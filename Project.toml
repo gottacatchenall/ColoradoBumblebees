@@ -1,6 +1,25 @@
 name = "ColoradoBumblebees"
-[compat]
-julia = "1.8.4"
-DrWatson = "2.12.1"
+
 [deps]
+ArchGDAL = "c9ce4bd3-c3d5-55b8-8973-c0e20141b8c3"
+BSON = "fbb218c0-5317-5bc6-957e-2ee96dd4b1f0"
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+Clustering = "aaaa29a8-35af-508c-8bc3-b662a17a0fe5"
+Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
+EcologicalNetworks = "f03a62fe-f8ab-5b77-a061-bb599b765229"
+Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
+GeoInterface = "cf35fbd7-0cd7-5166-be24-54bfbe79505f"
+GeoMakie = "db073c08-6b98-4ee5-b6a4-5efafb3259c6"
+GeometricFlux = "7e08b658-56d3-11e9-2997-919d5b31e4ea"
+MLJ = "add582a8-e3ab-11e8-2d5e-e98b27df1bc7"
+MLJScikitLearnInterface = "5ae90465-5518-4432-b9d2-8a1def2f0cab"
+Mangal = "b8b640a6-63d9-51e6-b784-5033db27bef2"
+SimpleSDMLayers = "2c645270-77db-11e9-22c3-0f302a89c64c"
+
+[compat]
+DrWatson = "2.12.1"
+julia = "1.8.4"
