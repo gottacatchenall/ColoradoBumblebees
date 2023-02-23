@@ -218,7 +218,6 @@ function fitvae!(model, timeseries; lr=1e-3, n_epochs=1_000, noise=false, σ=0.0
     end
 end
 
-
 enc_μ, enc_logvar, decoder = makemodel(VAETemporalEmbedding())
 
 
