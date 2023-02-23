@@ -220,7 +220,6 @@ end
 
 enc_μ, enc_logvar, decoder = makemodel(VAETemporalEmbedding())
 
-
 fitvae!((enc_μ, enc_logvar, decoder), bees_timeseries; lr=0.0005, n_epochs=10_00)
 
 
