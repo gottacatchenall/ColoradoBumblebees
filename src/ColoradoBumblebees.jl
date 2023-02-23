@@ -79,30 +79,149 @@ module ColoradoBumblebees
     using DataFrames, CSV
     using Dates
     using Mangal
+    using Statistics
     using GeoInterface
+    using SpeciesDistributionToolkit
+    using MultivariateStats
 
+    #using MLJ
+    using Clustering
+
+    const extent = (bottom=34., top=44., left=-110.5, right=-103.5)
+    export extent 
+
+
+    include(srcdir("util.jl"))
+
+    export bee, plant, pollinator, bee
+    export plants, bees, pollinators
+
+    
     abstract type Site end 
     struct PikesPeak <: Site end
     struct Gothic <: Site end
     struct ElkMeadows <: Site end
     struct Metaweb <: Site end
-    export Site, PikesPeak, Gothic, ElkMeadows, Metaweb
+    export Site, PikesPeak, Gothic, ElkMeadows, Metaweb, sitename
+    sitename(::Type{PikesPeak}) = "Pikes Peak"
+    sitename(::Type{Gothic}) = "Gothic"
+    sitename(::Type{ElkMeadows}) = "Elk Meadows"
+
+
+    struct Bee 
+        name
+        mangalnode::MangalNode
+    end
+
+    struct Plant
+        name
+        mangalnode::MangalNode
+    end 
+
+    Base.show(io::IO, plant::Plant) = Base.show(io, "🌷 $(plant.name)")
+    Base.show(io::IO, bee::Bee) = Base.show(io, "🐝 $(bee.name)")
+    export Bee, Plant
+
+
+    struct Interaction{T<:Site}
+        bee::Bee
+        plant::Plant
+        int::MangalInteraction
+        elevation 
+        time
+    end
+    Base.show(io::IO, int::Interaction{T}) where T = Base.print(io,"🐝 $(int.bee.name) ↔️ 🌷 $(int.plant.name) at $(sitename(T)) on $(monthname(int.time)) $(day(int.time)), $(year(int.time))")
+    
+
+    struct BeeData
+        bees::Vector{Bee}
+        plants::Vector{Plant}
+        interactions::Vector{Interaction}
+        occurrence::DataFrame
+        environment::DataFrame
+    end 
+    Base.show(io::IO, bd::BeeData) = Base.print(io, "Pollination dataset with $(length(bd.interactions)) interactions")
+ 
+    interactions(bd::BeeData) = bd.interactions
+
+    function interactions(bd::BeeData, sp1, sp2)
+        thisbee, thisplant = split(sp1.name, " ")[1] == "Bombus" ? (sp1, sp2) : (sp2, sp1)
+        filter(int ->  bee(int) == thisbee && plant(int) == thisplant, interactions(bd))
+    end
+    
+    function interactions(bd::BeeData, sp1)
+        isbee = split(sp1.name, " ")[1] == "Bombus"
+
+        otherspecies = isbee ? plants(bd) : bees(bd)
+        Is = []
+        for sp2 in otherspecies
+            thisbee = isbee ? sp1 : sp2
+            thisplant = isbee ? sp2 : sp1
+            Is = vcat(Is..., findall(int ->  bee(int) == thisbee && plant(int) == thisplant, interactions(bd))...)
+        end
+        interactions(bd)[Is]
+    end
+
+
+    occurrence(bd::BeeData) = bd.occurrence
+    environment(bd::BeeData) = bd.environment
+    
+    plant(int::MangalInteraction) = int.to
+    plant(int::Interaction) = int.plant
+    plant(bd::BeeData, str) = plants(bd)[findfirst(x->x.name==str, plants(bd))]
+
+
+    bee(int::MangalInteraction) = int.from
+    bee(int::Interaction) = int.bee
+    bee(bd::BeeData, str) = bees(bd)[findfirst(x->x.name==str,bees(bd))]
+
+    bees(data) = data.bees
+
+    
+    plants(data) = data.plants
+    
+
+    export BeeData, Interaction, interactions, occurrence, environment
+
 
 
     abstract type FeatureType end 
-    struct Phylogenetic <: FeatureType end
-    struct Environment <: FeatureType end
-    struct Spatial <: FeatureType end
-    struct Temporal <: FeatureType end
-    struct RelativeAbundance <: FeatureType end 
-    struct Structural <: FeatureType end 
+    abstract type Phylogenetic <: FeatureType end
+    abstract type Environment <: FeatureType end
+    abstract type Spatial <: FeatureType end
+    abstract type Temporal <: FeatureType end
+    abstract type RelativeAbundance <: FeatureType end 
+    abstract type Structural <: FeatureType end 
     export FeatureType, Phylogenetic, Environment, Spatial, Temporal, RelativeAbundance, Structural
     
-    
+    export getfeatures
+    export load_data, load_occurrence_data
+
     include(srcdir(joinpath("cleaning", "clean_raw_interactions.jl")))
     export clean_interactions
 
-    include(srcdir(joinpath("cleaning", "cleaned_interactions_to_networks.jl")))
+    include(srcdir(joinpath("cleaning", "create_networks.jl")))
     export create_interaction_data
+
+    include(srcdir(joinpath("cleaning", "clean_environmental_covariates.jl")))
+    export create_environmental_covariate_data
+
+    include(srcdir(joinpath("cleaning", "load_data.jl")))
+    export load_data
+
+
+    export outdim
+    include(srcdir("features", "spatial.jl"))
+    export KMeansSpatialEmbedding
+
+    include(srcdir("features", "environment.jl"))
+    export KMeansEnvironmentEmbedding
+
+
+    include(srcdir("models", "sandbox.jl"))
+    export feature_dataframe, label_dataframe
+
+    include(srcdir("models", "confusionmatrix.jl"))
+    export computemeasures
 
 end 

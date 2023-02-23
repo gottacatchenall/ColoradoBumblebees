@@ -12,27 +12,38 @@ function create_interaction_data()
 
     species_nodes = get_species_nodes(dfs)    
     
-    interactions, elevations, location = [], [], []
+    interactions = []
+
+
+    plantobjs, beeobjs = initialize_plant_and_bee_objects(species_nodes)
+
     net = initialize_new_network("ColoradoBumblebees")
     for (i,df) in enumerate(dfs)
         for r in eachrow(df)
             plantname, beename, datetime = r.plant, r.pollinator, r.datetime
             plantnode = species_nodes[findfirst(node -> node.name == plantname, species_nodes)]
             beenode = species_nodes[findfirst(node -> node.name == beename, species_nodes)]
-            coord = Point(r.longitude, r.latitude)
-          
-            push!(interactions, initialize_new_interaction(net, plantnode, beenode, datetime, coord))
-            push!(elevations, r.elevation)
-            push!(location, sites[i])
+            coord = (r.longitude, r.latitude)
+            elev = r.elevation
+            push!(interactions, initialize_new_interaction(net, beeobjs[beenode], plantobjs[plantnode], plantnode, beenode, datetime, coord, sites[i], elev))
         end
     end
 
-    Dict(
-        :nodes => species_nodes,
-        :interactions => interactions,
-        :elevation => elevations,
-        :site => location
-    )
+    collect(values(beeobjs)), collect(values(plantobjs)), interactions
+end
+
+function initialize_plant_and_bee_objects(species_nodes)
+    plants, bees = Dict(), Dict()
+
+    for s in species_nodes
+        isbee = split(s.name, " ")[1] == "Bombus"
+        if isbee 
+            merge!(bees, Dict(s=>Bee(s.name, s)))
+        else 
+            merge!(plants, Dict(s=>Plant(s.name,s)))
+        end
+    end
+    plants, bees 
 end
 
 
@@ -44,7 +55,6 @@ function get_species_nodes(dfs)
     allpollinators = unique(vcat([convert(Vector{String}, d[!,:pollinator]) for d in dfs]...))
     initialize_node.(vcat(allplants, allpollinators))
 end
-
 
 
 """
@@ -111,13 +121,13 @@ function initialize_new_network(name)
     net
 end
 
-function initialize_new_interaction(net, plantnode, beenode, datetime, coord)
+function initialize_new_interaction(net, bee, plant, plantnode, beenode, datetime, coord, site, elev)
     global interaction_id
     int = MangalInteraction(
         interaction_id,
         net,
-        plantnode,
         beenode,
+        plantnode,
         datetime,
         coord,
         false,
@@ -129,5 +139,6 @@ function initialize_new_interaction(net, plantnode, beenode, datetime, coord)
         Missing(),
     )
     interaction_id += 1
-    int
+    
+    Interaction{site}(bee, plant, int, elev, datetime)
 end
