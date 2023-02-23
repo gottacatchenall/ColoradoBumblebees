@@ -17,11 +17,6 @@ const INPUT_DIM = 147
 end
 outdim(ae::AETemporalEmbedding) = ae.encoder_dims[end]
 
-
-function getfeatures(ae::AETemporalEmbedding, abundance_timeseries)
-    
-end
-
 function makemodel(ae::AETemporalEmbedding)
     enc_dims = ae.encoder_dims    
     dec_dims = ae.decoder_dims
@@ -35,6 +30,25 @@ function makemodel(ae::AETemporalEmbedding)
     enc, dec, Chain(enc,dec) 
 end
 
+# ======================
+
+@Base.kwdef struct VAETemporalEmbedding <: Temporal
+    encoder_dims = [INPUT_DIM, 128, 64, 32]
+    decoder_dims = [32, 64, INPUT_DIM]
+end
+outdim(vae::VAETemporalEmbedding) = vae.encoder_dims[end]
+function makemodel(vae::VAETemporalEmbedding)
+    enc_dims = vae.encoder_dims    
+    dec_dims = vae.decoder_dims
+
+    enc_features = Chain(LSTM(enc_dims[begin]=>enc_dims[2]), [Dense(enc_dims[i], enc_dims[i+1]) for i in 2:(length(enc_dims)-2)]...)
+    
+    encoder_μ = Chain(enc_features, Dense(enc_dims[end-1], enc_dims[end]))
+    encoder_logvar = Chain(enc_features, Dense(enc_dims[end-1], enc_dims[end]))
+
+    dec = Chain([Dense(dec_dims[i], dec_dims[i+1]) for i in 1:(length(dec_dims)-1)]...)
+    encoder_μ, encoder_logvar, dec
+end
 
 
 # ===============
@@ -84,20 +98,12 @@ end
 
 # ====================================
 
-function fitmodel!(model, timeseries; lr=1e-3, n_epochs=1_000)
+function fitmodel!(model, timeseries; lr=1e-3, n_epochs=1_000, noise=false, σ=0.03) 
+    data_train = noise ? 
+         [(ts .+= rand(Normal(0, σ)),ts) for ts in timeseries] :
+         [(ts, ts) for ts in timeseries]
+
     loss(x,y) = mean([Flux.mse(model(t), t) for t in timeseries])
-
-
-    # X = to_features(timeseries)
-    #Itest = sample(1:size(X)[2], Int32(floor(0.2*size(X,2))), replace=false)
-    #Itrain = filter(x->x ∉ Itest,  1:size(X,2))
-    #data_test = (X[:,Itest],X[:,Itest])
-    #data_train = (X[:,Itrain],X[:, Itrain])
-
-    data_test, data_train = (timeseries,timeseries), (timeseries, timeseries)
-
-    data_train = [(ts,ts) for ts in timeseries]
-
     ps = Flux.params(model)
     
     trainlosses = []
@@ -105,10 +111,12 @@ function fitmodel!(model, timeseries; lr=1e-3, n_epochs=1_000)
     
     opt = ADAM(lr) 
     
+
     for epoch in 1:n_epochs
 
         for (i,ts) in enumerate(timeseries)
-            Flux.train!(loss, ps, [data_train[i]], opt)            
+            in, out = data_train[i]
+            Flux.train!(loss, ps, [(in, out)], opt)            
         end 
     
         trainloss = mean([loss(dt...) for dt in data_train])
@@ -126,42 +134,149 @@ function fitmodel!(model, timeseries; lr=1e-3, n_epochs=1_000)
 end
 
 
-# tests
 
+using Flux
+using Flux: logitbinarycrossentropy
+using ProgressMeter: Progress, next!
+using Zygote
+
+
+
+# tests
 phen = phenology(data)
 
 bees_timeseries = [Float32.(phen[b]) for b in bees(data)]
 
 embeds = []
 
-enc, dec, mod = makemodel(RNNAETemporalEmbedding())
-fitmodel!(mod, bees_timeseries)
+enc, dec, mod = makemodel(RNNAETemporalEmbedding([INPUT_DIM, 256, 128, 64, 32], [32, 64, 128, INPUT_DIM]))
+fitmodel!(mod, bees_timeseries; lr=1e-4, noise=false)
 
-
-
-enc, dec, mod = makemodel(LSTMAETemporalEmbedding())
-fitmodel!(mod, bees_timeseries)
+enc, dec, mod = makemodel(LSTMAETemporalEmbedding([INPUT_DIM, 256, 128, 64, 32], [32, 64, 128, INPUT_DIM]))
+fitmodel!(mod, bees_timeseries; lr=1e-4)
 
 
 enc, dec, mod = makemodel(AETemporalEmbedding())
 fitmodel!(mod, bees_timeseries)
 
-enc.(bees_timeseries)
+
+
+# ====================================
+# 
+#   VAE 
+# 
+# ============================================
+
+function foo(model, x)
+    enc_μ, enc_logvar, dec = model
+    μ, logvar = enc_μ(x), enc_logvar(x)
+    std = exp.(logvar ./ 2)
+    eps = rand(MvNormal(zeros(Float32, length(μ)), vec(std)))
+    x̂ = dec(μ .+ eps .* std)
+    x̂, μ, logvar
+end
+
+function fitvae!(model, timeseries; lr=1e-3, n_epochs=1_000, noise=false, σ=0.03) 
+    data_train = noise ? 
+         [(ts .+= rand(Normal(0, σ)),ts) for ts in timeseries] :
+         [(ts, ts) for ts in timeseries]
+
+    function loss(x,y)
+        x̂, μ, logvar = foo(model, x)
+        reconst_loss = sum([Flux.mse(x̂,t) for t in timeseries])
+
+        kl_div = -0.5 * sum(1. .+ logvar .- μ.^2 .- exp.(logvar))
+        reconst_loss + kl_div
+    end
+
+    ps = Flux.params(model)
+    
+    trainlosses = []
+    progbar = ProgressMeter.Progress(n_epochs)
+    
+    opt = ADAM(lr) 
+    
+
+    for epoch in 1:n_epochs
+
+        for (i,ts) in enumerate(timeseries)
+            in, out = data_train[i]
+            Flux.train!(loss, ps, [(in, out)], opt)            
+        end 
+    
+        trainloss = mean([loss(dt...) for dt in data_train])
+        ProgressMeter.next!(
+                progbar;
+                showvalues = [
+                    (Symbol("Loss"), trainloss),
+        
+                ],
+            )
+        if epoch % 10 == 0
+            push!(trainlosses, trainloss)
+        end
+    end
+end
+
+
+enc_μ, enc_logvar, decoder = makemodel(VAETemporalEmbedding())
+
+
+fitvae!((enc_μ, enc_logvar, decoder), bees_timeseries; lr=0.0005, n_epochs=10_00)
+
+
+xpred = [foo((enc_μ, enc_logvar, decoder), ts)[1] for ts in bees_timeseries]
+ 
+
+
+f = Figure()
+ax1 = Axis(f[1,1], title="")
+ax2 = Axis(f[1,2], title="")
+
+beenum = 1
+scatterlines!(ax1, 
+    1:INPUT_DIM,
+    [sum([bees_timeseries[i][t] for i in 1:length(bees_timeseries)]) for t in 1:INPUT_DIM]
+    )
+scatterlines!(ax2, 
+    1:INPUT_DIM,
+    [sum([xpred[i][t] for i in 1:length(bees_timeseries)]) for t in 1:INPUT_DIM]
+)
+current_figure()
+
+
+
+# ==============================================
+
 
 f = Figure()
 ax1 = Axis(f[1,1], title="True")
 ax2 = Axis(f[2,1], title="Reconstructed")
-
-
 scatterlines!(ax1, 
     1:INPUT_DIM,
      [sum([bees_timeseries[i][t] for i in 1:length(bees_timeseries)]) for t in 1:INPUT_DIM]
 )
-scatterlines!(ax1, 
+scatterlines!(ax2, 
     1:INPUT_DIM,
-     [sum([mod.(bees_timeseries[i])[t] for i in 1:length(bees_timeseries)]) for t in 1:INPUT_DIM]
+     [sum([mod(bees_timeseries[i])[t] for i in 1:length(bees_timeseries)]) for t in 1:INPUT_DIM]
 )
 current_figure()
+
+
+# =============================================================
+f = Figure()
+ax1 = Axis(f[1,1], title="")
+beenum = 2
+scatterlines!(ax1, 
+    1:INPUT_DIM,
+    bees_timeseries[beenum]
+)
+scatterlines!(ax1, 
+    1:INPUT_DIM,
+    mod(bees_timeseries[beenum])
+)
+current_figure()
+
 
 
 f = Figure()
@@ -169,7 +284,7 @@ ax1 = Axis(f[1,1])
 for v in enc.(bees_timeseries)
     scatter!(ax1, [v[1]], [v[2]])
 end
-
+current_figure()
 
 # Functions to construct inputs:
 # There are diffrent ways to do this:
