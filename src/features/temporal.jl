@@ -2,14 +2,21 @@ struct GaussianTemporalEmbedding <: Temporal
 
 end
 
+# IDEAS:
+#  -   preprocess signal with local smoothing (large fluctuations are likely
+#      measurement error and also could create spikier loss surface) 
+
+# - Each Temporal model is a struct with follwing params
+#       - enc & dec dims
+#       - node unit (dense/nothing, RNN, LSTM, GRU)
+#       - variational
+#       - noisy
+#
+# so only need one struct for AEs and rest is handled later
+
+
 # this is the extent of min(doy) to max(doy), therefore always the sequence length
 const INPUT_DIM = 147
-
-
-# IDEA:  AE with stacked input that gives matrix embedding for all species at same time 
-        # One encoder for everything, one decoder for each species
-
-# Noised and unnoised versions of each 
 
 @Base.kwdef struct AETemporalEmbedding <: Temporal
     encoder_dims = [INPUT_DIM, 32, 16]
@@ -232,11 +239,11 @@ ax1 = Axis(f[1,1], title="")
 ax2 = Axis(f[1,2], title="")
 
 beenum = 1
-scatterlines!(ax1, 
+barplot!(ax1, 
     1:INPUT_DIM,
     [sum([bees_timeseries[i][t] for i in 1:length(bees_timeseries)]) for t in 1:INPUT_DIM]
     )
-scatterlines!(ax2, 
+barplot!(ax2, 
     1:INPUT_DIM,
     [sum([xpred[i][t] for i in 1:length(bees_timeseries)]) for t in 1:INPUT_DIM]
 )
