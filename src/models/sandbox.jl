@@ -2,7 +2,7 @@ function feature_dataframe(data, embeddings)
     labeldf = label_dataframe(data)
 
     per_species_dim = sum(outdim.(embeddings))
-    @info per_species_dim
+
     featdf = DataFrame([["BEE$i"=>[] for i in 1:per_species_dim]...,["PLANT$i"=>[] for i in 1:per_species_dim]... ])
     
     feats = [getfeatures(e, data) for e in embeddings]

@@ -24,12 +24,13 @@ end
 
 function create_environmental_covariate_data()
     occurrence_df = load_occurrence_data()
-    layers = get_decorrelated_chelsa()
-    df = DataFrame(["species"=>[], ["w_BIO$i" => [] for i in 1:19]...])
+    # layers = get_decorrelated_chelsa()
+    layers = get_pca_chelsa()
+    df = DataFrame(["species"=>[], ["w_BIO$i" => [] for i in 1:length(layers)]...])
     for r in eachrow(occurrence_df)
         sp, lat, long = r
         push!(df.species, sp)
-        for i in 1:19
+        for i in 1:length(layers)
             if !isnothing(layers[i][long,lat])
                 push!(df[!, "w_BIO$i"], layers[i][long,lat])
             else
@@ -51,6 +52,15 @@ function get_decorrelated_chelsa()
     current_decorrelated_layers = decorrelate_chelsa(current_layers, w, mat)
 end
 
+function get_pca_chelsa()
+    biolayers = ["BIO$i" for i in 1:19]
+    current_layers = [SimpleSDMPredictor(RasterData(CHELSA2, BioClim); layer=l, extent...) for l in biolayers]
+    I = common_Is(current_layers)
+    mat = zeros(Float32,length(biolayers), length(I))
+    pca = fit_pca(current_layers)
+    pca_chelsa(current_layers, pca, mat)
+end
+
 function common_Is(layers)
     Is = []
     for l in layers
@@ -70,6 +80,34 @@ function fit_whitening(layers)
     w = MultivariateStats.fit(Whitening, matrix)
 end
 
+function fit_pca(layers)
+    Is = common_Is(layers)
+    matrix = zeros(length(layers), length(Is))
+
+    get_matrix_form!(layers, Is, matrix)
+    matrix = convert.(Float32, matrix)
+
+    @info "\t Fitting PCA..."
+    pca = MultivariateStats.fit(PCA, matrix)
+end
+
+
+function pca_chelsa(layers, pca, matrix)
+    Is = common_Is(layers)
+    get_matrix_form!(layers, Is, matrix)
+    pca_matrix = MultivariateStats.transform(pca, matrix)
+    new_layers = []
+    for l in 1:size(pca_matrix)[1]
+        tmp = convert(Float32,similar(layers[begin]))
+        tmp.grid .= 0.
+        #tmp.grid .= nothing
+        tmp.grid[Is] .= pca_matrix[l,:]
+        tmp
+        push!(new_layers, tmp)
+    end 
+    new_layers
+end
+
 function decorrelate_chelsa(layers, w, matrix)
     Is = common_Is(layers)
     get_matrix_form!(layers, Is, matrix)
@@ -78,7 +116,7 @@ function decorrelate_chelsa(layers, w, matrix)
     new_layers = []
     for l in 1:length(layers)
         tmp = convert(Float32,similar(layers[begin]))
-        tpm.grid .= 0.
+        tmp.grid .= 0.
         #tmp.grid .= nothing
         tmp.grid[Is] .= decorrelated_matrix[l,:]
         tmp
