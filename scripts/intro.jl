@@ -51,7 +51,7 @@ brt = BRT()
 balances = 0.2:0.1:8
 batch_sizes = [2^i for i in 3:9]
 ensemble_sizes = [2^i for i in 3:9]
-reps = 64
+reps = Threads.nthreads()
 
 results = [DataFrame(prauc=[], rocauc=[], balance=[], batch_size=[], ensemble_size=[]) for i in 1:reps]
 
