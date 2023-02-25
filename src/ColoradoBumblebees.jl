@@ -83,9 +83,12 @@ module ColoradoBumblebees
     using GeoInterface
     using SpeciesDistributionToolkit
     using MultivariateStats
-
+    using Flux
+    using Distributions
     #using MLJ
     using Clustering
+    using Random
+    using ProgressMeter
 
     const extent = (bottom=34., top=44., left=-110.5, right=-103.5)
     export extent 
@@ -176,12 +179,27 @@ module ColoradoBumblebees
     bee(bd::BeeData, str) = bees(bd)[findfirst(x->x.name==str,bees(bd))]
 
     bees(data) = data.bees
-
-    
     plants(data) = data.plants
     
 
-    export BeeData, Interaction, interactions, occurrence, environment
+
+    function phenology(data)    
+        species = vcat(bees(data)..., plants(data)...)
+        firstdoy, lastdoy = extrema([dayofyear(i.time) for i in interactions(data)])
+
+        dict = Dict()
+        for sp in species
+            abundances = zeros(Int32, lastdoy-firstdoy+1)
+            ints = interactions(data, sp)
+            for i in ints
+                abundances[dayofyear(i.time) - firstdoy + 1] += 1
+            end
+            merge!(dict, Dict(sp=>abundances))
+        end
+        dict
+    end
+
+    export BeeData, Interaction, interactions, occurrence, environment, phenology
 
 
 
@@ -216,6 +234,13 @@ module ColoradoBumblebees
 
     include(srcdir("features", "environment.jl"))
     export KMeansEnvironmentEmbedding
+
+
+    include(srcdir("features", "temporal.jl"))
+    export Autoencoder, Variational, Standard
+
+    const TEMPORAL_INPUT_DIM = 147
+    export TEMPORAL_INPUT_DIM
 
 
     include(srcdir("models", "sandbox.jl"))

@@ -4,6 +4,8 @@ using DrWatson
 using MLJ
 using ProgressMeter
 using DataFrames
+using Flux
+using Distributions
 
 # Here you may include files from the source directory
 include(srcdir("ColoradoBumblebees.jl"))
@@ -12,7 +14,13 @@ using Main.ColoradoBumblebees
 data = load_data()
 
 
-embeddings = [KMeansEnvironmentEmbedding(15)]
+embeddings = [
+    KMeansSpatialEmbedding(5), 
+    Autoencoder{Variational}(unit=LSTM, η=1e-3, n_epochs=250, encoder_dims=[TEMPORAL_INPUT_DIM,256,64,16,8], decoder_dims=[8,64,TEMPORAL_INPUT_DIM], train_proportion=1.),
+    Autoencoder{Standard}(unit=Dense, η=1e-2, encoder_dims=[TEMPORAL_INPUT_DIM,256,64,16,8], decoder_dims=[8,64,TEMPORAL_INPUT_DIM], train_proportion=1.),
+    #    KMeansEnvironmentEmbedding(10)
+    #       PCA them instead of whitening
+]
 
 #embeddings = [KMeansSpatialEmbedding(20)]
 
@@ -38,31 +46,76 @@ function balance_sample(y, I, batch_size=64, true_pct=0.5)
 end
 
 ## testing method for balanced training 
-ens_size = 100
-
-Is = shuffle(1:nrow(df))
-cut = Int32(floor(0.7*nrow(df)))
-Itrain, Itest  = Is[1:cut], Is[cut+1:end]
-
 
 ytest = [x == true for x in y[Itest]]
+
+
+SVM = @load SVMClassifier pkg=ScikitLearn
 
 rf = RandomForest()
 dt = DecisionTree()
 brt = BRT()
+svm = SVM()
 
-ypredict = zeros(length(Itest))
-models = []
-@showprogress for i in 1:ens_size
-    mach = machine(dt,X,y)
-    theserows = balance_sample(y, Itrain, 128, 0.5)
-    fit!(mach, rows=theserows, verbosity=0)
-    pred = predict(mach, rows=Itest)
+models = [dt]
 
-    ypredict .+= [p.prob_given_ref[2] for p in pred]
-    #push!(models, mach)
+
+res_df = DataFrame(prauc=[], rocauc=[], balance=[], batch_size=[], ensemble_size=[])
+
+balances = 0.2:0.1:8
+batch_sizes = [16,64,128]
+ensemble_sizes = [64,128,256]
+reps = 10
+
+@showprogress for b in balances
+    for bsize in batch_sizes
+        for es in ensemble_sizes
+            for r in 1:reps
+                @info (b,bsize,es,r)
+                Is = shuffle(1:nrow(df))
+                cut = Int32(floor(0.8*nrow(df)))
+                Itrain, Itest  = Is[1:cut], Is[cut+1:end]
+
+                ypredict = zeros(length(Itest))
+                for i in 1:es
+                    mach = machine(dt,X,y)
+                    theserows = balance_sample(y, Itrain, bsize, b)
+                    fit!(mach, rows=theserows, verbosity=0)
+                    pred = predict(mach, rows=Itest)
+                    ypredict .+= [p.prob_given_ref[2] for p in pred]            
+                end
+
+                ypredict = ypredict ./ es
+                meas = computemeasures(ytest, ypredict)
+                push!(res_df.prauc, meas[:prauc])
+                push!(res_df.rocauc, meas[:rocauc])
+                push!(res_df.balance, b)
+                push!(res_df.ensemble_size, es)
+                push!(res_df.batch_size, bsize)
+
+            end
+        end
+    end
 end
 
-ypredict = ypredict ./ ens_size
 
-computemeasures(ytest, ypredict)
+
+
+
+
+ens_size = 128
+ypredict = zeros(length(Itest))
+ for i in 1:ens_size
+    for m in models
+        mach = machine(m,X,y)
+        theserows = balance_sample(y, Itrain, 16, 0.25)
+        fit!(mach, rows=theserows, verbosity=0)
+        pred = predict(mach, rows=Itest)
+        ypredict .+= [p.prob_given_ref[2] for p in pred]
+    end 
+end
+
+
+ypredict = ypredict ./ (length(models)*ens_size)
+computemeasures(ytest, ypredict) 
+

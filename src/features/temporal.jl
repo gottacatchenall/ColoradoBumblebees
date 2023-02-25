@@ -1,181 +1,105 @@
-struct GaussianTemporalEmbedding <: Temporal
+abstract type AutoencoderType end 
+struct Standard <: AutoencoderType end
+struct Variational <: AutoencoderType end 
 
+@Base.kwdef struct Autoencoder{T} <: Temporal
+    unit = RNN               # node unit for first layer
+    encoder_dims = [TEMPORAL_INPUT_DIM, 64,32]
+    decoder_dims = [32, 64, TEMPORAL_INPUT_DIM]
+    η = 1e-2                # learning rate
+    opt =  ADAM             # optimizer
+    n_epochs = 1_000       # num epoachs
+    train_proportion = 0.8  # 
+    batch_size = 64 
+end
+outdim(ae::Autoencoder) = ae.encoder_dims[end]
+
+
+function getfeatures(ae::Autoencoder{Standard}, data)
+    enc, dec = _fitmodel(ae, _test_train_split(data, ae.train_proportion)...)
+    phen = phenology(data)
+    dict = Dict()
+
+    for (k,v) in phen
+        merge!(dict, Dict(k=>enc(Float32.(v))))
+    end
+    dict
+end
+function getfeatures(ae::Autoencoder{Variational}, data) 
+    enc_μ, enc_logvar, dec = _fitmodel(ae, _test_train_split(data, ae.train_proportion)...)
+    phen = phenology(data)
+    dict = Dict()
+
+    for (k,v) in phen
+        _, μ, _ = _reparam_trick(enc_μ, enc_logvar, dec, Float32.(v))
+        merge!(dict, Dict(k=>μ))
+    end
+    dict
 end
 
-# IDEAS:
-#  -   preprocess signal with local smoothing (large fluctuations are likely
-#      measurement error and also could create spikier loss surface) 
+function _fitmodel(ae::Autoencoder{Standard}, train, test)
+    enc, dec = _makemodel(ae)
+    model = Chain(enc, dec)
+    loss(x) = begin
+        #Flux.mse(model(x), x)
+        mean([Flux.mse(model(t), t) for t in x])
+    end 
 
-# - Each Temporal model is a struct with follwing params
-#       - enc & dec dims
-#       - node unit (dense/nothing, RNN, LSTM, GRU)
-#       - variational
-#       - noisy
-#
-# so only need one struct for AEs and rest is handled later
-
-
-# this is the extent of min(doy) to max(doy), therefore always the sequence length
-const INPUT_DIM = 147
-
-@Base.kwdef struct AETemporalEmbedding <: Temporal
-    encoder_dims = [INPUT_DIM, 32, 16]
-    decoder_dims = [16, 32, INPUT_DIM]
-end
-outdim(ae::AETemporalEmbedding) = ae.encoder_dims[end]
-
-function makemodel(ae::AETemporalEmbedding)
-    enc_dims = ae.encoder_dims    
-    dec_dims = ae.decoder_dims
-
-    enc = Chain(
-        [Dense(enc_dims[i], enc_dims[i+1]) for i in 1:(length(enc_dims)-1)]...
-    )
-    dec = Chain(
-        [Dense(dec_dims[i], dec_dims[i+1]) for i in 1:(length(dec_dims)-1)]...
-    )
-    enc, dec, Chain(enc,dec) 
+    opt = ae.opt(ae.η)
+    trainloss, testloss = _train_model(model, loss, train, test, opt, ae.n_epochs, ae.batch_size)
+    enc, dec
 end
 
-# ======================
-
-@Base.kwdef struct VAETemporalEmbedding <: Temporal
-    encoder_dims = [INPUT_DIM, 128, 64, 32]
-    decoder_dims = [32, 64, INPUT_DIM]
-end
-outdim(vae::VAETemporalEmbedding) = vae.encoder_dims[end]
-function makemodel(vae::VAETemporalEmbedding)
-    enc_dims = vae.encoder_dims    
-    dec_dims = vae.decoder_dims
-
-    enc_features = Chain(LSTM(enc_dims[begin]=>enc_dims[2]), [Dense(enc_dims[i], enc_dims[i+1]) for i in 2:(length(enc_dims)-2)]...)
-    
-    encoder_μ = Chain(enc_features, Dense(enc_dims[end-1], enc_dims[end]))
-    encoder_logvar = Chain(enc_features, Dense(enc_dims[end-1], enc_dims[end]))
-
-    dec = Chain([Dense(dec_dims[i], dec_dims[i+1]) for i in 1:(length(dec_dims)-1)]...)
-    encoder_μ, encoder_logvar, dec
-end
-
-
-# ===============
-
-
-@Base.kwdef struct RNNAETemporalEmbedding <: Temporal
-    encoder_dims = [INPUT_DIM, 32, 16]
-    decoder_dims = [16, 32, INPUT_DIM]
-end
-outdim(ae::RNNAETemporalEmbedding) = ae.encoder_dims[end]
-
-function makemodel(ae::RNNAETemporalEmbedding)
-    enc_dims = ae.encoder_dims    
-    dec_dims = ae.decoder_dims
-
-    enc = Chain(
-        RNN(enc_dims[1] => enc_dims[2]),
-        [Dense(enc_dims[i], enc_dims[i+1]) for i in 2:(length(enc_dims)-1)]...
-    )
-    dec = Chain(
-        [Dense(dec_dims[i], dec_dims[i+1]) for i in 1:(length(dec_dims)-1)]...,
-    )
-    enc, dec, Chain(enc,dec) 
-end
-
-# ====================================
-
-@Base.kwdef struct LSTMAETemporalEmbedding <: Temporal
-    encoder_dims = [INPUT_DIM, 32, 16]
-    decoder_dims = [16, 32, INPUT_DIM]
-end
-outdim(ae::LSTMAETemporalEmbedding) = ae.encoder_dims[end]
-
-function makemodel(ae::LSTMAETemporalEmbedding)
-    enc_dims = ae.encoder_dims    
-    dec_dims = ae.decoder_dims
-
-    enc = Chain(
-        LSTM(enc_dims[1] => enc_dims[2]),
-        [Dense(enc_dims[i], enc_dims[i+1]) for i in 2:(length(enc_dims)-1)]...
-    )
-    dec = Chain(
-        [Dense(dec_dims[i], dec_dims[i+1]) for i in 1:(length(dec_dims)-1)]...,
-    )
-    enc, dec, Chain(enc,dec) 
-end
-
-# ====================================
-
-function fitmodel!(model, timeseries; lr=1e-3, n_epochs=1_000, noise=false, σ=0.03) 
-    data_train = noise ? 
-         [(ts .+= rand(Normal(0, σ)),ts) for ts in timeseries] :
-         [(ts, ts) for ts in timeseries]
-
-    loss(x,y) = mean([Flux.mse(model(t), t) for t in timeseries])
-    ps = Flux.params(model)
-    
-    trainlosses = []
-    progbar = ProgressMeter.Progress(n_epochs)
-    
-    opt = ADAM(lr) 
-    
-
-    for epoch in 1:n_epochs
-
-        for (i,ts) in enumerate(timeseries)
-            in, out = data_train[i]
-            Flux.train!(loss, ps, [(in, out)], opt)            
+function _fitmodel(ae::Autoencoder{Variational}, train, test)
+    enc_μ, enc_logvar, dec = _makemodel(ae)
+    # model = Chain(enc_μ, enc_logvar, dec)
+    function loss(x)
+        reconst_loss = 0.
+        kl_div_sum = 0.
+        for t in x 
+            x̂, μ, logvar = _reparam_trick(enc_μ, enc_logvar, dec, t)
+            reconst_loss += Flux.mse(x̂,t) 
+            kl_div = -0.5 * sum(1. .+ logvar .- μ.^2 .- exp.(logvar))
+            kl_div_sum += kl_div
         end 
-    
-        trainloss = mean([loss(dt...) for dt in data_train])
-        ProgressMeter.next!(
-                progbar;
-                showvalues = [
-                    (Symbol("Loss"), trainloss),
+        reconst_loss + kl_div_sum
+    end
+
+    opt = ae.opt(ae.η)
+    trainloss, testloss = _train_model((enc_μ, enc_logvar, dec), loss, train, test, opt, ae.n_epochs, ae.batch_size)
+    enc_μ, enc_logvar, dec
+end
+
+function _train_model(model, loss, train, test, opt, n_epochs, batch_size)
+    ps = Flux.params(model)
+    trainlosses, testlosses = [], []
+    progbar = ProgressMeter.Progress(n_epochs)
+    @info "Starting training..."
+    for epoch in 1:n_epochs
+        Flux.train!(loss, ps, [(train)], opt)  
         
-                ],
-            )
+        trainloss = loss(train)
+      #  testloss = loss(test)
+        testloss = NaN
+        ProgressMeter.next!(progbar; showvalues = [(Symbol("Train Loss"), trainloss), (Symbol("Test Loss"), testloss)])
         if epoch % 10 == 0
             push!(trainlosses, trainloss)
+       #     push!(testlosses, testloss)
         end
     end
+    trainlosses, testlosses
 end
 
 
-
-using Flux
-using Flux: logitbinarycrossentropy
-using ProgressMeter: Progress, next!
-using Zygote
-
-
-
-# tests
-phen = phenology(data)
-
-bees_timeseries = [Float32.(phen[b]) for b in bees(data)]
-
-embeds = []
-
-enc, dec, mod = makemodel(RNNAETemporalEmbedding([INPUT_DIM, 256, 128, 64, 32], [32, 64, 128, INPUT_DIM]))
-fitmodel!(mod, bees_timeseries; lr=1e-4, noise=false)
-
-enc, dec, mod = makemodel(LSTMAETemporalEmbedding([INPUT_DIM, 256, 128, 64, 32], [32, 64, 128, INPUT_DIM]))
-fitmodel!(mod, bees_timeseries; lr=1e-4)
+function _test_train_split(data, train_proportion=0.8)
+    phen = phenology(data)
+    timeseries = shuffle(vcat([[Float32.(phen[b]) for b in f(data)] for f in [bees,plants]]...))
+    i = Int32(floor(train_proportion*length(timeseries)))
+    timeseries[begin:i], timeseries[i+1:end]
+end
 
 
-enc, dec, mod = makemodel(AETemporalEmbedding())
-fitmodel!(mod, bees_timeseries)
-
-
-
-# ====================================
-# 
-#   VAE 
-# 
-# ============================================
-
-function foo(model, x)
-    enc_μ, enc_logvar, dec = model
+function _reparam_trick(enc_μ, enc_logvar, dec, x)
     μ, logvar = enc_μ(x), enc_logvar(x)
     std = exp.(logvar ./ 2)
     eps = rand(MvNormal(zeros(Float32, length(μ)), vec(std)))
@@ -183,134 +107,28 @@ function foo(model, x)
     x̂, μ, logvar
 end
 
-function fitvae!(model, timeseries; lr=1e-3, n_epochs=1_000, noise=false, σ=0.03) 
-    data_train = noise ? 
-         [(ts .+= rand(Normal(0, σ)),ts) for ts in timeseries] :
-         [(ts, ts) for ts in timeseries]
 
-    function loss(x,y)
-        x̂, μ, logvar = foo(model, x)
-        reconst_loss = sum([Flux.mse(x̂,t) for t in timeseries])
-
-        kl_div = -0.5 * sum(1. .+ logvar .- μ.^2 .- exp.(logvar))
-        reconst_loss + kl_div
-    end
-
-    ps = Flux.params(model)
-    
-    trainlosses = []
-    progbar = ProgressMeter.Progress(n_epochs)
-    
-    opt = ADAM(lr) 
-    
-
-    for epoch in 1:n_epochs
-
-        for (i,ts) in enumerate(timeseries)
-            in, out = data_train[i]
-            Flux.train!(loss, ps, [(in, out)], opt)            
-        end 
-    
-        trainloss = mean([loss(dt...) for dt in data_train])
-        ProgressMeter.next!(
-                progbar;
-                showvalues = [
-                    (Symbol("Loss"), trainloss),
-        
-                ],
-            )
-        if epoch % 10 == 0
-            push!(trainlosses, trainloss)
-        end
-    end
-end
-
-enc_μ, enc_logvar, decoder = makemodel(VAETemporalEmbedding())
-
-fitvae!((enc_μ, enc_logvar, decoder), bees_timeseries; lr=0.0005, n_epochs=10_00)
-
-
-xpred = [foo((enc_μ, enc_logvar, decoder), ts)[1] for ts in bees_timeseries]
- 
-
-
-f = Figure()
-ax1 = Axis(f[1,1], title="")
-ax2 = Axis(f[1,2], title="")
-
-beenum = 1
-barplot!(ax1, 
-    1:INPUT_DIM,
-    [sum([bees_timeseries[i][t] for i in 1:length(bees_timeseries)]) for t in 1:INPUT_DIM]
+function _makemodel(ae::Autoencoder{Standard})
+    enc_layer_sizes, dec_layer_sizes = ae.encoder_dims, ae.decoder_dims
+    enc = Chain(ae.unit(enc_layer_sizes[1] => enc_layer_sizes[2]),
+        [Dense(enc_layer_sizes[i], enc_layer_sizes[i+1]) for i in 2:(length(enc_layer_sizes)-1)]...
     )
-barplot!(ax2, 
-    1:INPUT_DIM,
-    [sum([xpred[i][t] for i in 1:length(bees_timeseries)]) for t in 1:INPUT_DIM]
-)
-current_figure()
-
-
-
-# ==============================================
-
-
-f = Figure()
-ax1 = Axis(f[1,1], title="True")
-ax2 = Axis(f[2,1], title="Reconstructed")
-scatterlines!(ax1, 
-    1:INPUT_DIM,
-     [sum([bees_timeseries[i][t] for i in 1:length(bees_timeseries)]) for t in 1:INPUT_DIM]
-)
-scatterlines!(ax2, 
-    1:INPUT_DIM,
-     [sum([mod(bees_timeseries[i])[t] for i in 1:length(bees_timeseries)]) for t in 1:INPUT_DIM]
-)
-current_figure()
-
-
-# =============================================================
-f = Figure()
-ax1 = Axis(f[1,1], title="")
-beenum = 2
-scatterlines!(ax1, 
-    1:INPUT_DIM,
-    bees_timeseries[beenum]
-)
-scatterlines!(ax1, 
-    1:INPUT_DIM,
-    mod(bees_timeseries[beenum])
-)
-current_figure()
-
-
-
-f = Figure()
-ax1 = Axis(f[1,1])
-for v in enc.(bees_timeseries)
-    scatter!(ax1, [v[1]], [v[2]])
+    dec = Chain([Dense(dec_layer_sizes[i], dec_layer_sizes[i+1]) for i in 1:(length(dec_layer_sizes)-1)]...) 
+    enc, dec 
 end
-current_figure()
 
-# Functions to construct inputs:
-# There are diffrent ways to do this:
-#       1. pooled 
-#       2. site stratified
-#       3. year stratified
-#       4. year & site strat
+function _makemodel(ae::Autoencoder{Variational})
+    enc_layer_sizes, dec_layer_sizes = ae.encoder_dims, ae.decoder_dims
+    num_enc_layers, num_dec_layers = length.([enc_layer_sizes, dec_layer_sizes])
 
-
-function phenology(data)    
-    species = vcat(bees(data)..., plants(data)...)
-    firstdoy, lastdoy = extrema([dayofyear(i.time) for i in interactions(data)])
-
-    dict = Dict()
-    for sp in species
-        abundances = zeros(Int32, lastdoy-firstdoy+1)
-        ints = interactions(data, sp)
-        for i in ints
-            abundances[dayofyear(i.time) - firstdoy + 1] += 1
-        end
-        merge!(dict, Dict(sp=>abundances))
-    end
-    dict
+    enc_features = Chain(
+        ae.unit(enc_layer_sizes[begin]=>enc_layer_sizes[begin+1]), 
+        [Dense(enc_layer_sizes[i], enc_layer_sizes[i+1]) for i in 2:(num_enc_layers-2)]...
+    )
+  
+    encoder_μ = Chain(enc_features, Dense(enc_layer_sizes[end-1], enc_layer_sizes[end]))
+    encoder_logvar = Chain(enc_features, Dense(enc_layer_sizes[end-1], enc_layer_sizes[end]))
+    dec = Chain([Dense(dec_layer_sizes[i], dec_layer_sizes[i+1]) for i in 1:(num_dec_layers-1)]...)
+  
+    return encoder_μ, encoder_logvar, dec
 end

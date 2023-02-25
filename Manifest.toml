@@ -2,7 +2,7 @@
 
 julia_version = "1.8.4"
 manifest_format = "2.0"
-project_hash = "b0dbd422c81d92332858bb9b4eb963d2e2921a93"
+project_hash = "6f2b021cc53a620943cb1d9b6535e71d6e9e1e79"
 
 [[deps.ARFFFiles]]
 deps = ["CategoricalArrays", "Dates", "Parsers", "Tables"]
@@ -1222,6 +1222,12 @@ git-tree-sha1 = "bb8a1056b1d8b40f2f27167fc3ef6412a6719fbf"
 uuid = "50ed68f4-41fd-4504-931a-ed422449fee0"
 version = "0.3.2"
 
+[[deps.MLJFlux]]
+deps = ["CategoricalArrays", "ColorTypes", "ComputationalResources", "Flux", "MLJModelInterface", "Metalhead", "ProgressMeter", "Random", "Statistics", "Tables"]
+git-tree-sha1 = "2ecdce4dd9214789ee1796103d29eaee7619ebd0"
+uuid = "094fc8d1-fd35-5302-93ea-dabda2abf845"
+version = "0.2.9"
+
 [[deps.MLJIteration]]
 deps = ["IterationControl", "MLJBase", "Random", "Serialization"]
 git-tree-sha1 = "be6d5c71ab499a59e82d65e00a89ceba8732fcd5"
@@ -1330,6 +1336,12 @@ version = "1.1.7"
 deps = ["Artifacts", "Libdl"]
 uuid = "c8ffd9c3-330d-5841-b78e-0817d7145fa1"
 version = "2.28.0+0"
+
+[[deps.Metalhead]]
+deps = ["Artifacts", "BSON", "Flux", "Functors", "LazyArtifacts", "MLUtils", "NNlib", "Random", "Statistics"]
+git-tree-sha1 = "0e95f91cc5f23610f8f270d7397f307b21e19d2b"
+uuid = "dbeba491-748d-5e0e-a39e-b530a07fa0cc"
+version = "0.7.4"
 
 [[deps.MicroCollections]]
 deps = ["BangBang", "InitialValues", "Setfield"]
