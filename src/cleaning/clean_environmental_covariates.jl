@@ -24,18 +24,21 @@ end
 
 function create_environmental_covariate_data()
     occurrence_df = load_occurrence_data()
-    # layers = get_decorrelated_chelsa()
-    layers = get_pca_chelsa()
-    df = DataFrame(["species"=>[], ["w_BIO$i" => [] for i in 1:length(layers)]...])
+
+    colprefix = "w_BIO" #"PCA_BIO"
+
+    #current_layers = get_decorrelated_chelsa()
+    current_layers = get_pca_chelsa()
+    df = DataFrame(["species"=>[], ["$(colprefix)_$i" => [] for i in 1:length(current_layers)]...])
     for r in eachrow(occurrence_df)
         sp, lat, long = r
         push!(df.species, sp)
-        for i in 1:length(layers)
-            if !isnothing(layers[i][long,lat])
-                push!(df[!, "w_BIO$i"], layers[i][long,lat])
+        for i in 1:length(current_layers)
+            if !isnothing(current_layers[i][long,lat])
+                push!(df[!, "$(colprefix)_$i"], current_layers[i][long,lat])
             else
                 @info sp, long, lat
-                push!(df[!, "w_BIO$i"], NaN)
+                push!(df[!, "$(colprefix)_$i"], NaN)
             end
         end
     end
@@ -45,46 +48,56 @@ end
 
 function get_decorrelated_chelsa()
     biolayers = ["BIO$i" for i in 1:19]
-    current_layers = [SimpleSDMPredictor(RasterData(CHELSA2, BioClim); layer=l, extent...) for l in biolayers]
+    current_layers = [convert(Float32,SimpleSDMPredictor(RasterData(CHELSA2, BioClim); layer=l, extent...)) for l in biolayers]
     I = common_Is(current_layers)
     mat = zeros(Float32,length(biolayers), length(I))
     w = fit_whitening(current_layers)
     current_decorrelated_layers = decorrelate_chelsa(current_layers, w, mat)
+    standardize!(current_decorrelated_layers)
+    current_decorrelated_layers
 end
 
 function get_pca_chelsa()
     biolayers = ["BIO$i" for i in 1:19]
-    current_layers = [SimpleSDMPredictor(RasterData(CHELSA2, BioClim); layer=l, extent...) for l in biolayers]
+    current_layers = [convert(Float32,SimpleSDMPredictor(RasterData(CHELSA2, BioClim); layer=l, extent...)) for l in biolayers]
     I = common_Is(current_layers)
     mat = zeros(Float32,length(biolayers), length(I))
     pca = fit_pca(current_layers)
-    pca_chelsa(current_layers, pca, mat)
+    standardize!(pca_chelsa(current_layers, pca, mat))
 end
 
-function common_Is(layers)
+function standardize!(current_layers)
+    for l in current_layers
+        μ, σ = mean(l.grid), std(l.grid)
+        l.grid .= broadcast(x->(x-μ)/σ, l.grid)
+    end
+    current_layers
+end
+
+function common_Is(current_layers)
     Is = []
-    for l in layers
+    for l in current_layers
         push!(Is, findall(x -> !isnothing(x) && !isnan(x), l.grid))
     end
     Is = unique(intersect(unique(Is)...))
 end 
 
-function fit_whitening(layers)
-    Is = common_Is(layers)
-    matrix = zeros(length(layers), length(Is))
+function fit_whitening(current_layers)
+    Is = common_Is(current_layers)
+    matrix = zeros(length(current_layers), length(Is))
 
-    get_matrix_form!(layers, Is, matrix)
+    get_matrix_form!(current_layers, Is, matrix)
     matrix = convert.(Float32, matrix)
 
     @info "\t Fitting whitening..."
     w = MultivariateStats.fit(Whitening, matrix)
 end
 
-function fit_pca(layers)
-    Is = common_Is(layers)
-    matrix = zeros(length(layers), length(Is))
+function fit_pca(current_layers)
+    Is = common_Is(current_layers)
+    matrix = zeros(length(current_layers), length(Is))
 
-    get_matrix_form!(layers, Is, matrix)
+    get_matrix_form!(current_layers, Is, matrix)
     matrix = convert.(Float32, matrix)
 
     @info "\t Fitting PCA..."
@@ -92,13 +105,13 @@ function fit_pca(layers)
 end
 
 
-function pca_chelsa(layers, pca, matrix)
-    Is = common_Is(layers)
-    get_matrix_form!(layers, Is, matrix)
+function pca_chelsa(current_layers, pca, matrix)
+    Is = common_Is(current_layers)
+    get_matrix_form!(current_layers, Is, matrix)
     pca_matrix = MultivariateStats.transform(pca, matrix)
     new_layers = []
     for l in 1:size(pca_matrix)[1]
-        tmp = convert(Float32,similar(layers[begin]))
+        tmp = convert(Float32,similar(current_layers[begin]))
         tmp.grid .= 0.
         #tmp.grid .= nothing
         tmp.grid[Is] .= pca_matrix[l,:]

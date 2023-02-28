@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 
@@ -8,8 +7,8 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=8G
 
-export JULIA_DEPOT_PATH = "/project/def-gonzalez/mcatchen/JuliaEnvironments/ColoradoBumblebees"
+export JULIA_DEPOT_PATH = "/project/def-gonzalez/mcatchen/JuliaEnvironments/COBees"
 
 module load julia/1.8.1
-@info "Launching script..."
-julia intro.jl
+echo "Launching script..."
+julia -t 64 intro.jl

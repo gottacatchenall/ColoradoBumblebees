@@ -24,7 +24,10 @@ function getfeatures(kmse::KMeansEnvironmentEmbedding, env::DataFrame)
         return  vcat([res.centers[:,i] for i in 1:kmse.k]...)    
     else
         @info "no work with this species, still dumb hotfix"
-        return vcat([[mean(env[!,"w_BIO$i"]) for i in 1:size(X,1)] for i in 1:kmse.k]...)
+        return vcat([[mean(env[!,"w_BIO_$i"]) for i in 1:size(X,1)] for i in 1:kmse.k]...)
         #vcat([[mean(occ.longitude), mean(occ.latitude)] for i in 1:kmse.k]...)
     end
 end
+
+
+

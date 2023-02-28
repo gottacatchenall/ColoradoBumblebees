@@ -6,6 +6,9 @@ using ProgressMeter
 using DataFrames
 using Flux
 using Distributions
+using ParameterSchedulers
+using ParameterSchedulers: Scheduler
+using CSV
 
 # Here you may include files from the source directory
 include(srcdir("ColoradoBumblebees.jl"))
@@ -15,29 +18,32 @@ data = load_data()
 
 
 embeddings = [
-    KMeansSpatialEmbedding(5), 
+  # KMeansSpatialEmbedding(10), 
+    KMeansEnvironmentEmbedding(10),
     Autoencoder{Variational}(
         unit=LSTM, 
-        η=5e-3, 
         n_epochs=250, 
-        encoder_dims=[TEMPORAL_INPUT_DIM,256,64,16,4], 
-        decoder_dims=[4,64,TEMPORAL_INPUT_DIM], 
-        train_proportion=1.),
+        dropout=0.,
+        opt=ADAM(0.001),
+        encoder_dims=[TEMPORAL_INPUT_DIM,256,64,8,4], 
+        decoder_dims=[4,64,128,TEMPORAL_INPUT_DIM], 
+        train_proportion=1.)
 
-    Autoencoder{Standard}(
+    #= Autoencoder{Standard}(
         unit=Dense, 
-        η=5e-3, 
-        n_epochs=2000,
+        n_epochs=1000,
         encoder_dims=[TEMPORAL_INPUT_DIM,256,64,16,4], 
         decoder_dims=[4,64,TEMPORAL_INPUT_DIM],
-        train_proportion=1.),
-    KMeansEnvironmentEmbedding(5),
+        train_proportion=1.), =#
 ]
 
 df = feature_dataframe(data, embeddings)
 
 y, X, _, = unpack(df, ==(:interaction), ∉([:bee,:plant]); rng = 123)
 y = coerce(y, Multiclass{2})
+
+single_run(X,y, 256, 64)
+
 
 DecisionTree = @load DecisionTreeClassifier pkg = DecisionTree verbosity = 0
 RandomForest = @load RandomForestClassifier pkg = DecisionTree verbosity = 0
@@ -48,8 +54,8 @@ dt = DecisionTree()
 brt = BRT()
 
 
-balances = 0.2:0.1:8
-batch_sizes = [2^i for i in 3:9]
+balances = 0.2:0.05:0.8
+batch_sizes = [2^i for i in 3:7]
 ensemble_sizes = [2^i for i in 3:9]
 reps = Threads.nthreads()
 
@@ -94,25 +100,21 @@ _jobcount = get(ENV, "SLURM_ARRAY_TASK_COUNT", 1)
 CSV.write(datadir("output_$(_jobid).csv"), vcat(results...))
 
 
-#=
-Is = shuffle(1:nrow(df))
-cut = Int32(floor(0.8*nrow(df)))
-Itrain, Itest  = Is[1:cut], Is[cut+1:end]
-ytest = [x == true for x in y[Itest]]
-ens_size = 256
-ypredict = zeros(length(Itest))
-for i in 1:ens_size
-    for m in models
-        mach = machine(m,X,y)
-        theserows = balance_sample(y, Itrain, 64, 0.5)
+function single_run(X,y, ens_size=256, batch_size=64)
+    Is = shuffle(1:nrow(df))
+    cut = Int32(floor(0.8*nrow(df)))
+    Itrain, Itest  = Is[1:cut], Is[cut+1:end]
+    ytest = [x == true for x in y[Itest]]
+    ypredict = zeros(length(Itest))
+    for i in 1:ens_size
+        mach = machine(dt,X,y)
+        theserows = balance_sample(y, Itrain, batch_size, 0.5)
         fit!(mach, rows=theserows, verbosity=0)
         pred = predict(mach, rows=Itest)
         ypredict .+= [p.prob_given_ref[2] for p in pred]
-    end 
-end
+    end
 
+    ypredict = ypredict ./ (ens_size)
+    computemeasures(ytest, ypredict) 
 
-ypredict = ypredict ./ (length(models)*ens_size)
-computemeasures(ytest, ypredict) 
-
-=#
+end 

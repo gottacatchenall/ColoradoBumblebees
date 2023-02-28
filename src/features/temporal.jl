@@ -4,13 +4,13 @@ struct Variational <: AutoencoderType end
 
 @Base.kwdef struct Autoencoder{T} <: Temporal
     unit = RNN               # node unit for first layer
-    encoder_dims = [TEMPORAL_INPUT_DIM, 64,32]
+    encoder_dims = [TEMPORAL_INPUT_DIM, 64, 32]
     decoder_dims = [32, 64, TEMPORAL_INPUT_DIM]
-    η = 1e-2                # learning rate
-    opt =  ADAM             # optimizer
-    n_epochs = 1_000       # num epoachs
+    opt = ADAM(1e-2)
+    dropout = 0.1           # dropout
+    n_epochs = 1_000        # num epoachs
     train_proportion = 0.8  # 
-    batch_size = 64 
+    batch_size = 64         # batch_size
 end
 outdim(ae::Autoencoder) = ae.encoder_dims[end]
 
@@ -45,8 +45,7 @@ function _fitmodel(ae::Autoencoder{Standard}, train, test)
         mean([Flux.mse(model(t), t) for t in x])
     end 
 
-    opt = ae.opt(ae.η)
-    trainloss, testloss = _train_model(model, loss, train, test, opt, ae.n_epochs, ae.batch_size)
+    trainloss, testloss = _train_model(model, loss, train, test, ae.scheduler, ae.n_epochs, ae.batch_size)
     enc, dec
 end
 
@@ -65,8 +64,7 @@ function _fitmodel(ae::Autoencoder{Variational}, train, test)
         reconst_loss + kl_div_sum
     end
 
-    opt = ae.opt(ae.η)
-    trainloss, testloss = _train_model((enc_μ, enc_logvar, dec), loss, train, test, opt, ae.n_epochs, ae.batch_size)
+    trainloss, testloss = _train_model((enc_μ, enc_logvar, dec), loss, train, test, ae.opt, ae.n_epochs, ae.batch_size)
     enc_μ, enc_logvar, dec
 end
 
@@ -81,7 +79,7 @@ function _train_model(model, loss, train, test, opt, n_epochs, batch_size)
         trainloss = loss(train)
       #  testloss = loss(test)
         testloss = NaN
-        ProgressMeter.next!(progbar; showvalues = [(Symbol("Train Loss"), trainloss), (Symbol("Test Loss"), testloss)])
+        ProgressMeter.next!(progbar; showvalues = [(Symbol("Train Loss"), trainloss), (Symbol("η"), opt.eta)])
         if epoch % 10 == 0
             push!(trainlosses, trainloss)
        #     push!(testlosses, testloss)
@@ -110,9 +108,15 @@ end
 
 function _makemodel(ae::Autoencoder{Standard})
     enc_layer_sizes, dec_layer_sizes = ae.encoder_dims, ae.decoder_dims
-    enc = Chain(ae.unit(enc_layer_sizes[1] => enc_layer_sizes[2]),
-        [Dense(enc_layer_sizes[i], enc_layer_sizes[i+1]) for i in 2:(length(enc_layer_sizes)-1)]...
+   
+    _dense_unit(in,out) = Dense(in,out)
+    _dense_dropout_unit(in,out) = Chain(Dense(in,out), Dropout(ae.dropout))
+
+    f = ae.dropout > 0 ? _dense_dropout_unit : _dense_unit
+    enc = Chain(ae.unit(enc_layer_sizes[begin] => enc_layer_sizes[begin+1]),
+        [f(enc_layer_sizes[i], enc_layer_sizes[i+1]) for i in 2:(length(enc_layer_sizes)-1)]...
     )
+
     dec = Chain([Dense(dec_layer_sizes[i], dec_layer_sizes[i+1]) for i in 1:(length(dec_layer_sizes)-1)]...) 
     enc, dec 
 end
@@ -121,9 +125,14 @@ function _makemodel(ae::Autoencoder{Variational})
     enc_layer_sizes, dec_layer_sizes = ae.encoder_dims, ae.decoder_dims
     num_enc_layers, num_dec_layers = length.([enc_layer_sizes, dec_layer_sizes])
 
+    _dense_unit(in,out) = Dense(in,out)
+    _dense_dropout_unit(in,out) = Chain(Dense(in,out), Dropout(ae.dropout))
+
+    f = ae.dropout > 0 ? _dense_dropout_unit : _dense_unit
+
     enc_features = Chain(
         ae.unit(enc_layer_sizes[begin]=>enc_layer_sizes[begin+1]), 
-        [Dense(enc_layer_sizes[i], enc_layer_sizes[i+1]) for i in 2:(num_enc_layers-2)]...
+        [f(enc_layer_sizes[i], enc_layer_sizes[i+1]) for i in 2:(num_enc_layers-2)]...
     )
   
     encoder_μ = Chain(enc_features, Dense(enc_layer_sizes[end-1], enc_layer_sizes[end]))

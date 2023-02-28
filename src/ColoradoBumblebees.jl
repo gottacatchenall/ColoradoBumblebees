@@ -89,7 +89,9 @@ module ColoradoBumblebees
     using Clustering
     using Random
     using ProgressMeter
-
+    using ParameterSchedulers
+    using ParameterSchedulers: Scheduler
+    
     const extent = (bottom=34., top=44., left=-110.5, right=-103.5)
     export extent 
 
