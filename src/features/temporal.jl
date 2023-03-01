@@ -1,4 +1,8 @@
-@Base.kwdef struct TemporalAutoencoder{T} <: Temporal
+abstract type AutoencoderType end 
+struct Standard <: AutoencoderType end
+struct Variational <: AutoencoderType end 
+
+@Base.kwdef struct Autoencoder{T} <: Temporal
     unit = RNN               # node unit for first layer
     encoder_dims = [TEMPORAL_INPUT_DIM, 64, 32]
     decoder_dims = [32, 64, TEMPORAL_INPUT_DIM]
@@ -8,10 +12,10 @@
     train_proportion = 0.8  # 
     batch_size = 64         # batch_size
 end
-outdim(ae::TemporalAutoencoder) = ae.encoder_dims[end]
+outdim(ae::Autoencoder) = ae.encoder_dims[end]
 
 
-function getfeatures(ae::TemporalAutoencoder{Standard}, data)
+function getfeatures(ae::Autoencoder{Standard}, data)
     enc, dec = _fitmodel(ae, _test_train_split(data, ae.train_proportion)...)
     phen = phenology(data)
     dict = Dict()
@@ -21,7 +25,7 @@ function getfeatures(ae::TemporalAutoencoder{Standard}, data)
     end
     dict
 end
-function getfeatures(ae::TemporalAutoencoder{Variational}, data) 
+function getfeatures(ae::Autoencoder{Variational}, data) 
     enc_μ, enc_logvar, dec = _fitmodel(ae, _test_train_split(data, ae.train_proportion)...)
     phen = phenology(data)
     dict = Dict()
@@ -33,7 +37,7 @@ function getfeatures(ae::TemporalAutoencoder{Variational}, data)
     dict
 end
 
-function _fitmodel(ae::TemporalAutoencoder{Standard}, train, test)
+function _fitmodel(ae::Autoencoder{Standard}, train, test)
     enc, dec = _makemodel(ae)
     model = Chain(enc, dec)
     loss(x) = begin
@@ -45,7 +49,7 @@ function _fitmodel(ae::TemporalAutoencoder{Standard}, train, test)
     enc, dec
 end
 
-function _fitmodel(ae::TemporalAutoencoder{Variational}, train, test)
+function _fitmodel(ae::Autoencoder{Variational}, train, test)
     enc_μ, enc_logvar, dec = _makemodel(ae)
     # model = Chain(enc_μ, enc_logvar, dec)
     function loss(x)
@@ -102,7 +106,7 @@ function _reparam_trick(enc_μ, enc_logvar, dec, x)
 end
 
 
-function _makemodel(ae::TemporalAutoencoder{Standard})
+function _makemodel(ae::Autoencoder{Standard})
     enc_layer_sizes, dec_layer_sizes = ae.encoder_dims, ae.decoder_dims
    
     _dense_unit(in,out) = Dense(in,out)
@@ -117,7 +121,7 @@ function _makemodel(ae::TemporalAutoencoder{Standard})
     enc, dec 
 end
 
-function _makemodel(ae::TemporalAutoencoder{Variational})
+function _makemodel(ae::Autoencoder{Variational})
     enc_layer_sizes, dec_layer_sizes = ae.encoder_dims, ae.decoder_dims
     num_enc_layers, num_dec_layers = length.([enc_layer_sizes, dec_layer_sizes])
 
