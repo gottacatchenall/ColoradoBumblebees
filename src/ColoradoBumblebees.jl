@@ -245,12 +245,18 @@ module ColoradoBumblebees
     include(srcdir("features", "spatial.jl"))
     export KMeansSpatialEmbedding
 
-    include(srcdir("features", "environment.jl"))
-    export KMeansEnvironmentEmbedding
+    include(srcdir("features", "environment", "kmeans.jl"))
+    include(srcdir("features", "environment", "autoencoder.jl"))
 
+    export KMeansEnvironmentEmbedding, EnvironmentAutoencoder
+
+
+    abstract type AutoencoderType end 
+    struct Standard <: AutoencoderType end
+    struct Variational <: AutoencoderType end 
 
     include(srcdir("features", "temporal.jl"))
-    export Autoencoder, Variational, Standard
+    export TemporalAutoencoder, Variational, Standard
 
     const TEMPORAL_INPUT_DIM = 147
     export TEMPORAL_INPUT_DIM
