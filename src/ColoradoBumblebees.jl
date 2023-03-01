@@ -245,7 +245,8 @@ module ColoradoBumblebees
     include(srcdir("features", "spatial.jl"))
     export KMeansSpatialEmbedding
 
-    include(srcdir("features", "environment.jl"))
+    include(srcdir("features", "environment", "kmeans.jl"))
+    include(srcdir("features", "environment", "autoencoder.jl"))
     export KMeansEnvironmentEmbedding
 
 
