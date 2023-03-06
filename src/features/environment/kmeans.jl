@@ -3,6 +3,8 @@ struct KMeansEnvironmentEmbedding <: Environment
 end
 
 outdim(kmee::KMeansEnvironmentEmbedding) = 3kmee.k
+outdim(kmee::KMeansEnvironmentEmbedding, ::Union{Type{Bee},Type{Plant}}) = outdim(kmee)
+
 
 function getfeatures(kmee::KMeansEnvironmentEmbedding, data)
     env = environment(data)

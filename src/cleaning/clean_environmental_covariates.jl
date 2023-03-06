@@ -48,7 +48,7 @@ end
 
 function get_decorrelated_chelsa()
     biolayers = ["BIO$i" for i in 1:19]
-    current_layers = [convert(Float32,SimpleSDMPredictor(RasterData(CHELSA2, BioClim); layer=l, extent...)) for l in biolayers]
+    current_layers = [convert(Float32,SimpleSDMPredictor(RasterData(CHELSA2, BioClim); layer=l, EXTENT...)) for l in biolayers]
     I = common_Is(current_layers)
     mat = zeros(Float32,length(biolayers), length(I))
     w = fit_whitening(current_layers)
@@ -59,7 +59,7 @@ end
 
 function get_pca_chelsa()
     biolayers = ["BIO$i" for i in 1:19]
-    current_layers = [convert(Float32,SimpleSDMPredictor(RasterData(CHELSA2, BioClim); layer=l, extent...)) for l in biolayers]
+    current_layers = [convert(Float32,SimpleSDMPredictor(RasterData(CHELSA2, BioClim); layer=l, EXTENT...)) for l in biolayers]
     I = common_Is(current_layers)
     mat = zeros(Float32,length(biolayers), length(I))
     pca = fit_pca(current_layers)

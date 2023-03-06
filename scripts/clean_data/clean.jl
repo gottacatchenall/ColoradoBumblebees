@@ -12,3 +12,5 @@ clean_interactions(ElkMeadows)
 clean_interactions(Gothic)
 
 create_environmental_covariate_data()
+
+create_cooccurence_data()

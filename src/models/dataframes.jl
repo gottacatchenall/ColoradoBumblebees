@@ -1,24 +1,30 @@
 function feature_dataframe(data, embeddings)
     labeldf = label_dataframe(data)
 
-    per_species_dim = sum(outdim.(embeddings))
+    per_bee_dim =  sum([outdim(e, Bee) for e in embeddings])
+    per_plant_dim = sum([outdim(e, Plant) for e in embeddings])
 
-    featdf = DataFrame([["BEE$i"=>[] for i in 1:per_species_dim]...,["PLANT$i"=>[] for i in 1:per_species_dim]... ])
-    
+    featdf = DataFrame([["BEE$i"=>zeros(Float32, nrow(labeldf)) for i in 1:per_bee_dim]...,["PLANT$i"=>zeros(Float32, nrow(labeldf)) for i in 1:per_plant_dim]... ])
     feats = [getfeatures(e, data) for e in embeddings]
 
-    for r in eachrow(labeldf)
+    @info per_bee_dim, per_plant_dim
+
+
+    for (ri,r) in enumerate(eachrow(labeldf))
         b,p = r.bee, r.plant
-        cursor = 1
         for f in feats
             beevec, plantvec = f[b], f[p]
             for i in 1:length(f[b])
-                push!(featdf[!, "BEE$cursor"], beevec[i])
-                push!(featdf[!, "PLANT$cursor"], plantvec[i])
-                cursor += 1
+                featdf[ri, "BEE$i"] = beevec[i]
+            end
+            for i in 1:length(f[p])
+                featdf[ri, "PLANT$i"] = plantvec[i]
             end
         end
     end
+
+    @info nrow(featdf), nrow(labeldf)
+
     hcat(labeldf, featdf)
 end
 

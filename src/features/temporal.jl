@@ -13,6 +13,7 @@ struct Variational <: AutoencoderType end
     batch_size = 64         # batch_size
 end
 outdim(ae::Autoencoder) = ae.encoder_dims[end]
+outdim(ae::Autoencoder, ::Union{Type{Bee},Type{Plant}}) = outdim(ae)
 
 
 function getfeatures(ae::Autoencoder{Standard}, data)
@@ -45,7 +46,7 @@ function _fitmodel(ae::Autoencoder{Standard}, train, test)
         mean([Flux.mse(model(t), t) for t in x])
     end 
 
-    trainloss, testloss = _train_model(model, loss, train, test, ae.scheduler, ae.n_epochs, ae.batch_size)
+    trainloss, testloss = _train_model(model, loss, train, test, ae.opt, ae.n_epochs, ae.batch_size)
     enc, dec
 end
 

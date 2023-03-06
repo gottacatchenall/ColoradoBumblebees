@@ -3,6 +3,7 @@ struct KMeansSpatialEmbedding <: Spatial
 end
 
 outdim(kmse::KMeansSpatialEmbedding) = 2kmse.k
+outdim(kmse::KMeansSpatialEmbedding, ::Union{Type{Bee},Type{Plant}}) = outdim(kmse)
 
 function getfeatures(kmse::KMeansSpatialEmbedding, data)
     occ = occurrence(data)

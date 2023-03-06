@@ -68,7 +68,9 @@ function threshold(obs, pred; levels = 500)
 end
 
 function computemeasures(obs, pred; kwargs...)
+ 
     M, ROCAUC, AUPRC, optimalthres = threshold(obs, pred; kwargs...)
+
 
     meas  = Dict(
         :tpr => tpr,
@@ -93,4 +95,37 @@ function computemeasures(obs, pred; kwargs...)
         merge!(results, Dict(k=>v(M)))
     end
     results
+end 
+
+
+function computemeasures_mlj(pred, obs; kwargs...)
+    ypredict = [p.prob_given_ref[2] for p in pred]
+    yobs = [x == true for x in obs]
+
+    M, ROCAUC, AUPRC, optimalthres = threshold(yobs, ypredict; kwargs...)
+
+
+    meas  = Dict(
+        :tpr => tpr,
+        :tnr => tnr,
+        :ppv => ppv,
+        :npv => npv,
+        :fnr => fnr,
+        :fpr => fpr,
+        :acc => accuracy,
+        :bac => balanced,
+        :f1 => f1,
+        :mcc => mcc,
+        :fm => fm,
+        :Y => informedness,
+        :mkd => markedness,
+        :κ => κ,
+        :mcc => mcc,
+    )
+
+    results = Dict(:rocauc => ROCAUC, :prauc => AUPRC)
+    for (k,v) in meas
+        merge!(results, Dict(k=>v(M)))
+    end
+    results[:prauc]
 end 

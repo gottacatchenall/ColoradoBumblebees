@@ -1,6 +1,7 @@
 name = "ColoradoBumblebees"
 
 [deps]
+AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
 BSON = "fbb218c0-5317-5bc6-957e-2ee96dd4b1f0"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
@@ -22,12 +23,14 @@ MLJModels = "d491faf4-2d78-11e9-2867-c94bc002c0b7"
 MLJScikitLearnInterface = "5ae90465-5518-4432-b9d2-8a1def2f0cab"
 Mangal = "b8b640a6-63d9-51e6-b784-5033db27bef2"
 MultivariateStats = "6f286f6a-111f-5878-ab1e-185364afe411"
+NewickTree = "b0a14db8-6308-4ebc-8917-f72cd81f5094"
 ParameterSchedulers = "d7d3b36b-41b8-4d0d-a2bf-768c6151755e"
 Phylo = "aea672f4-3940-5932-aa44-993d1c3ff149"
 ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
 SimpleSDMLayers = "2c645270-77db-11e9-22c3-0f302a89c64c"
 SpeciesDistributionToolkit = "72b53823-5c0b-4575-ad0e-8e97227ad13b"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+TSne = "24678dba-d5e9-5843-a4c6-250288b04835"
 Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [compat]

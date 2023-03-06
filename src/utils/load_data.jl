@@ -1,5 +1,5 @@
 
-load_data() = BeeData(create_interaction_data()..., load_occurrence_data(), load_environmental_data())
+load_data() = BeeData(create_interaction_data()..., load_occurrence_data(), load_environmental_data(), load_cooccurence_data())
  
 
 function load_occurrence_data()
@@ -11,9 +11,5 @@ end
 
 load_environmental_data() = CSV.read(datadir("public", "environment", "covariates.csv"), DataFrame)
 
+load_cooccurence_data() = CSV.read(datadir("embargo", "cooccurence", "clean", "cooccurence.csv"), DataFrame)
 
-
-
-
-# interactions(bd, bee, plant) = ;
-# occurrence(bd, species) = ;
