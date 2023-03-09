@@ -17,7 +17,6 @@ struct BeeData
 end 
 Base.show(io::IO, bd::BeeData) = Base.print(io, "Pollination dataset with $(length(bd.interactions)) interactions")
 
-metaweb(bd::BeeData) = convert(BipartiteNetwork, convert(UnipartiteNetwork, [i.int for i in interactions(bd)]))
 occurrence(bd::BeeData) = bd.occurrence
 environment(bd::BeeData) = bd.environment
 bees(bd::BeeData) = bd.bees

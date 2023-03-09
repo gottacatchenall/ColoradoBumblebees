@@ -44,6 +44,9 @@ module ColoradoBumblebees
     # Features
     export FeatureType, Phylogenetic, Environment, Spatial, Temporal, RelativeAbundance, Structural
 
+    # SDMs
+    export Scenario, YearRange, SSP, SSP126, SSP370, SSP585
+
     # Data
     export BeeData
     export Interaction
@@ -60,6 +63,11 @@ module ColoradoBumblebees
     export metaweb
     export environment
     export sitename
+
+    export scenarios
+    export ssps
+    export ssp_path
+    export yearranges
 
     export bee, pollinator
     export plant
@@ -100,6 +108,7 @@ module ColoradoBumblebees
     include(srcdir("types", "species.jl"))
     include(srcdir("types", "data.jl"))
     include(srcdir("types", "features.jl"))
+    include(srcdir("models", "sdms.jl"))
 
     include(srcdir("utils", "cooccurence.jl"))
     include(srcdir("utils", "interactions.jl"))

@@ -15,3 +15,13 @@ function interactions(bd::BeeData, sp1)
     end
     interactions(bd)[Is]
 end
+
+function metaweb(data::BeeData)
+    mangalnet = convert(BipartiteNetwork, convert(UnipartiteNetwork, [i.int for i in interactions(data)]))    
+    
+    allbees, allplants = bees(data), plants(data)
+    t = [allbees[findfirst(x->x.mangalnode == mangalnet.T[i], allbees)] for i in 1:length(mangalnet.T)]
+    b = [allplants[findfirst(x->x.mangalnode == mangalnet.B[i], allplants)] for i in 1:length(mangalnet.B)]
+    
+    net = BipartiteNetwork(adjacency(mangalnet), t,b)
+end 
