@@ -4,7 +4,7 @@ end
 
 outdim(p::Pooled, ::Union{Type{Bee}, Type{Plant}}) = 1
 
-#function getfeatures(p::Pooled, data)
+function getfeatures(p::Pooled, data)
     ints = interactions(data)
 
     b,p = bees(data), plants(data)

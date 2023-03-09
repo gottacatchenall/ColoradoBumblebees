@@ -114,7 +114,7 @@ module ColoradoBumblebees
     include(srcdir("features", "spatial.jl"))
     include(srcdir("features", "environment", "kmeans.jl"))
     include(srcdir("features", "environment", "autoencoder.jl"))
-    include(srcdir("features", "structural.jl"))
+    include(srcdir("features", "structural", "svd.jl"))
     include(srcdir("features", "temporal.jl"))
     include(srcdir("features", "relativeabundance.jl"))
     include(srcdir("features", "phylogenetic", "hierarchical.jl"))
