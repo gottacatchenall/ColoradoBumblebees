@@ -4,7 +4,7 @@ struct YearRange
 end
 function yearranges()
     years = Year.([1970, 2010, 2040, 2070, 2100])
-    return [YearRange(years[t - 1] + Year(1), years[t]) for t in 2:length(years)]
+    return [YearRange(years[t-1] + Year(1), years[t]) for t = 2:length(years)]
 end
 
 ssps() = [SSP126, SSP370, SSP585]

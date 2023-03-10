@@ -67,7 +67,7 @@ function project_future_sdms(species, models, current_layers, w, futures, mat, e
 end
 
 function project_sdms_single_future(scenario, species, models, current_layers, mat)
-    for sp in species
+    Threads.@threads for sp in species
         outdir = get_sdm_dir(scenario, sp)
         run(`mkdir -p $outdir`)
         thismodel = models[sp]
@@ -158,7 +158,7 @@ end
 
 function fit_all_sdms(species, climate_layers, occurrence_layer, gbrt, baseline, mat)
     models = Dict()
-    for sp in species
+    Threads.@threads for sp in species
         outdir = get_sdm_dir(baseline, sp)
         run(`mkdir -p $outdir`)
 
