@@ -27,7 +27,7 @@ function get_output_dir()
     end
 end
 
-function make_sdms(data, gbrt::GaussianBRT, cluster = false)    
+function make_sdms(data, gbrt::GaussianBRT; cluster = false)    
     !cluster && @warn "Running on small extent"
     extent = cluster ? EXTENT : (bottom=35.0, top=40.0, left=-108.0, right=-105.0)
     current_layers = [
