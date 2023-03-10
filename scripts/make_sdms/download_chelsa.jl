@@ -27,7 +27,7 @@ for s in scenarios()[2:end]
                         layer=l,
                         EXTENT...,
                     ) 
-                c = N_ATTEMPTS
+                ct = N_ATTEMPTS
             catch 
                 @info "failed $l $ct times"
                 ct += 1 
