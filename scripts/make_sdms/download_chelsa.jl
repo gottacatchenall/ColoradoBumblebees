@@ -13,7 +13,9 @@ end
 N_ATTEMPTS = 15
 
 for s in scenarios()[2:end]
+    @info s
     for l in BIOLAYERS
+        @info l
         ct = 0
         while ct < N_ATTEMPTS
             try
