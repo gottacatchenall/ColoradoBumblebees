@@ -6,7 +6,12 @@ using Mangal
 using Statistics
 using GeoInterface
 using SpeciesDistributionToolkit
-using SpeciesDistributionToolkit: SSP126, SSP370, SSP585
+using SimpleSDMDatasets
+using SimpleSDMDatasets: CHELSA2Scenario, CHELSA2Model, CHELSA2
+
+using SimpleSDMLayers
+#using SpeciesDistributionToolkit: SSP126, SSP370, SSP585
+
 using MultivariateStats
 using Flux
 using LinearAlgebra
@@ -21,6 +26,10 @@ using EcologicalNetworks
 using NewickTree
 using AbstractTrees
 using Phylo
+using StatsBase
+using JSON
+using EvoTrees
+using Downloads 
 
 # _______________________________________________________
 #
@@ -49,7 +58,8 @@ export FeatureType,
     Phylogenetic, Environment, Spatial, Temporal, RelativeAbundance, Structural
 
 # SDMs
-export Scenario, YearRange, SSP, SSP126, SSP370, SSP585
+export Scenario, YearRange, SSP
+export GaussianBRT
 
 # Data
 export BeeData
@@ -76,6 +86,7 @@ export yearranges
 export get_sdm_dir
 export get_sdm_path
 export get_uncertainty_path
+export make_sdms
 
 export bee, pollinator
 export plant
@@ -141,5 +152,7 @@ include(srcdir("features", "phylogenetic", "simulated_traits.jl"))
 include(srcdir("models", "dataframes.jl"))
 include(srcdir("models", "confusionmatrix.jl"))
 include(srcdir("models", "balance_sample.jl"))
+
+include(srcdir("sdms", "sdms.jl"))
 
 end

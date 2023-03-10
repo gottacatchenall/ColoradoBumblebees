@@ -1,5 +1,5 @@
-smolext = (bottom=35.0, top=40.0, left=-108.0, right=-105.0)
-using CSV, DataFrames, MultivariateStats, EvoTrees, SpeciesDistributionToolkit, JSON
+#smolext = (bottom=35.0, top=40.0, left=-108.0, right=-105.0)
+#using CSV, DataFrames, MultivariateStats, EvoTrees, SpeciesDistributionToolkit, JSON
 
 Base.@kwdef struct GaussianBRT
     loss = :gaussian
@@ -27,13 +27,14 @@ function get_output_dir()
     end
 end
 
-function make_sdms(data, gbrt::GaussianBRT)
-    @warn "Running on small extent"
+function make_sdms(data, gbrt::GaussianBRT, cluster = false)    
+    !cluster && @warn "Running on small extent"
+    extent = cluster ? EXTENT : (bottom=35.0, top=40.0, left=-108.0, right=-105.0)
     current_layers = [
         convert(
-            Float32, SimpleSDMPredictor(RasterData(CHELSA2, BioClim); layer=l, smolext...)
+            Float32, SimpleSDMPredictor(RasterData(CHELSA2, BioClim); layer=l, extent...)
         ) for l in BIOLAYERS
-    ]
+    ] 
 
     mat = zeros(Float32, length(current_layers), prod(size(current_layers[begin])))
     w = fit_whitening(current_layers, mat)
@@ -48,16 +49,33 @@ function make_sdms(data, gbrt::GaussianBRT)
     occurrence_layer.grid .= 0
 
     scen = scenarios()
-    baseline, futures = scen[1], scen[2:end]
+    #baseline, futures = scen[1], scen[2:end]
+
+    !cluster && @warn "Still only running on ssp370"
+    baseline, futures = scen[1], cluster ? scen[2:end] : scen[5:7]
 
     models = fit_all_sdms(species, current_layers, occurrence_layer, gbrt, baseline, mat)
-    return project_future_sdms(species, models, current_layers, futures, mat)
+    return project_future_sdms(species, models, current_layers, w, futures, mat, extent)
 end
 
-function project_future_sdms(species, models, layers, futures, mat)
+function project_future_sdms(species, models, current_layers, w, futures, mat, extent)
     for f in futures
-        @info f
-        layers = load_climate_layers(f)
+        current_layers = load_climate_layers(f, extent)
+        current_layers = decorrelate_chelsa(current_layers, w, mat)
+        project_sdms_single_future(f, species, models, current_layers, mat)
+    end
+end
+
+function project_sdms_single_future(scenario, species, models, current_layers, mat)
+    for sp in species
+        outdir = get_sdm_dir(scenario, sp)
+        run(`mkdir -p $outdir`)
+        thismodel = models[sp]
+        predicted_sdm, predicted_uncertainty = predict_sdm(current_layers, thismodel, mat)
+        SpeciesDistributionToolkit.save(get_sdm_path(scenario, sp), predicted_sdm)
+        SpeciesDistributionToolkit.save(
+            get_uncertainty_path(scenario, sp), predicted_uncertainty
+        )
     end
 end
 
@@ -66,21 +84,68 @@ function _scenario_to_year_pair(scenario)
     return scenario.years.startyear => scenario.years.endyear
 end
 
-function load_climate_layers(scenario)
+function load_climate_layers(scenario, extent)
     tmp = [
         SimpleSDMPredictor(
             RasterData(CHELSA2, BioClim),
             _scenario_to_projection(scenario);
             timespan=_scenario_to_year_pair(scenario),
             layer=l,
-            EXTENT...,
+            extent...
         ) for l in BIOLAYERS
     ]
 end
 
+function SimpleSDMDatasets.source(
+    data::RasterData{CHELSA2, T},
+    future::Projection{S, M};
+    layer = first(SimpleSDMDatasets.layers(data, future)),
+    timespan = first(SimpleSDMDatasets.timespans(data, future)),
+) where {T <: BioClim, S <: CHELSA2Scenario, M <: CHELSA2Model}
+    var_code = (layer isa Integer) ? layer : findfirst(isequal(layer), layers(data))
+    
+    year_sep = string(timespan.first.value) * "-" * string(timespan.second.value)
+
+    Mstr, Sstr = map(x->convert(String, split(string(x), ".")[end]), [M,S])
+
+    model_sep = replace(uppercase(Mstr) * "/" * lowercase(Sstr), "_" => "-")
+    
+    root = "https://envicloud.wsl.ch/envicloud/chelsa/chelsa_V2/GLOBAL/climatologies/$(year_sep)/$(model_sep)/bio/"
+
+    stem = "CHELSA_bio$(var_code)_$(year_sep)_$(lowercase(replace(Mstr, "_" => "-")))_$(lowercase(Sstr))_V.2.1.tif"
+
+
+    return (
+        url = root * stem,
+        filename = lowercase(stem),
+        outdir = SimpleSDMDatasets.destination(data, future),
+    )
+end
+
+function SimpleSDMDatasets.destination(
+    ::RasterData{P, D},
+    ::Projection{S, M};
+    kwargs...,
+) where {P <: RasterProvider, D <: RasterDataset, S <: FutureScenario, M <: FutureModel}
+    
+    Pstr, Dstr, Mstr, Sstr = map(x->convert(String, split(string(x), ".")[end]), [P,D,M,S])
+    joinpath(
+        SimpleSDMDatasets._LAYER_PATH,
+        Pstr,
+        Dstr,
+        replace(Sstr, "_" => "-"),
+        replace(Mstr, "_" => "-"),
+    )
+end 
+
+
+
 function fit_all_sdms(species, climate_layers, occurrence_layer, gbrt, baseline, mat)
     models = Dict()
     for sp in species
+        outdir = get_sdm_dir(baseline, sp)
+        run(`mkdir -p $outdir`)
+
         convert_occurrence_to_tif!(sp, occurrence_layer)
         model, coords, labels = fit_sdm(climate_layers, occurrence_layer, gbrt)
         merge!(models, Dict(sp => model))
@@ -272,6 +337,8 @@ end
 #
 #
 #
+
+#=
 
 function make_sdms()
     run(`mkdir -p $(joinpath("/scratch", "mcatchen", "SDMs"))`)
@@ -600,7 +667,7 @@ end
 #futurelayers = [SimpleSDMPredictor(RasterData(CHELSA2, BioClim), Projection(SSP370, GFDL_ESM4); timespan=Year(2071)=>Year(2100), layer=l, bbox...) for l in BIOLAYERS]
 #decorrelated_layers = decorrelate_chelsa(layers)
 #sp = "Bombus bifarius"
-#= replace!(occ, false => nothing)
+replace!(occ, false => nothing)
 heatmap(
     elev;
     colormap = :deep,
@@ -609,7 +676,7 @@ heatmap(
 )
 scatter!(keys(pres); color = :black)
 scatter!(keys(absen); color = :red)
-current_figure() =#
+current_figure() 
 #makeplt(elev)
 #f = makeplt(sdm)
 # save("$sp.png", f, px_per_unit=3)
@@ -623,7 +690,7 @@ current_figure() =#
 #
 #
 # ===========================================================================
-#=
+
 function _find_span(n, m, M, pos, side)
     side in [:left, :right, :bottom, :top] ||
         throw(ArgumentError("side must be one of :left, :right, :bottom, top"))

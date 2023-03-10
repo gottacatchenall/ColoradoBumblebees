@@ -49,3 +49,11 @@ for s in scenarios()[2:end]
         end
     end 
 end
+
+for i in 1:N_ATTEMPTS
+    try 
+        [SimpleSDMPredictor(RasterData(CHELSA2, BioClim); layer=l, EXTENT...,) for l in BIOLAYERS]
+    catch
+        @info "failed $i"
+    end
+end
