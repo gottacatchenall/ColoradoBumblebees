@@ -5,7 +5,6 @@ using DrWatson
 include(srcdir("ColoradoBumblebees.jl"))
 using Main.ColoradoBumblebees
 
-
 # Clean CSVs
 clean_interactions(PikesPeak)
 clean_interactions(ElkMeadows)

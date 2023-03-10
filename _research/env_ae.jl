@@ -18,16 +18,15 @@ using Main.ColoradoBumblebees
 data = load_data()
 
 embeddings = [
-    EnvironmentAutoencoder(
-        n_epochs=200, 
-        species_encoder_dims = [256, 8],
-        shared_decoder_dims = [8, 64,128],
-        species_decoder_dims = [128, 256],       
-    )
+    EnvironmentAutoencoder(;
+        n_epochs=200,
+        species_encoder_dims=[256, 8],
+        shared_decoder_dims=[8, 64, 128],
+        species_decoder_dims=[128, 256],
+    ),
 ]
 
 df = feature_dataframe(data, embeddings)
-
 
 DecisionTree = @load DecisionTreeClassifier pkg = DecisionTree verbosity = 0
 RandomForest = @load RandomForestClassifier pkg = DecisionTree verbosity = 0
@@ -37,33 +36,30 @@ rf = RandomForest()
 dt = DecisionTree()
 brt = BRT()
 
-
-function single_run(X,y, ens_size=256, batch_size=128)
+function single_run(X, y, ens_size=256, batch_size=128)
     Is = shuffle(1:nrow(df))
-    cut = Int32(floor(0.8*nrow(df)))
-    Itrain, Itest  = Is[1:cut], Is[cut+1:end]
+    cut = Int32(floor(0.8 * nrow(df)))
+    Itrain, Itest = Is[1:cut], Is[(cut + 1):end]
     ytest = [x == true for x in y[Itest]]
     ypredict = zeros(length(Itest))
     for i in 1:ens_size
-        mach = machine(brt,X,y)
+        mach = machine(brt, X, y)
         theserows = balance_sample(y, Itrain, batch_size, 0.5)
-        fit!(mach, rows=theserows, verbosity=0)
-        pred = predict(mach, rows=Itest)
+        fit!(mach; rows=theserows, verbosity=0)
+        pred = predict(mach; rows=Itest)
         ypredict .+= [p.prob_given_ref[2] for p in pred]
     end
 
     ypredict = ypredict ./ (ens_size)
-    computemeasures(ytest, ypredict) 
+    return computemeasures(ytest, ypredict)
+end
 
-end 
-
-y, X, _, = unpack(df, ==(:interaction), ∉([:bee,:plant]); rng = 123)
+y, X, _, = unpack(df, ==(:interaction), ∉([:bee, :plant]); rng=123)
 y = coerce(y, Multiclass{2})
 
-single_run(X,y)
+single_run(X, y)
 
-
- print()
+print()
 
 #=
 env = CSV.read(datadir("public","environment", "whitened.csv"), DataFrame)
@@ -82,9 +78,7 @@ train_df = vcat(plantdf[shuffle(1:nrow(plantdf))[1:nrow(beedf)],:], beedf)
 labs = zeros(Float32, length(sp), 2*nrow(beedf))
 feat = zeros(Float32, 19, 2*nrow(beedf))
 
-
 train_df = vcat(plantdf[shuffle(1:nrow(plantdf))[1:nrow(beedf)],:], beedf)
-
 
 species_dfs = Dict()
 cursor = 1
@@ -106,7 +100,6 @@ onehot(s) = [i == findfirst(isequal(s), sp) for (i,_) in enumerate(sp)]
 
 one_hot_dict = Dict([s=>onehot(s) for s in sp])
 
-
 function make_species_encoder_decoder(s, in_embedding_dim, out_embedding_dim)
     concat = vec(Matrix(species_dfs[s][!,2:end]))
 
@@ -116,7 +109,6 @@ function make_species_encoder_decoder(s, in_embedding_dim, out_embedding_dim)
     dec = Chain(Dense(out_embedding_dim, length(concat)))
     enc,dec
 end
-
 
 embedding_dim = 16
 shared_decoder_out_dim = 128
@@ -138,9 +130,7 @@ for s in sp
     merge!(species_dec, Dict(s=>dec))
 end
 
-
 n_epochs = 200
-
 
 models = [Chain(species_enc[b], shared_dec, species_dec[b]) for b in sp]
 ps = Flux.params(models)
@@ -156,10 +146,6 @@ for epoch in 1:n_epochs
     end
     ProgressMeter.next!(progbar; showvalues = [(Symbol("Train Loss"), s)])
 end
-
-
-
-
 
 # cut = Int32(floor(0.8data_size))
 # ishuffled = shuffle(1:nrow(train_df))
@@ -181,8 +167,6 @@ dec = Chain(
 )
 model = Chain(enc,dec)
 
-
-
 opt = ADAM(1e-2)
 ps = Flux.params(model)
 
@@ -201,11 +185,10 @@ for epoch in 1:n_epochs
     end
     ProgressMeter.next!(progbar; showvalues = [(Symbol("Batch Loss"), epoch_sum/batch_size)])
 end
- 
+
 enc(Xtest)
 
 =#
-
 
 length(findall(x->length(x) > 0,[interactions(data,b,p) for b in bees(data), p in plants(data)]) ) / prod(length.([bees(data), plants(data)]))
 =#

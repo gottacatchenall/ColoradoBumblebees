@@ -1,6 +1,6 @@
 
 network_id = 0
-interaction_id = 0 
+interaction_id = 0
 taxon_id = 0
 node_id = 0
 
@@ -10,26 +10,40 @@ function create_interaction_data()
     dfs = [CSV.read(datadir(dirpath, _filename(s)), DataFrame) for s in sites]
     _cut_species!.(dfs)
 
-    species_nodes = get_species_nodes(dfs)    
-    
-    interactions = []
+    species_nodes = get_species_nodes(dfs)
 
+    interactions = []
 
     plantobjs, beeobjs = initialize_plant_and_bee_objects(species_nodes)
 
     net = initialize_new_network("ColoradoBumblebees")
-    for (i,df) in enumerate(dfs)
+    for (i, df) in enumerate(dfs)
         for r in eachrow(df)
             plantname, beename, datetime = r.plant, r.pollinator, r.datetime
-            plantnode = species_nodes[findfirst(node -> node.name == plantname, species_nodes)]
+            plantnode = species_nodes[findfirst(
+                node -> node.name == plantname, species_nodes
+            )]
             beenode = species_nodes[findfirst(node -> node.name == beename, species_nodes)]
             coord = (r.longitude, r.latitude)
             elev = r.elevation
-            push!(interactions, initialize_new_interaction(net, beeobjs[beenode], plantobjs[plantnode], plantnode, beenode, datetime, coord, sites[i], elev))
+            push!(
+                interactions,
+                initialize_new_interaction(
+                    net,
+                    beeobjs[beenode],
+                    plantobjs[plantnode],
+                    plantnode,
+                    beenode,
+                    datetime,
+                    coord,
+                    sites[i],
+                    elev,
+                ),
+            )
         end
     end
 
-    collect(values(beeobjs)), collect(values(plantobjs)), interactions
+    return collect(values(beeobjs)), collect(values(plantobjs)), interactions
 end
 
 function initialize_plant_and_bee_objects(species_nodes)
@@ -37,25 +51,25 @@ function initialize_plant_and_bee_objects(species_nodes)
 
     for s in species_nodes
         isbee = split(s.name, " ")[1] == "Bombus"
-        if isbee 
-            merge!(bees, Dict(s=>Bee(s.name, s)))
-        else 
-            merge!(plants, Dict(s=>Plant(s.name,s)))
+        if isbee
+            merge!(bees, Dict(s => Bee(s.name, s)))
+        else
+            merge!(plants, Dict(s => Plant(s.name, s)))
         end
     end
-    plants, bees 
+    return plants, bees
 end
-
 
 """
     get_species_nodes(dfs)
 """
-function get_species_nodes(dfs)    
-    allplants = unique(vcat([convert(Vector{String}, d[!,:plant]) for d in dfs]...))
-    allpollinators = unique(vcat([convert(Vector{String}, d[!,:pollinator]) for d in dfs]...))
-    initialize_node.(vcat(allplants, allpollinators))
+function get_species_nodes(dfs)
+    allplants = unique(vcat([convert(Vector{String}, d[!, :plant]) for d in dfs]...))
+    allpollinators = unique(
+        vcat([convert(Vector{String}, d[!, :pollinator]) for d in dfs]...)
+    )
+    return initialize_node.(vcat(allplants, allpollinators))
 end
-
 
 """
     _cut_species!(df)
@@ -63,9 +77,8 @@ end
 function _cut_species!(df)
     filter!(x -> x.plant != "Oreochrysum parryi", df)
     filter!(x -> x.plant != "Salix sp", df)
-    filter!(x -> x.pollinator != "Bombus suckleyi", df)
+    return filter!(x -> x.pollinator != "Bombus suckleyi", df)
 end
-
 
 """
     _filename(::Type{T}) where T<:Site
@@ -73,9 +86,6 @@ end
 _filename(::Type{PikesPeak}) = "pikespeak.csv"
 _filename(::Type{Gothic}) = "gothic_bombus.csv"
 _filename(::Type{ElkMeadows}) = "elkmeadows.csv"
-
-
-
 
 function initialize_node(species)
     global node_id
@@ -118,10 +128,12 @@ function initialize_new_network(name)
         Missing(),
     )
     global network_id += 1
-    net
+    return net
 end
 
-function initialize_new_interaction(net, bee, plant, plantnode, beenode, datetime, coord, site, elev)
+function initialize_new_interaction(
+    net, bee, plant, plantnode, beenode, datetime, coord, site, elev
+)
     global interaction_id
     int = MangalInteraction(
         interaction_id,
@@ -139,6 +151,6 @@ function initialize_new_interaction(net, bee, plant, plantnode, beenode, datetim
         Missing(),
     )
     interaction_id += 1
-    
-    Interaction{site}(bee, plant, int, elev, datetime)
+
+    return Interaction{site}(bee, plant, int, elev, datetime)
 end

@@ -37,19 +37,20 @@ function κ(M::ConfusionMatrix)
     return 2.0 * (M.tp * M.tn - M.fn * M.fp) /
            ((M.tp + M.fp) * (M.fp + M.tn) + (M.tp + M.fn) * (M.fn + M.tn))
 end
-mcc(M::ConfusionMatrix) =
-    (M.tp * M.tn - M.fp * M.fn) /
-    sqrt((M.tp + M.fp) * (M.tp + M.fn) * (M.tn + M.fp) * (M.tn + M.fn))
+function mcc(M::ConfusionMatrix)
+    return (M.tp * M.tn - M.fp * M.fn) /
+           sqrt((M.tp + M.fp) * (M.tp + M.fn) * (M.tn + M.fp) * (M.tn + M.fn))
+end
 
 function ∫(x::Array{T}, y::Array{T}) where {T<:Number}
     S = zero(Float64)
-    for i = 2:length(x)
-        S += (x[i] - x[i-1]) * (y[i] + y[i-1]) * 0.5
+    for i in 2:length(x)
+        S += (x[i] - x[i - 1]) * (y[i] + y[i - 1]) * 0.5
     end
     return .-S
 end
 
-function threshold(obs, pred; levels = 500)
+function threshold(obs, pred; levels=500)
     thresholds = LinRange(minimum(pred), maximum(pred), levels)
     M = Vector{ConfusionMatrix}(undef, length(thresholds))
     for (i, τ) in enumerate(thresholds)
@@ -68,11 +69,9 @@ function threshold(obs, pred; levels = 500)
 end
 
 function computemeasures(obs, pred; kwargs...)
- 
     M, ROCAUC, AUPRC, optimalthres = threshold(obs, pred; kwargs...)
 
-
-    meas  = Dict(
+    meas = Dict(
         :tpr => tpr,
         :tnr => tnr,
         :ppv => ppv,
@@ -91,12 +90,11 @@ function computemeasures(obs, pred; kwargs...)
     )
 
     results = Dict(:rocauc => ROCAUC, :prauc => AUPRC)
-    for (k,v) in meas
-        merge!(results, Dict(k=>v(M)))
+    for (k, v) in meas
+        merge!(results, Dict(k => v(M)))
     end
-    results
-end 
-
+    return results
+end
 
 function computemeasures_mlj(pred, obs; kwargs...)
     ypredict = [p.prob_given_ref[2] for p in pred]
@@ -104,8 +102,7 @@ function computemeasures_mlj(pred, obs; kwargs...)
 
     M, ROCAUC, AUPRC, optimalthres = threshold(yobs, ypredict; kwargs...)
 
-
-    meas  = Dict(
+    meas = Dict(
         :tpr => tpr,
         :tnr => tnr,
         :ppv => ppv,
@@ -124,8 +121,8 @@ function computemeasures_mlj(pred, obs; kwargs...)
     )
 
     results = Dict(:rocauc => ROCAUC, :prauc => AUPRC)
-    for (k,v) in meas
-        merge!(results, Dict(k=>v(M)))
+    for (k, v) in meas
+        merge!(results, Dict(k => v(M)))
     end
-    results[:prauc]
-end 
+    return results[:prauc]
+end

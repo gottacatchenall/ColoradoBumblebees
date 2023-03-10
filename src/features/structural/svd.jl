@@ -1,45 +1,44 @@
-Base.@kwdef struct MetawebSVD <: Structural 
+Base.@kwdef struct MetawebSVD <: Structural
     dimensions = 8
-end 
+end
 outdim(svd::MetawebSVD) = svd.dimensions
 outdim(svd::MetawebSVD, ::Union{Type{Bee},Type{Plant}}) = outdim(svd)
 
-
 function getfeatures(s::MetawebSVD, data)
     mw = ColoradoBumblebees.metaweb(data)
-    L,Λ,R = svd(adjacency(mw))
+    L, Λ, R = svd(adjacency(mw))
 
-    b,p = bees(data), plants(data)
+    b, p = bees(data), plants(data)
 
     dict = Dict()
-    for (i,bee_node) in enumerate(mw.T)
-        x = b[findfirst(x->x.name == bee_node.name, b)]
-        merge!(dict, Dict(x => L[i,1:s.dimensions]))
+    for (i, bee_node) in enumerate(mw.T)
+        x = b[findfirst(x -> x.name == bee_node.name, b)]
+        merge!(dict, Dict(x => L[i, 1:(s.dimensions)]))
     end
-    for (i,plant_node) in enumerate(mw.B)
-        x = p[findfirst(x->x.name == plant_node.name, p)]
-        merge!(dict, Dict(x=>R[i,1:s.dimensions]))
+    for (i, plant_node) in enumerate(mw.B)
+        x = p[findfirst(x -> x.name == plant_node.name, p)]
+        merge!(dict, Dict(x => R[i, 1:(s.dimensions)]))
     end
-    dict
+    return dict
 end
 
-Base.@kwdef struct CooccurencePCA <: Structural 
+Base.@kwdef struct CooccurencePCA <: Structural
     dimensions = 16
 end
 outdim(pca::CooccurencePCA) = pca.dimensions
 
 function getfeatures(pca::CooccurencePCA, data)
     C, proj = pca_coocc(data)
-    
+
     sp = vcat(bees(data)..., plants(data)...)
 
     dict = Dict()
 
     for s in sp
-        col = findall(x->x==s.name, C.S)[begin]
-        merge!(dict, Dict(s=>proj[1:pca.dimensions, col]))
+        col = findall(x -> x == s.name, C.S)[begin]
+        merge!(dict, Dict(s => proj[1:(pca.dimensions), col]))
     end
-    dict
+    return dict
 end
 
 function pca_coocc(data)
@@ -48,9 +47,9 @@ function pca_coocc(data)
     B = BipartiteNetwork(C, [b.name for b in bees(data)], [p.name for p in plants(data)])
     N = convert(UnipartiteNetwork, B)
     K = EcologicalNetworks.mirror(N)
-        pc = MultivariateStats.fit(PPCA, Float64.(Array(K.edges)))
+    pc = MultivariateStats.fit(PPCA, Float64.(Array(K.edges)))
     pr = MultivariateStats.transform(pc, Float64.(Array(K.edges)))
-    K, pr
+    return K, pr
 end
 
 #=

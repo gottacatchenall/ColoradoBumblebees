@@ -1,7 +1,7 @@
 """
     clean_interactions(s::Type{T}) where T<:Site
-""" 
-function clean_interactions(s::Type{T}) where T<:Site
+"""
+function clean_interactions(s::Type{T}) where {T<:Site}
     raw_data_path = datadir(joinpath("embargo", "interactions", "raw", _filename(s)))
     @info raw_data_path
     rawdf = _misc_cleanup(s, CSV.read(raw_data_path, DataFrame))
@@ -10,13 +10,13 @@ function clean_interactions(s::Type{T}) where T<:Site
 
     outdir = datadir(joinpath("embargo", "interactions", "clean"))
     run(`mkdir -p $outdir`)
-    CSV.write(joinpath(outdir, _filename(s)), cleandf)
+    return CSV.write(joinpath(outdir, _filename(s)), cleandf)
 end
 
 """
     fill_clean_df!(s::Type{T}, rawdf, cleandf) 
 """
-function fill_clean_df!(s::Type{T}, rawdf, cleandf) where T<:Site
+function fill_clean_df!(s::Type{T}, rawdf, cleandf) where {T<:Site}
     for (i, row) in enumerate(eachrow(rawdf))
         cleandf[i, :datetime] = _datetime(s, row)
         cleandf[i, :plant] = _plant(s, row)
@@ -28,25 +28,20 @@ function fill_clean_df!(s::Type{T}, rawdf, cleandf) where T<:Site
 end
 
 const sitenames = [
-    "Avery.Wash",
-    "Copper.Creek",
-    "Frogs.Pond",
-    "Gothic.Spires",
-    "Rosy.Hills",
-    "Stormy.Pass",
+    "Avery.Wash", "Copper.Creek", "Frogs.Pond", "Gothic.Spires", "Rosy.Hills", "Stormy.Pass"
 ]
 
 """
     _datetime(::Type{T}, row) where T <: Site
 
 """
-_datetime(::Type{PikesPeak}, row) = begin
+function _datetime(::Type{PikesPeak}, row)
     year, month, day_of_month, time = row.year, row["month.x"], row["day.x"], row.time_field
-    DateTime(Date(year, month, day_of_month), time)
+    return DateTime(Date(year, month, day_of_month), time)
 end
-_datetime(::Type{ElkMeadows}, row) = begin
+function _datetime(::Type{ElkMeadows}, row)
     year, month, day_of_month = row.Year, row.Month, row.Day
-    DateTime(Date(year, month, day_of_month))
+    return DateTime(Date(year, month, day_of_month))
 end
 _datetime(::Type{Gothic}, row) = DateTime(Date(row.year, 01, 01) + Day(row.doy), Time(12))
 
@@ -60,14 +55,12 @@ _plant(::Type{Gothic}, row) = begin
     return string(splitplant[1], " ", splitplant[2])
 end
 
-
 """
     _bee(::Type{T}, row) where T <: Site
 """
 _bee(::Type{PikesPeak}, row) = row["pol_sp"]
 _bee(::Type{ElkMeadows}, row) = row["Insect species name"]
 _bee(::Type{Gothic}, row) = string("Bombus ", row.species)
-
 
 """
     _elevation(::Type{T}, row) where T <: Site
@@ -77,41 +70,41 @@ _elevation(::Type{ElkMeadows}, row) = row["ele_m"]
 _elevation(::Type{Gothic}, row) = begin
     elevs = [3045, 2940, 2855, 3015, 2894, 2990]
     elevs[findfirst(x -> x == row.site, sitenames)]
-end 
-
+end
 
 """
     _latitude(::Type{T}, row) where T <: Site
 """
 _latitude(::Type{PikesPeak}, row) = row["lat"]
 _latitude(::Type{ElkMeadows}, row) = row["lat"]
-_latitude(::Type{Gothic}, row) = begin
+function _latitude(::Type{Gothic}, row)
     lats = [38.97501, 38.95645, 38.94414, 38.96498, 38.92809, 38.99161]
-    lats[findfirst(x -> x == row.site, sitenames)]
-end 
+    return lats[findfirst(x -> x == row.site, sitenames)]
+end
 
 """
     _longitude(::Type{T}, row) where T <: Site
 """
 _longitude(::Type{PikesPeak}, row) = row["lon"]
 _longitude(::Type{ElkMeadows}, row) = row["lon"]
-_longitude(::Type{Gothic}, row) = begin
+function _longitude(::Type{Gothic}, row)
     longs = [-106.9924, -106.98276, -106.98507, -106.98698, -106.96297, -107.01027]
-    longs[findfirst(x -> x == row.site, sitenames)]
-end 
-
+    return longs[findfirst(x -> x == row.site, sitenames)]
+end
 
 """
     allocate_clean_df(rawdata)
 """
-allocate_clean_df(rawdata) = DataFrame(
-    plant = ["" for i = 1:nrow(rawdata)],
-    pollinator = ["" for i = 1:nrow(rawdata)],
-    datetime = [DateTime(0) for i = 1:nrow(rawdata)],
-    elevation = zeros(Float32, nrow(rawdata)),
-    latitude = zeros(Float32, nrow(rawdata)),
-    longitude = zeros(Float32, nrow(rawdata)),
-)
+function allocate_clean_df(rawdata)
+    return DataFrame(;
+        plant=["" for i in 1:nrow(rawdata)],
+        pollinator=["" for i in 1:nrow(rawdata)],
+        datetime=[DateTime(0) for i in 1:nrow(rawdata)],
+        elevation=zeros(Float32, nrow(rawdata)),
+        latitude=zeros(Float32, nrow(rawdata)),
+        longitude=zeros(Float32, nrow(rawdata)),
+    )
+end
 
 """
     _filename(::Type{T}) where T<:Site
@@ -120,11 +113,10 @@ _filename(::Type{PikesPeak}) = "pikespeak.csv"
 _filename(::Type{Gothic}) = "gothic_bombus.csv"
 _filename(::Type{ElkMeadows}) = "elkmeadows.csv"
 
-
 """
     _misc_cleanup(::Type{T}, rawdata) where T<:Site
 """
-function _misc_cleanup(::Type{PikesPeak}, rawdata)  
+function _misc_cleanup(::Type{PikesPeak}, rawdata)
     filter!(r -> !ismissing(r["ack.nam"]), rawdata)
     filter!(r -> split(r["ack.nam"])[2] ∉ ["sp", "sp.", "SP", "NA"], rawdata)
     filter!(r -> split(r["pol_sp"])[2] ∉ ["sp", "sp.", "SP", "NA"], rawdata)
@@ -138,13 +130,17 @@ function _misc_cleanup(::Type{PikesPeak}, rawdata)
             r["ack.nam"] = string(spl[1], " ", spl[2])
         end
     end
-    rawdata
+    return rawdata
 end
 
-function _misc_cleanup(::Type{ElkMeadows}, rawdata)      
+function _misc_cleanup(::Type{ElkMeadows}, rawdata)
     filter!(r -> !ismissing(r["Plant species name"]), rawdata)
-    filter!(r -> split(r["Plant species name"])[2] ∉ ["sp", "sp.", "UNKNOWN SP", "NA"], rawdata)
-    filter!(r -> split(r["Insect species name"])[2] ∉ ["sp", "sp.", "UNKNOWN SP", "NA"], rawdata)
+    filter!(
+        r -> split(r["Plant species name"])[2] ∉ ["sp", "sp.", "UNKNOWN SP", "NA"], rawdata
+    )
+    filter!(
+        r -> split(r["Insect species name"])[2] ∉ ["sp", "sp.", "UNKNOWN SP", "NA"], rawdata
+    )
 
     for r in eachrow(rawdata)
         spl = split(r["Plant species name"], " ")[1:2]
@@ -159,9 +155,9 @@ function _misc_cleanup(::Type{ElkMeadows}, rawdata)
             r["Insect species name"] = "Bombus californicus"
         end
     end
-    rawdata
+    return rawdata
 end
 
-function _misc_cleanup(::Type{Gothic}, rawdata)    
-    rawdata   
-end 
+function _misc_cleanup(::Type{Gothic}, rawdata)
+    return rawdata
+end

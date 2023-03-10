@@ -1,5 +1,5 @@
 struct KMeansSpatialEmbedding <: Spatial
-    k  # embedding dimensions
+    k::Any  # embedding dimensions
 end
 
 outdim(kmse::KMeansSpatialEmbedding) = 2kmse.k
@@ -10,21 +10,21 @@ function getfeatures(kmse::KMeansSpatialEmbedding, data)
     species = vcat(bees(data)..., plants(data)...)
     dict = Dict()
     for s in species
-        thisspecies = findall(x->x.species==s.name, eachrow(occ))
-        merge!(dict, Dict(s=>getfeatures(kmse, occ[thisspecies, :])))
+        thisspecies = findall(x -> x.species == s.name, eachrow(occ))
+        merge!(dict, Dict(s => getfeatures(kmse, occ[thisspecies, :])))
     end
-    dict
+    return dict
 end
 
 function getfeatures(kmse::KMeansSpatialEmbedding, occ::DataFrame)
-    long, lat = occ[!, :longitude], occ[!,:latitude]
+    long, lat = occ[!, :longitude], occ[!, :latitude]
     X = hcat(long, lat)'
     if nrow(occ) > kmse.k
         res = kmeans(X, kmse.k)
-        return  vcat([res.centers[:,i] for i in 1:kmse.k]...)    
+        return vcat([res.centers[:, i] for i in 1:(kmse.k)]...)
     else
         @info "no work with this species, still dumb hotfix"
-        vcat([[mean(occ.longitude), mean(occ.latitude)] for i in 1:kmse.k]...)
+        vcat([[mean(occ.longitude), mean(occ.latitude)] for i in 1:(kmse.k)]...)
     end
 end
 
