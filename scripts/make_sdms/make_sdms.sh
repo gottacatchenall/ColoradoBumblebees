@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-#SBATCH --time=1:00:00
+#SBATCH --time=4:00:00
 #SBATCH --account=def-gonzalez
 #SBATCH --ntasks=203
 #SBATCH --cpus-per-task=1
