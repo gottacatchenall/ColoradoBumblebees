@@ -97,6 +97,8 @@ function fit_all_sdms(
     uncertainties = []
     fitstats = []
 
+    start_time = Second(Int64(ceil(time())))
+
     Threads.@threads for THREAD_ID in 1:Threads.nthreads()
         sp = species[THREAD_ID]
         outdir = sdm_dirs[THREAD_ID]
@@ -114,6 +116,11 @@ function fit_all_sdms(
         push!(sdms, predicted_sdm)
         push!(uncertainties, predicted_uncertainty)
         push!(fitstats, compute_fit_stats_and_cutoff(predicted_sdm, coords, labels))
+
+
+        elapsed = Time(Second(Int64(ceil(time()))) - start_time)
+
+        @info "Completed species $sp in $elapsed"
     end
 
     for i in eachindex(sdms)
