@@ -104,7 +104,7 @@ function fit_all_sdms(
 
         statsdict = compute_fit_stats_and_cutoff(predicted_sdm, coords, labels)
         write_stats(
-            statsdict, joinpath(sdms_dirs[THREAD_ID], "fit.json")
+            statsdict, joinpath(sdm_dirs[THREAD_ID], "fit.json")
         )
         SpeciesDistributionToolkit.save(
             sdm_out_paths[THREAD_ID], predicted_sdm
