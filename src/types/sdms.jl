@@ -4,7 +4,7 @@ struct YearRange
 end
 function yearranges()
     years = Year.([1970, 2010, 2040, 2070, 2100])
-    return [YearRange(years[t-1] + Year(1), years[t]) for t = 2:length(years)]
+    return [YearRange(years[t - 1] + Year(1), years[t]) for t in 2:length(years)]
 end
 
 ssps() = [SSP126, SSP370, SSP585]
@@ -27,11 +27,28 @@ function scenarios()
     return scen
 end
 
-function get_sdm_dir(s::Scenario, sp)
-    return datadir("public", "SDMs", sp.name, year_path(s.years), ssp_path(s.ssp))
+function get_output_dir()
+    return if contains(run(`hostname`), "narval")
+        joinpath("/scratch", "mcatchen", "BeeSDMs") # cluster
+    else
+        joinpath(datadir("public", "SDMs")) # local
+    end
 end
-get_sdm_path(s::Scenario, sp) = joinpath(get_sdm_dir(s, sp), "sdm.tif")
-get_uncertainty_path(s::Scenario, sp) = joinpath(get_sdm_dir(s, sp), "uncertainty.tif")
+
+function get_sdm_dir(s::Scenario, sp; cluster=false)
+    return if cluster
+        joinpath(
+        "/scratch", "mcatchen", "BeeSDMs", sp.name, year_path(s.years), ssp_path(s.ssp))
+    else
+        datadir("public", "SDMs", sp.name, year_path(s.years), ssp_path(s.ssp))
+    end
+end
+function get_sdm_path(s::Scenario, sp, ; kwargs...)
+    return joinpath(get_sdm_dir(s, sp; kwargs...), "sdm.tif")
+end
+function get_uncertainty_path(s::Scenario, sp; kwargs...)
+    return joinpath(get_sdm_dir(s, sp; kwargs...), "uncertainty.tif")
+end
 function year_path(y::YearRange)
     y.startyear.value == 1971 && return "current"
     return string(y.startyear.value, "-", y.endyear.value)

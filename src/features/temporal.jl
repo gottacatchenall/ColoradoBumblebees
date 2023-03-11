@@ -155,7 +155,8 @@ function _makemodel(ae::Autoencoder{Variational})
     )
     dec = Chain(
         [
-            Dense(dec_layer_sizes[i], dec_layer_sizes[i + 1]) for i in 1:(num_dec_layers - 1)
+            Dense(dec_layer_sizes[i], dec_layer_sizes[i + 1]) for
+            i in 1:(num_dec_layers - 1)
         ]...,
     )
 

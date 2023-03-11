@@ -29,7 +29,7 @@ using Phylo
 using StatsBase
 using JSON
 using EvoTrees
-using Downloads 
+using Downloads
 
 # _______________________________________________________
 #

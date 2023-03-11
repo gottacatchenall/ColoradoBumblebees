@@ -19,40 +19,40 @@ for s in scenarios()[2:end]
         ct = 0
         while ct < N_ATTEMPTS
             try
-                tmp = 
-                    SimpleSDMPredictor(
-                        RasterData(CHELSA2, BioClim),
-                        _scenario_to_projection(s);
-                        timespan=_scenario_to_year_pair(s),
-                        layer=l,
-                        EXTENT...,
-                    ) 
+                tmp = SimpleSDMPredictor(
+                    RasterData(CHELSA2, BioClim),
+                    _scenario_to_projection(s);
+                    timespan=_scenario_to_year_pair(s),
+                    layer=l,
+                    EXTENT...,
+                )
                 ct = N_ATTEMPTS
-            catch 
+            catch
                 @info "failed $l $ct times"
-                ct += 1 
+                ct += 1
             end
         end
 
-        try 
-
-            tmp = 
-                    SimpleSDMPredictor(
-                        RasterData(CHELSA2, BioClim),
-                        _scenario_to_projection(s);
-                        timespan=_scenario_to_year_pair(s),
-                        layer=l,
-                        EXTENT...,
-                    ) 
+        try
+            tmp = SimpleSDMPredictor(
+                RasterData(CHELSA2, BioClim),
+                _scenario_to_projection(s);
+                timespan=_scenario_to_year_pair(s),
+                layer=l,
+                EXTENT...,
+            )
         catch
             @info "never successed with $l"
         end
-    end 
+    end
 end
 
 for i in 1:N_ATTEMPTS
-    try 
-        [SimpleSDMPredictor(RasterData(CHELSA2, BioClim); layer=l, EXTENT...,) for l in BIOLAYERS]
+    try
+        [
+            SimpleSDMPredictor(RasterData(CHELSA2, BioClim); layer=l, EXTENT...) for
+            l in BIOLAYERS
+        ]
     catch
         @info "failed $i"
     end

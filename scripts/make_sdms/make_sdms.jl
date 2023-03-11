@@ -6,5 +6,4 @@ using Main.ColoradoBumblebees
 
 data = load_data()
 
-make_sdms(data, GaussianBRT(), cluster=true)
- 
+make_sdms(data, GaussianBRT(); cluster=true)

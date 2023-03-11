@@ -19,30 +19,22 @@ function brt_params(gbrt::GaussianBRT)
     return EvoTreeGaussian(; (v => getfield(gbrt, v) for v in fieldnames(typeof(gbrt)))...)
 end
 
-function get_output_dir()
-    return if contains(run(`hostname`), "narval")
-        joinpath("/scratch", "mcatchen", "BeeSDMs") # cluster
-    else
-        joinpath(datadir("public", "SDMs")) # local
-    end
-end
-
-function make_sdms(data, gbrt::GaussianBRT; cluster = false)    
+function make_sdms(data, gbrt::GaussianBRT; cluster=false)
     !cluster && @warn "Running on small extent"
     extent = cluster ? EXTENT : (bottom=35.0, top=40.0, left=-108.0, right=-105.0)
     current_layers = [
         convert(
             Float32, SimpleSDMPredictor(RasterData(CHELSA2, BioClim); layer=l, extent...)
         ) for l in BIOLAYERS
-    ] 
+    ]
 
     mat = zeros(Float32, length(current_layers), prod(size(current_layers[begin])))
     w = fit_whitening(current_layers, mat)
     current_layers = decorrelate_chelsa(current_layers, w, mat)
 
     # TESTING
-    @warn "Still using single species"
-    species = [plants(data)[1]]
+    @warn "Still using 6 species"
+    species = [plants(data)[1:6]]
     #species = vcat(bees(data)..., plants(data)...)
 
     occurrence_layer = convert(Bool, similar(current_layers[begin]))
@@ -54,7 +46,9 @@ function make_sdms(data, gbrt::GaussianBRT; cluster = false)
     !cluster && @warn "Still only running on ssp370"
     baseline, futures = scen[1], cluster ? scen[2:end] : scen[5:7]
 
-    models = fit_all_sdms(species, current_layers, occurrence_layer, gbrt, baseline, mat)
+    models = fit_all_sdms(
+        species, current_layers, occurrence_layer, gbrt, baseline, mat; cluster=cluster
+    )
     return project_future_sdms(species, models, current_layers, w, futures, mat, extent)
 end
 
@@ -85,78 +79,74 @@ function _scenario_to_year_pair(scenario)
 end
 
 function load_climate_layers(scenario, extent)
-    tmp = [
+    return tmp = [
         SimpleSDMPredictor(
             RasterData(CHELSA2, BioClim),
             _scenario_to_projection(scenario);
             timespan=_scenario_to_year_pair(scenario),
             layer=l,
-            extent...
+            extent...,
         ) for l in BIOLAYERS
     ]
 end
 
-function SimpleSDMDatasets.source(data::RasterData{CHELSA2, BioClim}; layer = "BIO1")
+function SimpleSDMDatasets.source(data::RasterData{CHELSA2,BioClim}; layer="BIO1")
     var_code = (layer isa Integer) ? layer : findfirst(isequal(layer), layers(data))
     root = "https://envicloud.wsl.ch/envicloud/chelsa/chelsa_V2/GLOBAL/climatologies/1981-2010/bio/"
     stem = "CHELSA_bio$(var_code)_1981-2010_V.2.1.tif"
-    return (
-        url = root * stem,
-        filename = lowercase(stem),
-        outdir = destination(data),
-    )
+    return (url=root * stem, filename=lowercase(stem), outdir=destination(data))
 end
 
 function SimpleSDMDatasets.source(
-    data::RasterData{CHELSA2, T},
-    future::Projection{S, M};
-    layer = first(SimpleSDMDatasets.layers(data, future)),
-    timespan = first(SimpleSDMDatasets.timespans(data, future)),
-) where {T <: BioClim, S <: CHELSA2Scenario, M <: CHELSA2Model}
+    data::RasterData{CHELSA2,T},
+    future::Projection{S,M};
+    layer=first(SimpleSDMDatasets.layers(data, future)),
+    timespan=first(SimpleSDMDatasets.timespans(data, future)),
+) where {T<:BioClim,S<:CHELSA2Scenario,M<:CHELSA2Model}
     var_code = (layer isa Integer) ? layer : findfirst(isequal(layer), layers(data))
-    
+
     year_sep = string(timespan.first.value) * "-" * string(timespan.second.value)
 
-    Mstr, Sstr = map(x->convert(String, split(string(x), ".")[end]), [M,S])
+    Mstr, Sstr = map(x -> convert(String, split(string(x), ".")[end]), [M, S])
 
     model_sep = replace(uppercase(Mstr) * "/" * lowercase(Sstr), "_" => "-")
-    
+
     root = "https://envicloud.wsl.ch/envicloud/chelsa/chelsa_V2/GLOBAL/climatologies/$(year_sep)/$(model_sep)/bio/"
 
     stem = "CHELSA_bio$(var_code)_$(year_sep)_$(lowercase(replace(Mstr, "_" => "-")))_$(lowercase(Sstr))_V.2.1.tif"
 
-
     return (
-        url = root * stem,
-        filename = lowercase(stem),
-        outdir = SimpleSDMDatasets.destination(data, future),
+        url=root * stem,
+        filename=lowercase(stem),
+        outdir=SimpleSDMDatasets.destination(data, future),
     )
 end
 
-function destination(::RasterData{P, D}; kwargs...) where {P <: RasterProvider, D <: RasterDataset}
-    Pstr, Dstr = map(x->convert(String, split(string(x), ".")[end]), [P,D])
-    joinpath(SimpleSDMDatasets._LAYER_PATH, Pstr, Dstr)
+function destination(
+    ::RasterData{P,D}; kwargs...
+) where {P<:RasterProvider,D<:RasterDataset}
+    Pstr, Dstr = map(x -> convert(String, split(string(x), ".")[end]), [P, D])
+    return joinpath(SimpleSDMDatasets._LAYER_PATH, Pstr, Dstr)
 end
 
 function SimpleSDMDatasets.destination(
-    ::RasterData{P, D},
-    ::Projection{S, M};
-    kwargs...,
-) where {P <: RasterProvider, D <: RasterDataset, S <: FutureScenario, M <: FutureModel}
-    
-    Pstr, Dstr, Mstr, Sstr = map(x->convert(String, split(string(x), ".")[end]), [P,D,M,S])
-    joinpath(
+    ::RasterData{P,D}, ::Projection{S,M}; kwargs...
+) where {P<:RasterProvider,D<:RasterDataset,S<:FutureScenario,M<:FutureModel}
+    Pstr, Dstr, Mstr, Sstr = map(
+        x -> convert(String, split(string(x), ".")[end]), [P, D, M, S]
+    )
+    return joinpath(
         SimpleSDMDatasets._LAYER_PATH,
         Pstr,
         Dstr,
         replace(Sstr, "_" => "-"),
         replace(Mstr, "_" => "-"),
     )
-end 
+end
 
-
-
-function fit_all_sdms(species, climate_layers, occurrence_layer, gbrt, baseline, mat)
+function fit_all_sdms(
+    species, climate_layers, occurrence_layer, gbrt, baseline, mat; cluster=false
+)
     models = Dict()
     Threads.@threads for sp in species
         outdir = get_sdm_dir(baseline, sp)
@@ -169,10 +159,14 @@ function fit_all_sdms(species, climate_layers, occurrence_layer, gbrt, baseline,
         predicted_sdm, predicted_uncertainty = predict_sdm(climate_layers, model, mat)
 
         statsdict = compute_fit_stats_and_cutoff(predicted_sdm, coords, labels)
-        write_stats(statsdict, joinpath(get_sdm_dir(baseline, sp), "fit.json"))
-        SpeciesDistributionToolkit.save(get_sdm_path(baseline, sp), predicted_sdm)
+        write_stats(
+            statsdict, joinpath(get_sdm_dir(baseline, sp; cluster=cluster), "fit.json")
+        )
         SpeciesDistributionToolkit.save(
-            get_uncertainty_path(baseline, sp), predicted_uncertainty
+            get_sdm_path(baseline, sp; cluster=cluster), predicted_sdm
+        )
+        SpeciesDistributionToolkit.save(
+            get_uncertainty_path(baseline, sp; cluster=cluster), predicted_uncertainty
         )
     end
     return models
@@ -277,7 +271,7 @@ end
 
 function fit_whitening(layers, mat)
     layers_to_matrix!(layers, mat)
-    return w = MultivariateStats.fit(Whitening, mat)
+    return MultivariateStats.fit(Whitening, mat)
 end
 
 function decorrelate_chelsa(layers, w, matrix)
