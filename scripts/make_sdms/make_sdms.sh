@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-#SBATCH --time=12:00:00
+#SBATCH --time=24:00:00
 #SBATCH --account=def-gonzalez
 #SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=32G
