@@ -71,9 +71,9 @@ function project_sdms_single_future(scenario, species, models, current_layers, m
         run(`mkdir -p $outdir`)
         thismodel = models[sp]
         predicted_sdm, predicted_uncertainty = predict_sdm(current_layers, thismodel, zeros(size(mat)))
-        SpeciesDistributionToolkit.save(sdm_out_paths[THREAD_ID], predicted_sdm)
+        SpeciesDistributionToolkit.save(sdm_out_paths[THREAD_ID], predicted_sdm; driver="GTiff")
         SpeciesDistributionToolkit.save(
-            uncertainty_out_paths[THREAD_ID], predicted_uncertainty
+            uncertainty_out_paths[THREAD_ID], predicted_uncertainty; driver="GTiff"
         )
     end
 end
@@ -107,10 +107,10 @@ function fit_all_sdms(
             statsdict, joinpath(sdm_dirs[THREAD_ID], "fit.json")
         )
         SpeciesDistributionToolkit.save(
-            sdm_out_paths[THREAD_ID], predicted_sdm
+            sdm_out_paths[THREAD_ID], predicted_sdm; driver="GTiff"
         )
         SpeciesDistributionToolkit.save(
-            uncertainty_out_paths[THREAD_ID], predicted_uncertainty
+            uncertainty_out_paths[THREAD_ID], predicted_uncertainty; driver="GTiff"
         )
     end
     return models
