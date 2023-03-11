@@ -65,15 +65,22 @@ function project_sdms_single_future(scenario, species, models, current_layers, m
     uncertainty_out_paths = [get_uncertainty_path(scenario, sp; cluster=cluster) for sp in species]
     sdm_dirs = [get_sdm_dir(scenario, sp; cluster=cluster) for sp in species]
 
+    sdms, uncertainties = [], []
+
     Threads.@threads for THREAD_ID in 1:Threads.nthreads()
         sp = species[THREAD_ID]
         outdir = sdm_dirs[THREAD_ID]
         run(`mkdir -p $outdir`)
         thismodel = models[sp]
         predicted_sdm, predicted_uncertainty = predict_sdm(current_layers, thismodel, zeros(size(mat)))
-        SpeciesDistributionToolkit.save(sdm_out_paths[THREAD_ID], predicted_sdm; driver="GTiff")
+        push!(sdms, predicted_sdm)
+        push!(uncertainties, predicted_uncertainty)
+    end
+
+    for i in eachindex(sdms)
+        SpeciesDistributionToolkit.save(sdm_out_paths[THREAD_ID], sdms[i]; driver="GTiff")
         SpeciesDistributionToolkit.save(
-            uncertainty_out_paths[THREAD_ID], predicted_uncertainty; driver="GTiff"
+            uncertainty_out_paths[THREAD_ID], uncertainties[i]; driver="GTiff"
         )
     end
 end
@@ -87,6 +94,9 @@ function fit_all_sdms(
     uncertainty_out_paths = [get_uncertainty_path(baseline, sp; cluster=cluster) for sp in species]
     sdm_dirs = [get_sdm_dir(baseline, sp; cluster=cluster) for sp in species]
 
+    sdms = []
+    uncertainties = []
+    fitstats = []
 
     Threads.@threads for THREAD_ID in 1:Threads.nthreads()
         sp = species[THREAD_ID]
@@ -102,15 +112,20 @@ function fit_all_sdms(
 
         predicted_sdm, predicted_uncertainty = predict_sdm(climate_layers, model, zeros(size(mat)))
 
-        statsdict = compute_fit_stats_and_cutoff(predicted_sdm, coords, labels)
+        push!(sdms, predicted_sdm)
+        push!(uncertainties, predicted_uncertainty)
+        push!(fitstats, compute_fit_stats_and_cutoff(predicted_sdm, coords, labels))
+    end
+
+    for i in eachindex(sdms)
         write_stats(
-            statsdict, joinpath(sdm_dirs[THREAD_ID], "fit.json")
+            fitstats[i], joinpath(sdm_dirs[i], "fit.json")
         )
         SpeciesDistributionToolkit.save(
-            sdm_out_paths[THREAD_ID], predicted_sdm; driver="GTiff"
+            sdm_out_paths[i], sdms[i]; driver="GTiff"
         )
         SpeciesDistributionToolkit.save(
-            uncertainty_out_paths[THREAD_ID], predicted_uncertainty; driver="GTiff"
+            uncertainty_out_paths[i], uncertainties[i]; driver="GTiff"
         )
     end
     return models
