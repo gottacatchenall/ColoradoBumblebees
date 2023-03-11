@@ -136,25 +136,42 @@ function initialize_new_interaction(
 )
     global interaction_id
     try 
-    int = MangalInteraction(
-        interaction_id,
-        net,
-        beenode,
-        plantnode,
-        datetime,
-        coord,
-        false,
-        :pollination,
-        Missing(),
-        1,
-        now(),
-        now(),
-        Missing(),
-    )
-    interaction_id += 1
+        thisint = MangalInteraction(
+            interaction_id,
+            net,
+            beenode,
+            plantnode,
+            datetime,
+            coord,
+            false,
+            :pollination,
+            Missing(),
+            1,
+            now(),
+            now(),
+            Missing(),
+        )
+        interaction_id += 1
+        return Interaction{site}(bee, plant, thisint, elev, datetime)
+
     catch
         @info "Failed with $bee, $plant"
+        thisint = MangalInteraction(
+            interaction_id,
+            net,
+            beenode,
+            plantnode,
+            datetime,
+            coord,
+            false,
+            :pollination,
+            Missing(),
+            1,
+            now(),
+            now(),
+            Missing(),
+        )
+        return Interaction{site}(bee, plant, thisint, elev, datetime)
     end
 
-    return Interaction{site}(bee, plant, int, elev, datetime)
 end
