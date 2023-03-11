@@ -34,7 +34,7 @@ function make_sdms(data, gbrt::GaussianBRT; cluster=false)
 
     # TESTING
     @warn "Still using 6 species"
-    species = [plants(data)[1:6]]
+    species = plants(data)[1:6]
     #species = vcat(bees(data)..., plants(data)...)
 
     occurrence_layer = convert(Bool, similar(current_layers[begin]))
