@@ -4,7 +4,7 @@
 #SBATCH --time=24:00:00
 #SBATCH --account=def-gonzalez
 #SBATCH --cpus-per-task=1
-#SBATCH --mem-per-cpu=96G
+#SBATCH --mem-per-cpu=128G
 #SBATCH --ntasks=203
 
 
