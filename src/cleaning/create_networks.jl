@@ -19,7 +19,7 @@ function create_interaction_data()
     net = initialize_new_network("ColoradoBumblebees")
     for (i, df) in enumerate(dfs)
         for r in eachrow(df)
-            plantname, beename, datetime = r.plant, r.pollinator, r.datetime
+            plantname, beename, datetime = r.plant, r.pollinator, DateTime(r.datetime)
             plantnode = species_nodes[findfirst(
                 node -> node.name == plantname, species_nodes
             )]
