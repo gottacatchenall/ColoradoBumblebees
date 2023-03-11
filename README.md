@@ -1,8 +1,13 @@
 # ColoradoBumblebees
 
+
+> **Warning** 
+> This project uses embargoed data that is (obviously) not on github, so it won't run. If you are on the MOU for the data and want to run this code, email me.
+
 This code base is using the [Julia Language](https://julialang.org/) and
 [DrWatson](https://juliadynamics.github.io/DrWatson.jl/stable/)
 to make a reproducible scientific project named
+
 > ColoradoBumblebees
 
 To (locally) reproduce this project, do the following:
