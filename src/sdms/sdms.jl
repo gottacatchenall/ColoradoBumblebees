@@ -49,28 +49,69 @@ function make_sdms(data, gbrt::GaussianBRT; cluster=false)
     models = fit_all_sdms(
         species, current_layers, occurrence_layer, gbrt, baseline, mat; cluster=cluster
     )
-    return project_future_sdms(species, models, current_layers, w, futures, mat, extent)
+    return project_future_sdms(species, models, current_layers, w, futures, mat, extent; cluster=cluster)
 end
 
-function project_future_sdms(species, models, current_layers, w, futures, mat, extent)
+function project_future_sdms(species, models, current_layers, w, futures, mat, extent; cluster=false)
     for f in futures
         current_layers = load_climate_layers(f, extent)
         current_layers = decorrelate_chelsa(current_layers, w, mat)
-        project_sdms_single_future(f, species, models, current_layers, mat)
+        project_sdms_single_future(f, species, models, current_layers, mat; cluster=cluster)
     end
 end
 
-function project_sdms_single_future(scenario, species, models, current_layers, mat)
-    Threads.@threads for sp in species
-        outdir = get_sdm_dir(scenario, sp)
+function project_sdms_single_future(scenario, species, models, current_layers, mat; cluster=cluster)
+    sdm_out_paths = [get_sdm_path(scenario, sp; cluster=cluster) for sp in species]
+    uncertainty_out_paths = [get_uncertainty_path(scenario, sp; cluster=cluster) for sp in species]
+    sdm_dirs = [get_sdm_dir(scenario, sp; cluster=cluster) for sp in species]
+
+    Threads.@threads for (THREAD_ID,sp) in enumerate(species)
+        outdir = sdm_dirs[THREAD_ID]
         run(`mkdir -p $outdir`)
         thismodel = models[sp]
-        predicted_sdm, predicted_uncertainty = predict_sdm(current_layers, thismodel, mat)
-        SpeciesDistributionToolkit.save(get_sdm_path(scenario, sp), predicted_sdm)
+        predicted_sdm, predicted_uncertainty = predict_sdm(current_layers, thismodel, zeros(size(mat)))
+        SpeciesDistributionToolkit.save(sdm_out_paths[THREAD_ID], predicted_sdm)
         SpeciesDistributionToolkit.save(
-            get_uncertainty_path(scenario, sp), predicted_uncertainty
+            uncertainty_out_paths[THREAD_ID], predicted_uncertainty
         )
     end
+end
+
+function fit_all_sdms(
+    species, climate_layers, template_layer, gbrt, baseline, mat; cluster=false
+)
+    models = Dict()
+
+    sdm_out_paths = [get_sdm_path(baseline, sp; cluster=cluster) for sp in species]
+    uncertainty_out_paths = [get_uncertainty_path(baseline, sp; cluster=cluster) for sp in species]
+    sdm_dirs = [get_sdm_dir(baseline, sp; cluster=cluster) for sp in species]
+
+
+    Threads.@threads for (sp, THREAD_ID) in enumerate(species)
+        outdir = sdm_dirs[THREAD_ID]
+        run(`mkdir -p $outdir`)
+       
+        occurrence_layer = similar(template_layer)
+        occurrence_layer.grid .= 0
+        convert_occurrence_to_tif!(sp, occurrence_layer)
+
+        model, coords, labels = fit_sdm(climate_layers, occurrence_layer, gbrt)
+        merge!(models, Dict(sp => model))
+
+        predicted_sdm, predicted_uncertainty = predict_sdm(climate_layers, model, zeros(size(mat)))
+
+        statsdict = compute_fit_stats_and_cutoff(predicted_sdm, coords, labels)
+        write_stats(
+            statsdict, joinpath(sdms_dirs[THREAD_ID], "fit.json")
+        )
+        SpeciesDistributionToolkit.save(
+            sdm_out_paths[THREAD_ID], predicted_sdm
+        )
+        SpeciesDistributionToolkit.save(
+            uncertainty_out_paths[THREAD_ID], predicted_uncertainty
+        )
+    end
+    return models
 end
 
 _scenario_to_projection(scenario, model=GFDL_ESM4) = Projection(scenario.ssp, model)
@@ -144,33 +185,6 @@ function SimpleSDMDatasets.destination(
     )
 end
 
-function fit_all_sdms(
-    species, climate_layers, occurrence_layer, gbrt, baseline, mat; cluster=false
-)
-    models = Dict()
-    Threads.@threads for sp in species
-        outdir = get_sdm_dir(baseline, sp)
-        run(`mkdir -p $outdir`)
-
-        convert_occurrence_to_tif!(sp, occurrence_layer)
-        model, coords, labels = fit_sdm(climate_layers, occurrence_layer, gbrt)
-        merge!(models, Dict(sp => model))
-
-        predicted_sdm, predicted_uncertainty = predict_sdm(climate_layers, model, mat)
-
-        statsdict = compute_fit_stats_and_cutoff(predicted_sdm, coords, labels)
-        write_stats(
-            statsdict, joinpath(get_sdm_dir(baseline, sp; cluster=cluster), "fit.json")
-        )
-        SpeciesDistributionToolkit.save(
-            get_sdm_path(baseline, sp; cluster=cluster), predicted_sdm
-        )
-        SpeciesDistributionToolkit.save(
-            get_uncertainty_path(baseline, sp; cluster=cluster), predicted_uncertainty
-        )
-    end
-    return models
-end
 
 function predict_sdm(climate_layers, model, mat)
     layers_to_matrix!(climate_layers, mat)
