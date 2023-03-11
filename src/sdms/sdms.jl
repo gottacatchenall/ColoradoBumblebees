@@ -33,16 +33,15 @@ function make_sdms(data, gbrt::GaussianBRT; cluster=false)
     current_layers = decorrelate_chelsa(current_layers, w, mat)
 
     # TESTING
-    @warn "Still using 6 species"
-    species = plants(data)[1:6]
-    #species = vcat(bees(data)..., plants(data)...)
+    #@warn "Still using 6 species"
+    #species = plants(data)[1:6]
+    @warn "Running on all species"
+    species = vcat(bees(data)..., plants(data)...)
 
     occurrence_layer = convert(Bool, similar(current_layers[begin]))
     occurrence_layer.grid .= 0
 
     scen = scenarios()
-    #baseline, futures = scen[1], scen[2:end]
-
     !cluster && @warn "Still only running on ssp370"
     baseline, futures = scen[1], cluster ? scen[2:end] : scen[5:7]
 
