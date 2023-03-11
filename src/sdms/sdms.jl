@@ -78,9 +78,9 @@ function project_sdms_single_future(scenario, species, models, current_layers, m
     end
 
     for i in eachindex(sdms)
-        SpeciesDistributionToolkit.save(sdm_out_paths[THREAD_ID], sdms[i]; driver="GTiff")
+        SpeciesDistributionToolkit.save(sdm_out_paths[i], sdms[i]; driver="GTiff")
         SpeciesDistributionToolkit.save(
-            uncertainty_out_paths[THREAD_ID], uncertainties[i]; driver="GTiff"
+            uncertainty_out_paths[i], uncertainties[i]; driver="GTiff"
         )
     end
 end
