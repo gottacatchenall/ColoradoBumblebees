@@ -65,7 +65,8 @@ function project_sdms_single_future(scenario, species, models, current_layers, m
     uncertainty_out_paths = [get_uncertainty_path(scenario, sp; cluster=cluster) for sp in species]
     sdm_dirs = [get_sdm_dir(scenario, sp; cluster=cluster) for sp in species]
 
-    Threads.@threads for (THREAD_ID,sp) in enumerate(species)
+    Threads.@threads for THREAD_ID in 1:Threads.nthreads()
+        sp = species[THREAD_ID]
         outdir = sdm_dirs[THREAD_ID]
         run(`mkdir -p $outdir`)
         thismodel = models[sp]
@@ -87,7 +88,8 @@ function fit_all_sdms(
     sdm_dirs = [get_sdm_dir(baseline, sp; cluster=cluster) for sp in species]
 
 
-    Threads.@threads for (sp, THREAD_ID) in enumerate(species)
+    Threads.@threads for THREAD_ID in 1:Threads.nthreads()
+        sp = species[THREAD_ID]
         outdir = sdm_dirs[THREAD_ID]
         run(`mkdir -p $outdir`)
        
