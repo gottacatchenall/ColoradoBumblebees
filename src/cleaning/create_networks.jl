@@ -135,6 +135,7 @@ function initialize_new_interaction(
     net, bee, plant, plantnode, beenode, datetime, coord, site, elev
 )
     global interaction_id
+    try 
     int = MangalInteraction(
         interaction_id,
         net,
@@ -151,6 +152,9 @@ function initialize_new_interaction(
         Missing(),
     )
     interaction_id += 1
+    catch
+        @info "Failed with $bee, $plant"
+    end
 
     return Interaction{site}(bee, plant, int, elev, datetime)
 end
