@@ -97,30 +97,25 @@ function fit_all_sdms(
     uncertainties = []
     fitstats = []
 
-    start_time = Second(Int64(ceil(time())))
-
-    Threads.@threads for THREAD_ID in 1:Threads.nthreads()
+    for THREAD_ID in eachindex(species)
         sp = species[THREAD_ID]
         outdir = sdm_dirs[THREAD_ID]
+        @info sp
         run(`mkdir -p $outdir`)
        
-        occurrence_layer = similar(template_layer)
-        occurrence_layer.grid .= 0
-        convert_occurrence_to_tif!(sp, occurrence_layer)
-
-        model, coords, labels = fit_sdm(climate_layers, occurrence_layer, gbrt)
+        #occurrence_layer = similar(template_layer)
+        #occurrence_layer.grid .= 0
+        #convert_occurrence_to_tif!(sp, occurrence_layer)
+        convert_occurrence_to_tif!(sp, template_layer)
+        model, coords, labels = fit_sdm(climate_layers, template_layer, gbrt)
         merge!(models, Dict(sp => model))
 
-        predicted_sdm, predicted_uncertainty = predict_sdm(climate_layers, model, zeros(size(mat)))
+        #predicted_sdm, predicted_uncertainty = predict_sdm(climate_layers, model, zeros(size(mat)))
+        predicted_sdm, predicted_uncertainty = predict_sdm(climate_layers, model, mat)
 
         push!(sdms, predicted_sdm)
         push!(uncertainties, predicted_uncertainty)
         push!(fitstats, compute_fit_stats_and_cutoff(predicted_sdm, coords, labels))
-
-
-        elapsed = Time(Second(Int64(ceil(time()))) - start_time)
-
-        @info "Completed species $sp in $elapsed"
     end
 
     for i in eachindex(sdms)
