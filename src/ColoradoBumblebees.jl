@@ -22,7 +22,7 @@ using Random
 using ProgressMeter
 using ParameterSchedulers
 using ParameterSchedulers: Scheduler
-using EcologicalNetworks
+using EcologicalNetworks: BipartiteNetwork, UnipartiteNetwork, adjacency
 using NewickTree
 using AbstractTrees
 using Phylo
@@ -88,6 +88,8 @@ export get_sdm_path
 export get_uncertainty_path
 export make_sdms
 
+export get_newick
+
 export bee, pollinator
 export plant
 export bees, pollinators
@@ -122,6 +124,7 @@ export Variational
 export Standard
 export Pooled
 export Hierarchical
+export SimulatedTraits
 
 include(srcdir("types", "sites.jl"))
 include(srcdir("types", "species.jl"))

@@ -17,10 +17,11 @@ using Main.ColoradoBumblebees
 data = load_data()
 
 embeddings = [
-    Pooled(),
+    SimulatedTraits(),
+ #   Pooled(),
     # Hierarchical(),
-    MetawebSVD(8),
-    KMeansSpatialEmbedding(3),
+    MetawebSVD(8)
+ #   KMeansSpatialEmbedding(3),
     # KMeansEnvironmentEmbedding(3),
 
     #= Autoencoder{Variational}(
@@ -55,10 +56,11 @@ BRT = @load EvoTreeClassifier pkg = EvoTrees
 # brt = BRT(n_subfeatures=20, n_trees=100, max_depth=30, nbins=64)
 brt = BRT(; n_subfeatures=20)
 rf = RandomForest(; n_subfeatures=20, n_trees=100)
-#rf = RandomForest()
+#
 MLJ.evaluate(rf, X, y; measure=computemeasures_mlj)
 
 function single_run(X, y, ens_size=256, batch_size=64)
+    rf = RandomForest()
     Is = shuffle(1:nrow(df))
     cut = Int32(floor(0.8 * nrow(df)))
     Itrain, Itest = Is[1:cut], Is[(cut + 1):end]

@@ -23,7 +23,7 @@ end
 
 function metaweb(data::BeeData)
     mangalnet = convert(
-        BipartiteNetwork, convert(UnipartiteNetwork, [i.int for i in interactions(data)])
+        BipartiteNetwork, convert(UnipartiteNetwork, [i.int for i in ColoradoBumblebees.interactions(data)])
     )
 
     allbees, allplants = bees(data), plants(data)
@@ -35,6 +35,6 @@ function metaweb(data::BeeData)
         allplants[findfirst(x -> x.mangalnode == mangalnet.B[i], allplants)] for
         i in 1:length(mangalnet.B)
     ]
-
-    return net = BipartiteNetwork(adjacency(mangalnet), t, b)
+    tstr, bstr = [i.name for i in t], [i.name for i in b]
+    return BipartiteNetwork(adjacency(mangalnet), tstr, bstr)
 end

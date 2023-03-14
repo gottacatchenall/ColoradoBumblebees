@@ -108,6 +108,8 @@ function fit_all_sdms(
         #convert_occurrence_to_tif!(sp, occurrence_layer)
         convert_occurrence_to_tif!(sp, template_layer)
         model, coords, labels = fit_sdm(climate_layers, template_layer, gbrt)
+        
+        # THIS ISNT MEMORY SAFE w/ THREADS FIND A NEW WAY
         merge!(models, Dict(sp => model))
 
         #predicted_sdm, predicted_uncertainty = predict_sdm(climate_layers, model, zeros(size(mat)))
@@ -115,6 +117,8 @@ function fit_all_sdms(
 
         push!(sdms, predicted_sdm)
         push!(uncertainties, predicted_uncertainty)
+
+        println("About to compute stats for $sp with coords: $coords")
         push!(fitstats, compute_fit_stats_and_cutoff(predicted_sdm, coords, labels))
     end
 

@@ -12,11 +12,11 @@ function getfeatures(s::MetawebSVD, data)
 
     dict = Dict()
     for (i, bee_node) in enumerate(mw.T)
-        x = b[findfirst(x -> x.name == bee_node.name, b)]
+        x = b[findfirst(x -> x.name == bee_node, b)]
         merge!(dict, Dict(x => L[i, 1:(s.dimensions)]))
     end
     for (i, plant_node) in enumerate(mw.B)
-        x = p[findfirst(x -> x.name == plant_node.name, p)]
+        x = p[findfirst(x -> x.name == plant_node, p)]
         merge!(dict, Dict(x => R[i, 1:(s.dimensions)]))
     end
     return dict
