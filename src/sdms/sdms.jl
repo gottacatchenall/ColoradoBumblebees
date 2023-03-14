@@ -236,10 +236,12 @@ end
 function compute_fit_stats_and_cutoff(distribution, coords, y)
     cutoff = LinRange(extrema(distribution)..., 500)
 
-    print(typeof(coords))
     filter!(!isnothing, coords)
     coords = convert(Vector{typeof(coords[begin])}, coords)
-    print(typeof(coords))
+
+    I = filter(!isnothing, [_point_to_cartesian(distribution, c) for c in coords])
+    println(typeof(I))
+
 
     obs = y .> 0
 
@@ -249,7 +251,7 @@ function compute_fit_stats_and_cutoff(distribution, coords, y)
     fn = zeros(Float64, length(cutoff))
 
     for (i, c) in enumerate(cutoff)
-        prd = distribution[coords] .>= c
+        prd = distribution.grid[I] .>= c
         tp[i] = sum(prd .& obs)
         tn[i] = sum(.!(prd) .& (.!obs))
         fp[i] = sum(prd .& (.!obs))
