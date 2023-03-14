@@ -17,21 +17,21 @@ using Main.ColoradoBumblebees
 data = load_data()
 
 embeddings = [
-    SimulatedTraits(),
- #   Pooled(),
+    SimulatedTraits(; truncated_dims = 8, variance_distribution=Gamma(3.,1)),
+    Pooled(),
     # Hierarchical(),
-    MetawebSVD(8)
+  #  MetawebSVD(8),
  #   KMeansSpatialEmbedding(3),
     # KMeansEnvironmentEmbedding(3),
 
-    #= Autoencoder{Variational}(
+  #=  Autoencoder{Variational}(
          unit=LSTM, 
          n_epochs=250, 
          dropout=0.,
          opt=ADAM(0.001),
-         encoder_dims=[TEMPORAL_INPUT_DIM,128,64,8], 
-         decoder_dims=[8,64,128,TEMPORAL_INPUT_DIM], 
-         train_proportion=1.)
+         encoder_dims=[TEMPORAL_INPUT_DIM,128,64,4], 
+         decoder_dims=[4,64,128,TEMPORAL_INPUT_DIM], 
+         train_proportion=1.) =#
 
      Autoencoder{Standard}(
          unit=Dense, 
@@ -39,7 +39,7 @@ embeddings = [
          opt=ADAM(1e-4),
          encoder_dims=[TEMPORAL_INPUT_DIM,32,4], 
          decoder_dims=[4,32,TEMPORAL_INPUT_DIM],
-         train_proportion=1.) =#
+         train_proportion=1.)
 ]
 
 df = feature_dataframe(data, embeddings)
@@ -53,11 +53,11 @@ DecisionTree = @load DecisionTreeClassifier pkg = DecisionTree verbosity = 0
 RandomForest = @load RandomForestClassifier pkg = DecisionTree verbosity = 0
 BRT = @load EvoTreeClassifier pkg = EvoTrees
 
-# brt = BRT(n_subfeatures=20, n_trees=100, max_depth=30, nbins=64)
-brt = BRT(; n_subfeatures=20)
+#brt = BRT(; n_subfeatures=20)
 rf = RandomForest(; n_subfeatures=20, n_trees=100)
-#
+#brt = BRT(n_subfeatures=20, n_trees=30, max_depth=10, nbins=64)
 MLJ.evaluate(rf, X, y; measure=computemeasures_mlj)
+
 
 function single_run(X, y, ens_size=256, batch_size=64)
     rf = RandomForest()

@@ -115,14 +115,22 @@ function fit_all_sdms(
         #predicted_sdm, predicted_uncertainty = predict_sdm(climate_layers, model, zeros(size(mat)))
         predicted_sdm, predicted_uncertainty = predict_sdm(climate_layers, model, mat)
 
-        push!(sdms, predicted_sdm)
-        push!(uncertainties, predicted_uncertainty)
-
-        println("About to compute stats for $sp with coords: $(typeof(coords)), $(length(coords))")
-        push!(fitstats, compute_fit_stats_and_cutoff(predicted_sdm, coords, labels))
+        write_stats(
+            compute_fit_stats_and_cutoff(predicted_sdm, coords, labels), joinpath(sdm_dirs[i], "fit.json")
+        )
+        SpeciesDistributionToolkit.save(
+            sdm_out_paths[i], predicted_sdm; driver="GTiff"
+        )
+        SpeciesDistributionToolkit.save(
+            uncertainty_out_paths[i], predicted_uncertainty; driver="GTiff"
+        )
+        #push!(sdms, predicted_sdm)
+        #push!(uncertainties, predicted_uncertainty)
+       #println("About to compute stats for $sp with coords: $(typeof(coords)), $(length(coords))")
+       # push!(fitstats, compute_fit_stats_and_cutoff(predicted_sdm, coords, labels))
     end
 
-    for i in eachindex(sdms)
+    #= for i in eachindex(sdms)
         write_stats(
             fitstats[i], joinpath(sdm_dirs[i], "fit.json")
         )
@@ -132,7 +140,7 @@ function fit_all_sdms(
         SpeciesDistributionToolkit.save(
             uncertainty_out_paths[i], uncertainties[i]; driver="GTiff"
         )
-    end
+    end =#
     return models
 end
 
