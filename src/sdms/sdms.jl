@@ -96,7 +96,7 @@ function fit_all_sdms(
     fitstats = []
     models = []
 
-    for THREAD_ID in @Thread.nthreads()
+    for THREAD_ID in eachindex(species)
         sp = species[THREAD_ID]
         outdir = sdm_dirs[THREAD_ID]
         @info sp
@@ -109,10 +109,10 @@ function fit_all_sdms(
         model, coords, labels = fit_sdm(climate_layers, template_layer, gbrt)
         
 
-        predicted_sdm, predicted_uncertainty = predict_sdm(climate_layers, model, zeros(size(mat)))
-        #predicted_sdm, predicted_uncertainty = predict_sdm(climate_layers, model, mat)
+        #predicted_sdm, predicted_uncertainty = predict_sdm(climate_layers, model, zeros(size(mat)))
+        predicted_sdm, predicted_uncertainty = predict_sdm(climate_layers, model, mat)
 
-        #=write_stats(
+        write_stats(
             compute_fit_stats_and_cutoff(predicted_sdm, coords, labels), joinpath(sdm_dirs[THREAD_ID], "fit.json")
         )
         SpeciesDistributionToolkit.save(
@@ -120,12 +120,12 @@ function fit_all_sdms(
         )
         SpeciesDistributionToolkit.save(
             uncertainty_out_paths[THREAD_ID], predicted_uncertainty; driver="GTiff"
-        )=#
+        )
         push!(models, model)
-        push!(sdms, predicted_sdm)
-        push!(uncertainties, predicted_uncertainty)
+        #push!(sdms, predicted_sdm)
+        #push!(uncertainties, predicted_uncertainty)
        #println("About to compute stats for $sp with coords: $(typeof(coords)), $(length(coords))")
-        push!(fitstats, compute_fit_stats_and_cutoff(predicted_sdm, coords, labels))
+        #push!(fitstats, compute_fit_stats_and_cutoff(predicted_sdm, coords, labels))
     end
 
     for i in eachindex(sdms)
