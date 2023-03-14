@@ -239,7 +239,7 @@ function compute_fit_stats_and_cutoff(distribution, coords, y)
     filter!(!isnothing, coords)
     coords = convert(Vector{typeof(coords[begin])}, coords)
 
-    I = filter(!isnothing, [_point_to_cartesian(distribution, c) for c in coords])
+    I = filter(!isnothing, [SimpleSDMLayers._point_to_cartesian(distribution, c) for c in coords])
     println(typeof(I))
 
 
