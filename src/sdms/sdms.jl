@@ -236,9 +236,11 @@ end
 function compute_fit_stats_and_cutoff(distribution, coords, y)
     cutoff = LinRange(extrema(distribution)..., 500)
 
+    print(typeof(coords))
     filter!(!isnothing, coords)
     coords = convert(Vector{typeof(coords[begin])}, coords)
-    
+    print(typeof(coords))
+
     obs = y .> 0
 
     tp = zeros(Float64, length(cutoff))
