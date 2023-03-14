@@ -118,7 +118,7 @@ function fit_all_sdms(
         push!(sdms, predicted_sdm)
         push!(uncertainties, predicted_uncertainty)
 
-        println("About to compute stats for $sp with coords: $coords")
+        println("About to compute stats for $sp with coords: $(typeof(coords)), $(length(coords))")
         push!(fitstats, compute_fit_stats_and_cutoff(predicted_sdm, coords, labels))
     end
 
@@ -269,6 +269,8 @@ function fit_sdm(climate_layers, occurrence_layer, gbrt)
     presences, pseudoabsences = get_pres_and_abs(occurrence_layer)
 
     X, y, coords = get_features_and_labels(presences, pseudoabsences, climate_layers)
+ 
+    filter!(!isnothing, coords)
     Xtrain, Ytrain, Xtest, Ytest = test_train_split(X, y)
 
     model = fit_evotree(
