@@ -15,3 +15,4 @@ module load julia/1.8.5
 echo "Launching script..."
 julia -t 203 make_sdms.jl
 # julia -t 6 make_sdms.jl
+

@@ -67,10 +67,9 @@ function project_sdms_single_future(scenario, species, models, current_layers, m
     sdms, uncertainties = [], []
 
     Threads.@threads for THREAD_ID in 1:Threads.nthreads()
-        sp = species[THREAD_ID]
         outdir = sdm_dirs[THREAD_ID]
         run(`mkdir -p $outdir`)
-        thismodel = models[sp]
+        thismodel = models[THREAD_ID]
         predicted_sdm, predicted_uncertainty = predict_sdm(current_layers, thismodel, zeros(size(mat)))
         push!(sdms, predicted_sdm)
         push!(uncertainties, predicted_uncertainty)
@@ -87,7 +86,6 @@ end
 function fit_all_sdms(
     species, climate_layers, template_layer, gbrt, baseline, mat; cluster=false
 )
-    models = Dict()
 
     sdm_out_paths = [get_sdm_path(baseline, sp; cluster=cluster) for sp in species]
     uncertainty_out_paths = [get_uncertainty_path(baseline, sp; cluster=cluster) for sp in species]
@@ -96,26 +94,25 @@ function fit_all_sdms(
     sdms = []
     uncertainties = []
     fitstats = []
+    models = []
 
-    for THREAD_ID in eachindex(species)
+    for THREAD_ID in @Thread.nthreads()
         sp = species[THREAD_ID]
         outdir = sdm_dirs[THREAD_ID]
         @info sp
         run(`mkdir -p $outdir`)
        
-        #occurrence_layer = similar(template_layer)
-        #occurrence_layer.grid .= 0
-        #convert_occurrence_to_tif!(sp, occurrence_layer)
-        convert_occurrence_to_tif!(sp, template_layer)
+        occurrence_layer = similar(template_layer)
+        occurrence_layer.grid .= 0
+        convert_occurrence_to_tif!(sp, occurrence_layer)
+        #convert_occurrence_to_tif!(sp, template_layer)
         model, coords, labels = fit_sdm(climate_layers, template_layer, gbrt)
         
-        # THIS ISNT MEMORY SAFE w/ THREADS FIND A NEW WAY
-        merge!(models, Dict(sp => model))
 
-        #predicted_sdm, predicted_uncertainty = predict_sdm(climate_layers, model, zeros(size(mat)))
-        predicted_sdm, predicted_uncertainty = predict_sdm(climate_layers, model, mat)
+        predicted_sdm, predicted_uncertainty = predict_sdm(climate_layers, model, zeros(size(mat)))
+        #predicted_sdm, predicted_uncertainty = predict_sdm(climate_layers, model, mat)
 
-        write_stats(
+        #=write_stats(
             compute_fit_stats_and_cutoff(predicted_sdm, coords, labels), joinpath(sdm_dirs[THREAD_ID], "fit.json")
         )
         SpeciesDistributionToolkit.save(
@@ -123,14 +120,15 @@ function fit_all_sdms(
         )
         SpeciesDistributionToolkit.save(
             uncertainty_out_paths[THREAD_ID], predicted_uncertainty; driver="GTiff"
-        )
-        #push!(sdms, predicted_sdm)
-        #push!(uncertainties, predicted_uncertainty)
+        )=#
+        push!(models, model)
+        push!(sdms, predicted_sdm)
+        push!(uncertainties, predicted_uncertainty)
        #println("About to compute stats for $sp with coords: $(typeof(coords)), $(length(coords))")
-       # push!(fitstats, compute_fit_stats_and_cutoff(predicted_sdm, coords, labels))
+        push!(fitstats, compute_fit_stats_and_cutoff(predicted_sdm, coords, labels))
     end
 
-    #= for i in eachindex(sdms)
+    for i in eachindex(sdms)
         write_stats(
             fitstats[i], joinpath(sdm_dirs[i], "fit.json")
         )
@@ -140,7 +138,7 @@ function fit_all_sdms(
         SpeciesDistributionToolkit.save(
             uncertainty_out_paths[i], uncertainties[i]; driver="GTiff"
         )
-    end =#
+    end 
     return models
 end
 
