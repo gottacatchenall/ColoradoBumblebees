@@ -30,7 +30,9 @@ ra = RecurrentAutoencoder(
 df = feature_dataframe(data, [ra])
 
 
-    
+df = feature_dataframe(data, [LFSVD()])
+
+
 y, X, species_pairs = unpack(df, ==(:interaction), ∉([:bee, :plant]); rng=123)
 
 X = MLJ.transform(fit!(machine(Standardizer(), X)),X)
