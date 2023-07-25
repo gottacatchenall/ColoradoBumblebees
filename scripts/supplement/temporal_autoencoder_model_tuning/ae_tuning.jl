@@ -41,12 +41,12 @@ function loss(rnn, enc, dec, x)
     for t in x
         Flux.reset!(rnn) # Reset hidden state
         hidden = vcat([rnn([ti]) for ti in t]...)
-        reconst_loss += Flux.mse(dec(enc(hidden)), t)
+        reconst_loss += Flux.mse(dec(enc(vec(hidden))), t)
     end
     return reconst_loss
 end
 
-function train(unit, rnn_dims, encoder_dims, decoder_dims; η=0.01, n_epochs=3000, cuda=false)
+function train(unit, rnn_dims, encoder_dims, decoder_dims; η=0.01, n_epochs=1000, cuda=false)
     loader = get_data_loader()
 
     rnn, enc, dec = _makemodel(unit, rnn_dims, encoder_dims, decoder_dims)
@@ -72,9 +72,23 @@ function train(unit, rnn_dims, encoder_dims, decoder_dims; η=0.01, n_epochs=300
             )
         end
     end
-    CSV.write("./loss_η_0.01.csv", DataFrame(epoch=[i for i in 1:length(losses)], loss=losses))
+
+    opt = ADAM(0.1 * η)
+    for _ in 1:n_epochs
+        for (x,_) in loader
+            Flux.train!(x->loss(rnn,enc,dec,x), ps, [(x)], opt)
+            trainloss = loss(rnn, enc, dec, x)
+            push!(losses, trainloss)
+            ProgressMeter.next!(
+                progbar; showvalues=[(Symbol("Train Loss"), trainloss)]
+            )
+        end
+    end
+
+
+    CSV.write("./loss_η_0.01_then_0.001.csv", DataFrame(epoch=[i for i in 1:length(losses)], loss=losses))
 end
 
 
 
-train(LSTM, [1, 8, 1], [147, 16], [16, 147]; cuda=true)
+train(LSTM, [1, 8], [8*147, 16], [16, 147]; cuda=true)
