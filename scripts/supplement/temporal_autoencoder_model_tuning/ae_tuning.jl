@@ -46,7 +46,7 @@ function loss(rnn, enc, dec, x)
     return reconst_loss
 end
 
-function train(unit, rnn_dims, encoder_dims, decoder_dims; η=0.01, n_epochs=500, cuda=false)
+function train(unit, rnn_dims, encoder_dims, decoder_dims; η=0.01, n_epochs=3000, cuda=false)
     loader = get_data_loader()
 
     rnn, enc, dec = _makemodel(unit, rnn_dims, encoder_dims, decoder_dims)
@@ -61,16 +61,18 @@ function train(unit, rnn_dims, encoder_dims, decoder_dims; η=0.01, n_epochs=500
     opt = ADAM(η)
     ps = Flux.params(rnn, enc, dec)
     progbar = ProgressMeter.Progress(n_epochs)
-
+    losses = []
     for _ in 1:n_epochs
         for (x,_) in loader
             Flux.train!(x->loss(rnn,enc,dec,x), ps, [(x)], opt)
             trainloss = loss(rnn, enc, dec, x)
+            push!(losses, trainloss)
             ProgressMeter.next!(
                 progbar; showvalues=[(Symbol("Train Loss"), trainloss)]
             )
         end
     end
+    CSV.write("./loss_η_0.01.csv", DataFrame(epoch=[i for i in 1:length(losses)], loss=losses))
 end
 
 
