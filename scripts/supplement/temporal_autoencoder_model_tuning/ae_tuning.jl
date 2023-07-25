@@ -91,4 +91,4 @@ end
 
 
 
-train(LSTM, [1, 8], [8*147, 16], [16, 147]; cuda=true)
+train(LSTM, [1, 8, 2], [2*147, 16], [16, 147]; cuda=true)
