@@ -60,7 +60,7 @@ function train(unit, rnn_dims, encoder_dims, decoder_dims; η=0.01, n_epochs=100
 
     opt = ADAM(η)
     ps = Flux.params(rnn, enc, dec)
-    progbar = ProgressMeter.Progress(n_epochs)
+    progbar = ProgressMeter.Progress(2*n_epochs)
     losses = []
     for _ in 1:n_epochs
         for (x,_) in loader
@@ -73,7 +73,7 @@ function train(unit, rnn_dims, encoder_dims, decoder_dims; η=0.01, n_epochs=100
         end
     end
 
-    opt = ADAM(0.1 * η)
+    opt = ADAM(0.5 * η)
     for _ in 1:n_epochs
         for (x,_) in loader
             Flux.train!(x->loss(rnn,enc,dec,x), ps, [(x)], opt)
@@ -86,7 +86,7 @@ function train(unit, rnn_dims, encoder_dims, decoder_dims; η=0.01, n_epochs=100
     end
 
 
-    CSV.write("./loss_η_0.01_then_0.001.csv", DataFrame(epoch=[i for i in 1:length(losses)], loss=losses))
+    CSV.write("./loss_η_0.01_then_0.005.csv", DataFrame(epoch=[i for i in 1:length(losses)], loss=losses))
 end
 
 
