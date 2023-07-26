@@ -1,4 +1,8 @@
 using CUDA
+@info CUDA.versioninfo()
+CUDA.set_runtime_version!("local")
+@info CUDA.versioninfo()
+
 using Flux
 
 using DataFrames
