@@ -64,7 +64,7 @@ function train(unit, rnn_dims, encoder_dims, decoder_dims; η=0.01, n_epochs=500
 
     opt = ADAM(η)
     ps = Flux.params(rnn, enc, dec)
-    progbar = ProgressMeter.Progress(2*n_epochs)
+    progbar = ProgressMeter.Progress(n_epochs)
     losses = []
     for _ in 1:n_epochs
         for (x,_) in loader
@@ -109,8 +109,8 @@ end
 
 function main()
     cuda = true
-    rnn, enc = train(LSTM, [1, 8, 1], [147,  16], [16, 147]; cuda=cuda)
-    filename = "LSTM(1,8,1)_ENC(147,16)_DEC(16,147)"
+    rnn, enc = train(LSTM, [1, 8, 1], [147,  32], [32, 147]; cuda=cuda)
+    filename = "LSTM(1,8,1)_ENC(147,32)_DEC(32,147)"
 
     write_embeddings(rnn,enc,filename; cuda=cuda)
 end
