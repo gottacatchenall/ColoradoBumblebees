@@ -101,7 +101,10 @@ function write_embeddings(rnn, enc, filename; cuda=false)
 
     df.species = species
 
-    CSV.write("./$filename.csv", df)
+
+    run(`mkdir -p embeds`)
+
+    CSV.write("./embeds/$filename.csv", df)
 end
 
 function main()
