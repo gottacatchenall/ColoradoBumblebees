@@ -50,7 +50,7 @@ function loss(rnn, enc, dec, x)
     return reconst_loss
 end
 
-function train(unit, rnn_dims, encoder_dims, decoder_dims; η=0.01, n_epochs=1000, cuda=false)
+function train(unit, rnn_dims, encoder_dims, decoder_dims; η=0.01, n_epochs=500, cuda=false)
     loader = get_data_loader()
 
     rnn, enc, dec = _makemodel(unit, rnn_dims, encoder_dims, decoder_dims)
