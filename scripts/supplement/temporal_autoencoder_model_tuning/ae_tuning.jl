@@ -5,7 +5,7 @@ using DataFrames
 using CSV
 using ProgressMeter
 
-function get_data_loader()
+function load_data()
     df = CSV.read("./pheno.csv", DataFrame)
 
     timeseries = []
@@ -16,8 +16,12 @@ function get_data_loader()
         I = sortperm(this_species.time)
         push!(timeseries, this_species.abundance[I])
     end
-    timeseries
 
+    species, timeseries
+end 
+
+function get_data_loader()
+    _, timeseries = load_data()
     train_loader = Flux.DataLoader((timeseries, timeseries), batchsize=length(timeseries), shuffle=true)
 end
 
@@ -73,9 +77,36 @@ function train(unit, rnn_dims, encoder_dims, decoder_dims; η=0.01, n_epochs=100
         end
     end
 
-    CSV.write("./loss_η_0.01_then_0.005.csv", DataFrame(epoch=[i for i in 1:length(losses)], loss=losses))
+    rnn, enc
 end
 
+function write_embeddings(rnn, enc, filename; cuda=false)
+    species, timeseries = load_data()
+    
+    embeds = []
 
+    if cuda 
+        timeseries |> gpu
+    end 
+    for t in timeseries
+        Flux.reset!(rnn) # Reset hidden state
+        hidden = vcat([rnn([ti]) for ti in t]...)
+        out = enc(hidden) |> cpu
+        push!(embeds, out)
+    end
+    
+    mat = hcat(embeds...)
+    
+    df = DataFrame(Matrix(mat'), :auto)
 
-train(LSTM, [1, 8, 8, 2], [2*147, 64,  16], [16, 32, 147]; cuda=true)
+    df.species = species
+
+    CSV.write("./$filename.csv", df)
+end
+
+function main()
+    cuda = true
+    rnn, enc = train(LSTM, [1, 8, 1], [147,  16], [16, 147]; cuda=cuda)
+    write_embeddings(rnn,enc,filename; cuda=cuda)
+end
+
