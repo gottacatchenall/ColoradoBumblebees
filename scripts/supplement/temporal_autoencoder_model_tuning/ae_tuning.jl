@@ -109,8 +109,8 @@ end
 
 function main()
     cuda = true
-    rnn, enc = train(LSTM, [1, 8, 8, 8, 1], [147,  16], [16, 147]; cuda=cuda)
-    filename = "LSTM(1,8,8,8,1)_ENC(147,16)_DEC(16,147)"
+    rnn, enc = train(LSTM, [1, 32, 32, 1], [147,  16], [16, 147]; cuda=cuda)
+    filename = "LSTM(1,32,32,1)_ENC(147,16)_DEC(16,147)"
 
     write_embeddings(rnn,enc,filename; cuda=cuda)
 end
