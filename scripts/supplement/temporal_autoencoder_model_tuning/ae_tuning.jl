@@ -1,8 +1,4 @@
 using CUDA
-@info CUDA.versioninfo()
-CUDA.set_runtime_version!("local")
-@info CUDA.versioninfo()
-
 using Flux
 
 using DataFrames
@@ -117,3 +113,5 @@ function main()
     write_embeddings(rnn,enc,filename; cuda=cuda)
 end
 
+
+main()
