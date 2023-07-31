@@ -25,7 +25,6 @@ function Base.show(io::IO, bd::BeeData)
     )
 end
 
-interactions(bd::BeeData) = bd.interactions
 occurrence(bd::BeeData) = bd.occurrence
 environment(bd::BeeData) = bd.environment
 bees(bd::BeeData) = bd.bees

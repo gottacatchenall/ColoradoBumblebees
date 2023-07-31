@@ -97,13 +97,6 @@ function _cut_species!(df)
     #return filter!(x -> x.pollinator != "Bombus suckleyi", df)
 end
 
-"""
-    _filename(::Type{T}) where T<:Site
-"""
-_filename(::Type{PikesPeak}) = "pikespeak.csv"
-_filename(::Type{Gothic}) = "gothic_bombus.csv"
-_filename(::Type{ElkMeadows}) = "elkmeadows.csv"
-
 function initialize_node(species)
     global node_id
     reftax = initialize_reference_taxon(species)
