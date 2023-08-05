@@ -5,6 +5,7 @@ module ColoradoBumblebees
     @reexport using BSON
     @reexport using Clustering 
     @reexport using CSV
+    @reexport using CUDA
     @reexport using Dates
     @reexport using DataFrames
     @reexport using DelimitedFiles
@@ -29,6 +30,15 @@ module ColoradoBumblebees
 
 
     Random.seed!(3141592653589793)
+
+    GPU_AVAILABLE = CUDA.has_cuda_gpu()
+    CLUSTER = false
+    try 
+        a = ENV["CLUSTER"]
+        a != "" 
+        CLUSTER = true
+    catch 
+    end
 
 
     include(srcdir("includes.jl"))
