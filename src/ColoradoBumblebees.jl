@@ -35,6 +35,7 @@ module ColoradoBumblebees
     CLUSTER = nothing
     try 
         a = ENV["CLUSTER"]
+        println("ENV[CLUSTER]: ", a)
         if a != "" 
             CLUSTER = true
         end 
