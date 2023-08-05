@@ -51,3 +51,9 @@ include(srcdir("classification_models", "batch_fit.jl"))
 include(srcdir("artifacts", "shared.jl"))
 include(srcdir("artifacts", "representation_artifacts.jl"))
 include(srcdir("artifacts", "classification_artifacts.jl"))
+
+# SDMs
+
+include(srcdir("species_distributions", "distribution_models.jl"))
+include(srcdir("species_distributions", "utils.jl"))
+include(srcdir("species_distributions", "fit_distributions.jl"))
