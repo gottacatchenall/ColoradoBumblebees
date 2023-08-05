@@ -10,6 +10,7 @@ include(srcdir("types", "representations.jl"))
 include(srcdir("types", "classification_models.jl"))
 include(srcdir("types", "classification_fits.jl"))
 include(srcdir("types", "confusion_matrix.jl"))
+include(srcdir("types", "species_distributions.jl"))
 
 include(srcdir("load_data", "load_chelsa.jl"))
 include(srcdir("load_data", "load_networks.jl"))
@@ -56,4 +57,4 @@ include(srcdir("artifacts", "classification_artifacts.jl"))
 
 include(srcdir("species_distributions", "distribution_models.jl"))
 include(srcdir("species_distributions", "utils.jl"))
-include(srcdir("species_distributions", "fit_distributions.jl"))
+include(srcdir("species_distributions", "fit_distribution.jl"))
