@@ -37,10 +37,10 @@ module ColoradoBumblebees
         a = ENV["CLUSTER"]
         println("ENV[CLUSTER]: ", a)
         if a != "" 
-            CLUSTER = true
+            ColoradoBumblebees.CLUSTER = true
         end 
     catch 
-        CLUSTER = false
+        ColoradoBumblebees.CLUSTER = false
         @info "in catch statment"
     end
 
