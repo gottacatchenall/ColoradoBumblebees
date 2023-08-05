@@ -32,14 +32,14 @@ module ColoradoBumblebees
     Random.seed!(3141592653589793)
 
     GPU_AVAILABLE = CUDA.has_cuda_gpu()
-    CLUSTER = false
+    CLUSTER = nothing
     try 
         a = ENV["CLUSTER"]
-        @info a
         if a != "" 
             CLUSTER = true
         end 
     catch 
+        CLUSTER = false
         @info "in catch statment"
     end
 
