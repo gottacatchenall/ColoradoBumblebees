@@ -31,7 +31,7 @@ function ColoradoBumblebees.save(x::BatchFit)
     end
 end
 
-function ColoradoBumblebees._load_classification_fit(path)
+function _load_classification_fit(path)
     metadata_path = joinpath(path, "metadata.json")    
     metadata = JSON.parsefile(metadata_path)
 

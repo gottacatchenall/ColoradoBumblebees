@@ -53,11 +53,23 @@ ColoradoBumblebees.load(dir)
 
 
 
+# Distributed tests
+
+`julia -p 2`
+@everywhere using DrWatson
+@everywhere @quickactivate :ColoradoBumblebees
+@everywhere data = load_data()
+@everywhere xgb = XGBoost()
 
 
+fetch(@spawnat 1 lfsvd = representations(data, LFSVD()))
+fetch(@spawnat 2 phy = representations(data, SimulatedTraits())) 
 
+fetch(@spawnat 1 feat_df = feature_dataframe(data, lfsvd))
+fetch(@spawnat 1 bf = @time batch_fit(xgb, lfsvd, feat_df, 8))
 
-
+fetch(@spawnat 2 feat_df = feature_dataframe(data, phy))
+fetch(@spawnat 2 bf = @time batch_fit(xgb, phy, feat_df, 8))
 
 
 
