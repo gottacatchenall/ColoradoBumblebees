@@ -6,7 +6,7 @@ end
 outdim(svd::LFSVD) = svd.embed_dims
 outdim(svd::LFSVD, ::Union{Type{Bee},Type{Plant}}) = outdim(svd)
 
-function getfeatures(s::LFSVD, data)
+function _embed(data::BeeData, s::LFSVD)
     trunc_dims =  s.truncation_dims
     emb_dims = s.embed_dims
 
@@ -14,8 +14,7 @@ function getfeatures(s::LFSVD, data)
     lf = linearfilter(mw, s.α)
 
     truncated_M = _get_truncated_metaweb(lf, trunc_dims)
-
-
+ 
     bee_emb, _, plant_emb = svd(truncated_M)
     embedding_dict = merge(Dict(zip(mw.T, eachrow(bee_emb))), Dict(zip(mw.B, eachrow(plant_emb))))
     _create_embedding_dict(data, embedding_dict, emb_dims)

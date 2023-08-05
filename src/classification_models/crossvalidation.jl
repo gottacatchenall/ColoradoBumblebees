@@ -1,10 +1,10 @@
+#=
 function fit_model(features, model)
     y, X, species_pairs = unpack(features, ==(:interaction), ∉([:bee, :plant]); rng=123)
     y = coerce(y, Multiclass{2})
     cv, pred = crossvalidation(model, X, y, species_pairs)
     
     thres = cv[!,:threshold][1]
-
     preddf = copy(features)
     preddf.prediction = pred
     preddf.thresholded_prediction .= pred .> thres
@@ -38,15 +38,14 @@ function crossvalidation(model, X, y, species_pairs; ens_size=256, batch_size=64
     return _eval_dicts_to_csv([eval_dict]), total_ypredict ./ (ens_size)
 end
 
-
+# currently unused
 function get_prediction_df(probs, species_pairs, thres)
     species_pairs[!, :probability] .= probs
-
     species_pairs[!, :thresholded_probability] .= map(x -> x < thres ? 0 : 1, probs)
     return species_pairs
 end
 
-
+# This is not going to be necessary
 function _eval_dicts_to_csv(dicts)
     cols = collect(keys(dicts[begin]))
     df = DataFrame([[] for c in cols], cols)
@@ -58,9 +57,11 @@ function _eval_dicts_to_csv(dicts)
     return df
 end
 
+# currently unused 
 function _cv_test_train_split(X, y; proportion=0.8)
     cutoff = Int32(floor(nrow(X) * proportion))
     I = collect(1:nrow(X))
     shuffle!(I)
     return I[(cutoff + 1):end], I[begin:cutoff]
 end
+=#

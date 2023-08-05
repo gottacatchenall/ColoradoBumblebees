@@ -2,16 +2,16 @@ Base.@kwdef struct KMeansEnvironmentEmbedding <: Environment
     k::Any = 4 # embedding dimensions
 end
 
-outdim(kmee::KMeansEnvironmentEmbedding) = 3kmee.k
+outdim(kmee::KMeansEnvironmentEmbedding) = 7kmee.k
 outdim(kmee::KMeansEnvironmentEmbedding, ::Union{Type{Bee},Type{Plant}}) = outdim(kmee)
 
-function ColoradoBumblebees.getfeatures(kmee::KMeansEnvironmentEmbedding, data)
+function _embed(data::BeeData, kmee::KMeansEnvironmentEmbedding)
     env = environment(data)
     species = vcat(bees(data)..., plants(data)...)
     dict = Dict()
     for s in species
         thisspecies = findall(x -> x.species == s.name, eachrow(env))
-        merge!(dict, Dict(s => getfeatures(kmee, env[thisspecies, :])))
+        merge!(dict, Dict(s => _feat(kmee, env[thisspecies, :])))
     end
 
     ext = vcat(values(dict)...)
@@ -23,9 +23,8 @@ function ColoradoBumblebees.getfeatures(kmee::KMeansEnvironmentEmbedding, data)
     return dict
 end
 
-function getfeatures(kmse::KMeansEnvironmentEmbedding, env::DataFrame)
+function _feat(kmse::KMeansEnvironmentEmbedding, env::DataFrame)
     X = Matrix(env[!, 2:end])'
-    #X = hcat(long, lat)'
     if nrow(env) > kmse.k
         res = kmeans(X, kmse.k)
         return vcat([res.centers[:, i] for i in 1:(kmse.k)]...)

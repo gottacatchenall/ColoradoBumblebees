@@ -1,8 +1,8 @@
 struct Pooled <: RelativeAbundance end
 
-outdim(p::Pooled, ::Union{Type{Bee},Type{Plant}}) = 1
+outdim(p::Pooled) = 1
 
-function getfeatures(p::Pooled, data)
+function _embed(data::BeeData, ::Pooled)
     ints = interactions(data)
 
     b, p = bees(data), plants(data)
@@ -10,10 +10,10 @@ function getfeatures(p::Pooled, data)
     allints = length(ints)
 
     beeabd = Dict([
-        (thisbee => length(interactions(data, thisbee)) / allints) for thisbee in b
+        (thisbee => [length(interactions(data, thisbee)) / allints]) for thisbee in b
     ])
     plantabd = Dict([
-        (thisplant => length(interactions(data, thisplant)) / allints) for thisplant in p
+        (thisplant => [length(interactions(data, thisplant)) / allints]) for thisplant in p
     ])
 
     return merge(beeabd, plantabd)

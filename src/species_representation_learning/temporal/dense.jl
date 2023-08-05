@@ -15,7 +15,7 @@ end
 outdim(ae::DenseAutoencoder) = ae.encoder_dims[end]
 outdim(ae::DenseAutoencoder, ::Union{Type{Bee},Type{Plant}}) = outdim(ae)
 
-function getfeatures(ae::DenseAutoencoder{Standard}, data)
+function _embed(data::BeeData, ae::DenseAutoencoder{Standard})
     enc, dec = _fitmodel(ae, _test_train_split(data, ae.train_proportion)...)
     phen = load_phenology(data)
     dict = Dict()
@@ -25,7 +25,7 @@ function getfeatures(ae::DenseAutoencoder{Standard}, data)
     end
     return dict
 end
-function getfeatures(ae::DenseAutoencoder{Variational}, data)
+function _embed(data::BeeData, ae::DenseAutoencoder{Variational})
     enc_μ, enc_logvar, dec = _fitmodel(ae, _test_train_split(data, ae.train_proportion)...)
     phen = load_phenology(data)
     dict = Dict()

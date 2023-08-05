@@ -5,7 +5,7 @@ end
 outdim(svd::MetawebSVD) = svd.embed_dims
 outdim(svd::MetawebSVD, ::Union{Type{Bee},Type{Plant}}) = outdim(svd)
 
-function getfeatures(s::MetawebSVD, data)
+function _embed(data::BeeData, s::MetawebSVD)
     trunc_dims =  s.truncation_dims
     emb_dims = s.embed_dims
     mw = metaweb(data)

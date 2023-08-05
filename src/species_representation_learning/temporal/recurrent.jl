@@ -9,7 +9,7 @@ end
 outdim(ae::RecurrentAutoencoder) = ae.encoder_dims[end]
 outdim(ae::RecurrentAutoencoder, ::Union{Type{Bee},Type{Plant}}) = outdim(ae)
 
-function getfeatures(ae::RecurrentAutoencoder, data)
+function _embed(data::BeeData, ae::RecurrentAutoencoder)
     phen = load_phenology(data)
     rnn, enc, _ = _fitmodel(ae, phen)
 

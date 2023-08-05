@@ -1,11 +1,13 @@
-struct Bee
-    name::Any
-    mangalnode::MangalNode
-end
-Base.show(io::IO, bee::Bee) = Base.show(io, "🐝 $(bee.name)")
+abstract type Species end 
 
-struct Plant
+struct Bee <: Species
     name::Any
     mangalnode::MangalNode
 end
-Base.show(io::IO, plant::Plant) = Base.show(io, "🌷 $(plant.name)")
+Base.show(io::IO, bee::Bee) = Base.print(io, "🐝 $(bee.name)")
+
+struct Plant <: Species
+    name::Any
+    mangalnode::MangalNode
+end
+Base.show(io::IO, plant::Plant) = Base.print(io, "🌷 $(plant.name)")

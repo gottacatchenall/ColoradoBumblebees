@@ -7,6 +7,7 @@ export Site
 export PikesPeak, Gothic, ElkMeadows
 
 # Species
+export Species
 export Bee, Plant
 
 # Data
@@ -23,8 +24,24 @@ export Temporal
 export RelativeAbundance
 export Structural 
 
+# Representations
+
+export SpeciesRepresentations
+export BatchFit
+
+export ClassificationModel
+export ClassificationFit
+
+export XGBoost
+export BoostedRegressionTree
+export RandomForest
+export LogisticRegression 
+
+
 # Contants     
 export TEMPORAL_INPUT_DIM, EXTENT, BIOLAYERS
+
+export RANDOM_FOREST, LOGISTIC_MODEL, BOOSTED_REGRESSION_TREE, XGBOOST
 
 # -----------------------------------------------------------------
 # Methods 
@@ -34,6 +51,8 @@ export plant
 export bee
 export plants
 export bees
+
+export artifactdir
 
 export cooccurence
 export occurrence
@@ -51,6 +70,9 @@ export load_interaction_data
 export load_newick
 export load_phenology
 
+export save 
+export path
+
 # Cleaning 
 export clean_interactions
 export clean_environmental_covariate_data
@@ -59,6 +81,9 @@ export clean_environmental_covariate_data
 export outdims
 export getfeatures 
 export feature_dataframe, label_dataframe
+export embed
+
+export representations
 
 export MetawebSVD, LFSVD 
 export SimulatedTraits, PhylogeneticNode2Vec
@@ -70,8 +95,10 @@ export RecurrentAutoencoder
 export _get_truncated_metaweb
 export _create_embedding_dict
 
-# Feature Learning
-export crossvalidation
-export batch
-export fit_model
-export computemeasures
+# Classification  
+export batch_fit
+export fit_classifier
+export balance_sample
+export compute_fit_stats
+
+

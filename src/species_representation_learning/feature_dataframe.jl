@@ -1,50 +1,47 @@
-function feature_dataframe(data, embeddings)
-    labeldf = label_dataframe(data)
 
-    feats = [getfeatures(e, data) for e in embeddings]
+function feature_dataframe(data, rep::SpeciesRepresentations)
+    label_df = label_dataframe(data)
+    
+    feature_dims = 2outdim(rep.embed_model)
+    emb = rep.embedding
 
-    cols = []
+    feature_df = _initialize_df(rep.embed_model, feature_dims, label_df)
 
-    for i in eachindex(embeddings)
-        e = embeddings[i]
-        per_bee_dim = outdim(e, Bee)
-        per_plant_dim = outdim(e, Plant)
-        for fi in per_bee_dim
-            @info "$(string(typeof(e)))_BEE$fi"
-        end
-        push!(
-            cols,
-            [
-                "$(string(typeof(e)))_BEE$fi" => zeros(nrow(labeldf)) for fi in 1:per_bee_dim
-            ]...,
-        )
-        push!(
-            cols,
-            [
-                "$(string(typeof(e)))_PLANT$fi" => zeros(nrow(labeldf)) for
-                fi in 1:per_plant_dim
-            ]...,
-        )
-    end
-
-    featdf = DataFrame(cols...)
-
-    for (ri, r) in enumerate(eachrow(labeldf))
+    for (ri, r) in enumerate(eachrow(label_df))
         b, p = r.bee, r.plant
-        for (fi, f) in enumerate(feats)
-            beevec, plantvec = f[b], f[p]
-            for i in 1:length(f[b])
-                featdf[ri, "$(string(typeof(embeddings[fi])))_BEE$i"] = beevec[i]
-            end
-            for i in 1:length(f[p])
-                featdf[ri, "$(string(typeof(embeddings[fi])))_PLANT$i"] = plantvec[i]
-            end
+        beevec, plantvec = emb[b], emb[p]
+        for i in eachindex(beevec)
+            feature_df[ri, "$(string(typeof(rep.embed_model)))_BEE$i"] = beevec[i]
+        end
+        for i in eachindex(plantvec)
+            feature_df[ri, "$(string(typeof(rep.embed_model)))_PLANT$i"] = plantvec[i]
         end
     end
-    return hcat(labeldf, featdf)
+
+    feature_df = MLJ.transform(fit!(machine(Standardizer(), feature_df)),feature_df)
+    return hcat(label_df, feature_df)
 end
 
-# each row is pair of species
+function feature_dataframe(data, reps::Vector{S}) where S<:SpeciesRepresentations
+    label_df = label_dataframe(data)
+    feature_df = hcat([_initialize_df(r.embed_model, 2outdim(r.embed_model), label_df) for r in reps]...)
+    for (ri, r) in enumerate(eachrow(label_df))
+        b, p = r.bee, r.plant
+        for rep in reps
+            emb = rep.embedding
+            beevec, plantvec = emb[b], emb[p]
+            for i in eachindex(beevec)
+                feature_df[ri, "$(string(typeof(rep.embed_model)))_BEE$i"] = beevec[i]
+            end
+            for i in eachindex(plantvec)
+                feature_df[ri, "$(string(typeof(rep.embed_model)))_PLANT$i"] = plantvec[i]
+            end
+        end 
+    end
+    feature_df = MLJ.transform(fit!(machine(Standardizer(), feature_df)),feature_df)
+    hcat(label_df, feature_df)
+end
+
 function label_dataframe(data)
     allpairs = [(b, p) for b in bees(data), p in plants(data)]
 
@@ -57,3 +54,13 @@ function label_dataframe(data)
     end
     return df
 end
+
+function _initialize_df(emb_model, feature_dims, label_df)
+    per_species_dim = feature_dims ÷ 2
+    
+    cols = []
+    push!(cols, ["$(string(typeof(emb_model)))_BEE$fi" => zeros(nrow(label_df)) for fi in 1:per_species_dim]...)
+    push!(cols, ["$(string(typeof(emb_model)))_PLANT$fi" => zeros(nrow(label_df)) for fi in 1:per_species_dim]...)
+    DataFrame(cols...)
+end 
+

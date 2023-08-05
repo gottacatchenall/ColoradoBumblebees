@@ -2,6 +2,8 @@ module ColoradoBumblebees
     using Reexport
 
     @reexport using AbstractTrees
+    @reexport using BSON
+    @reexport using Clustering 
     @reexport using CSV
     @reexport using Dates
     @reexport using DataFrames

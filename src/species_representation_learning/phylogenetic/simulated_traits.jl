@@ -3,9 +3,9 @@ Base.@kwdef struct SimulatedTraits <: Phylogenetic
     variance_distribution = Exponential(1.0)
     truncated_dims = 8
 end
-outdim(st::SimulatedTraits, ::Union{Type{Bee},Type{Plant}}) = st.truncated_dims
+outdim(st::SimulatedTraits) = st.truncated_dims
 
-function getfeatures(st::SimulatedTraits, data)
+function _embed(data::BeeData, st::SimulatedTraits)
     dict = Dict()
 
     species = vcat(bees(data), plants(data))

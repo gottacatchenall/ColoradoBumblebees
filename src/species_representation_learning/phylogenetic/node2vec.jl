@@ -8,7 +8,7 @@ end
 outdim(pn2v::PhylogeneticNode2Vec, ::Union{Type{Bee},Type{Plant}}) = pn2v.embedding_dim
 outdim(pn2v::PhylogeneticNode2Vec) = pn2v.embedding_dim
 
-function getfeatures(pn2v::PhylogeneticNode2Vec, data)
+function _embed(data::BeeData, pn2v::PhylogeneticNode2Vec)
     beetree, planttree = readnw.(load_newick())
     return merge([_run_node2vec(pn2v, t, data) for t in [beetree, planttree]]...)
 end
