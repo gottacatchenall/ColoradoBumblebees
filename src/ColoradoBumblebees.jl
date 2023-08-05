@@ -35,9 +35,12 @@ module ColoradoBumblebees
     CLUSTER = false
     try 
         a = ENV["CLUSTER"]
-        a != "" 
-        CLUSTER = true
+        @info a
+        if a != "" 
+            CLUSTER = true
+        end 
     catch 
+        @info "in catch statment"
     end
 
 
