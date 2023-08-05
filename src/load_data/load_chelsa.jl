@@ -18,8 +18,22 @@ function load_layers(paths)
     layers
 end
 
-function load_baseline_layers()
-    baseline_dir = joinpath(datadir("public", "chelsa", "baseline"))
-    baseline_paths = sort_pathlist(joinpath.(baseline_dir, readdir(baseline_dir))) 
-    baseline_layers = load_layers(baseline_paths)
+
+function _chelsa_dir_path(::Type{Timespan{S,E}}, s::Type{SC}) where {S,E,SC<:Scenario}
+    startyear, endyear = S.value, E.value
+    isbaseline = Timespan{S,E} == baseline()
+    dirpath = isbaseline ? "baseline" : dirname(s)
+    yrpath = isbaseline ? "" : "$startyear-$endyear"
+    datadir("public", "chelsa", dirpath, yrpath)
+end 
+
+function load_chelsa(::Type{Timespan{S,E}}, s::Type{SC}) where {S,E, SC<:Scenario}
+    dir = _chelsa_dir_path(Timespan{S,E}, s) 
+    load_layers([joinpath(dir, x) for x in readdir(dir)])
 end
+
+function load_chelsa_baseline()
+    load_chelsa(baseline(), Baseline)
+end
+
+load_chelsa(::Type{SC}, ::Type{Timespan{S,E}}) where {S,E, SC<:Scenario} = load_chelsa(Timespan{S,E}, SC)
