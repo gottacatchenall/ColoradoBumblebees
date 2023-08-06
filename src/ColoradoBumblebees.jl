@@ -32,18 +32,9 @@ module ColoradoBumblebees
     Random.seed!(3141592653589793)
 
     GPU_AVAILABLE = CUDA.has_cuda_gpu()
-    CLUSTER = nothing
-    try 
-        a = ENV["CLUSTER"]
-        println("ENV[CLUSTER]: ", a)
-        if a != "" 
-            ColoradoBumblebees.CLUSTER = true
-        end 
-    catch 
-        ColoradoBumblebees.CLUSTER = false
-        @info "in catch statment"
-    end
+    CLUSTER = "CLUSTER" ∈ collect(keys(ENV))
 
+    printf("CLUSTER: $CLUSTER")
 
     include(srcdir("includes.jl"))
 end 
