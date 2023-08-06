@@ -34,7 +34,5 @@ module ColoradoBumblebees
     GPU_AVAILABLE = CUDA.has_cuda_gpu()
     CLUSTER = "CLUSTER" ∈ collect(keys(ENV))
 
-    printf("CLUSTER: $CLUSTER")
-
     include(srcdir("includes.jl"))
 end 

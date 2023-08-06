@@ -108,3 +108,15 @@ y_predict = MLJ.predict(mach)
 rf = RandomForest()
 
 prediction, cv = fit_model(df, rf)
+
+
+
+
+# variational AE
+
+
+ra = RecurrentAutoencoder{Variational}(
+    rnn_dims=[1,8,1], 
+    encoder_dims=[TEMPORAL_INPUT_DIM,8], 
+    decoder_dims=[8,TEMPORAL_INPUT_DIM], 
+    unit=LSTM)
