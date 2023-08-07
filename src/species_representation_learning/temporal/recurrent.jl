@@ -32,7 +32,7 @@ function _embed(data::BeeData, ae::RecurrentAutoencoder{Variational})
 
     for (k, v) in phen
         Flux.reset!(rnn) # Reset hidden state
-        hidden = vcat([rnn([ti]) for ti in v]...)
+        hidden = [rnn([ti])[1] for ti in t]
         emb = enc_μ(first_enc(hidden))
         merge!(dict, Dict(k => emb))
     end
@@ -82,7 +82,7 @@ function _train_model!(ae::RecurrentAutoencoder{Variational}, rnn, first_enc, en
         kl_div_sum = 0f0
         for t in values(x)
             Flux.reset!(rnn) # Reset hidden state
-            hidden = vcat([rnn([ti]) for ti in t]...)
+            hidden = [rnn([ti])[1] for ti in t]
             x̂, μ, logvar = _reparam_trick(first_enc, enc_μ, enc_logvar, dec, hidden)
             reconst_loss += Flux.mse(x̂, t)
             kl_div = -0.5 * sum(1.0 .+ logvar .- μ .^ 2 .- exp.(logvar))
