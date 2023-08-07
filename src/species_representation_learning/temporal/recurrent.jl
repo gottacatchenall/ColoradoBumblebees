@@ -17,7 +17,7 @@ function _embed(data::BeeData, ae::RecurrentAutoencoder{Standard})
 
     for (k, v) in phen
         Flux.reset!(rnn) # Reset hidden state
-        hidden = vcat([rnn([ti]) for ti in v]...)
+        hidden = [rnn([ti])[1] for ti in v]
         emb = enc(hidden)
         merge!(dict, Dict(k => emb))
     end
@@ -32,7 +32,7 @@ function _embed(data::BeeData, ae::RecurrentAutoencoder{Variational})
 
     for (k, v) in phen
         Flux.reset!(rnn) # Reset hidden state
-        hidden = [rnn([ti])[1] for ti in t]
+        hidden = [rnn([ti])[1] for ti in v]
         emb = enc_μ(first_enc(hidden))
         merge!(dict, Dict(k => emb))
     end
