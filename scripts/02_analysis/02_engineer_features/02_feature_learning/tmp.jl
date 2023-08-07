@@ -116,7 +116,17 @@ prediction, cv = fit_model(df, rf)
 
 
 ra = RecurrentAutoencoder{Variational}(
-    rnn_dims=[1,8,1], 
-    encoder_dims=[TEMPORAL_INPUT_DIM,8], 
+    rnn_dims=[1, 8, 1], 
+    encoder_dims=[TEMPORAL_INPUT_DIM, 8], 
     decoder_dims=[8,TEMPORAL_INPUT_DIM], 
     unit=LSTM)
+
+rep = representations(data, ra)
+
+
+# Many reps
+feat_df = feature_dataframe(data, rep)
+bf = @time batch_fit(xgb, rep, feat_df, 64)
+
+
+mean([f.fit_stats[:prauc] for f in bf.fits])
