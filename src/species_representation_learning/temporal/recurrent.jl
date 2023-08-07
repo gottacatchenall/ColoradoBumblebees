@@ -45,7 +45,6 @@ function _get_data_loader(phenlogies)
 end
 
 convert_to_gpu!(x) = x |> gpu 
-convert_to_cpu!(x) = x |> cpu 
 
 function _fitmodel(ae::RecurrentAutoencoder{Standard}, phenologies)
     loader = _get_data_loader(phenologies)
@@ -55,7 +54,6 @@ function _fitmodel(ae::RecurrentAutoencoder{Standard}, phenologies)
 
     _train_model!(ae, rnn, enc, dec, loader)
 
-    ColoradoBumblebees.GPU_AVAILABLE && convert_to_cpu!.([rnn, first_enc, enc_μ, enc_logvar, dec, loader])
     return rnn, enc, dec
 end
 
@@ -106,11 +104,6 @@ function _train_model!(ae::RecurrentAutoencoder{Variational}, rnn, first_enc, en
                 progbar; showvalues=[(Symbol("Train Loss"), trainloss)]
             )
         end
-        #=Flux.train!(variational_loss, ps, [(phenologies)], opt)
-        trainloss = variational_loss(phenologies)
-        ProgressMeter.next!(
-            progbar; showvalues=[(Symbol("Train Loss"), trainloss)]
-        )=#
     end
 end 
 
