@@ -65,7 +65,6 @@ function _fitmodel(ae::RecurrentAutoencoder{Variational}, phenologies)
 
     _train_model!(ae, rnn, first_enc, enc_μ, enc_logvar, dec, loader)
 
-    ColoradoBumblebees.GPU_AVAILABLE && convert_to_cpu!.([rnn, first_enc, enc_μ, enc_logvar, dec, loader])
     return rnn, first_enc, enc_μ, enc_logvar, dec
 end
 
