@@ -1,7 +1,7 @@
 const FIT_STATS_DIR = "fit_stats"
 const PREDICTION_DF_DIR = "predictions"
 
-artifactdir() = "./artifacts"
+artifactdir() = projectdir("artifacts")
 
 _write_json(writepath, d::Dict) = open(writepath, "w") do f
     write(f, JSON.json(d))
