@@ -124,6 +124,8 @@ ra = RecurrentAutoencoder{Variational}(
 
 
 rep = representations(data, ra)
+ColoradoBumblebees.save(rep)
+
 
 savename(rep)
 

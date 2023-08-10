@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --account=def-gonzalez
 #SBATCH --gpus-per-node=1
-#SBATCH --mem=8G               # memory per node
-#SBATCH --time=30:00
+#SBATCH --mem=16G               # memory per node
+#SBATCH --time=1:06:00
 
 module load cuda
 module load julia
