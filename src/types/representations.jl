@@ -20,5 +20,5 @@ path(sr::SpeciesRepresentations) = joinpath(
 
 
 DrWatson.default_prefix(sr::SpeciesRepresentations{T,P}) where {T,P} = "SpeciesRepresentation_"
-
 DrWatson.savename(sr::SpeciesRepresentations{T,P}) where {T,P} = string(T)*"("*savename(sr.embed_model)*")"
+

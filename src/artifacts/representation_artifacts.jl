@@ -21,13 +21,26 @@ end
 function _representations_to_dict(reps::Vector{S}) where S<:SpeciesRepresentations
     d = Dict()
     for r in reps
-        merge!(d, Dict(string(typeof(r.embed_model)) => struct2dict(r.embed_model)))
+        dict = typeof(r.embed_model) <: RecurrentAutoencoder ? struct2dict(_deserialize(r)) : struct2dict(r.embed_model)
+        merge!(d, Dict(string(typeof(r.embed_model)) => dict))
     end
     d
 end
 
-function _representations_to_dict(rep::SpeciesRepresentations)
-    struct2dict(rep.embed_model)
+function _deserialize(rep::SpeciesRepresentations{RecurrentAutoencoder{V}}) where V
+    # convert rep.embed_model to a dict, replace the unserialiables with Symbols
+    # of the name, voila 
+    d = Dict([f=>getfield(rep.embed_model, f) for f in fieldnames(typeof(rep.embed_model))])
+
+    d[:opt] = Symbol("ADAM_η=$(d[:opt].eta)")
+    d[:unit] = Symbol(string(d[:unit]))
+    
+
+    return RecurrentAutoencoder{V}(;d...)
+end 
+
+function _representations_to_dict(rep::SpeciesRepresentations{T}) where T 
+    return T <: RecurrentAutoencoder ? struct2dict(_deserialize(rep).embed_model) : struct2dict(rep.embed_model)
 end
 
 function _embed_df_to_embed_dict(embed_df)
@@ -58,6 +71,7 @@ function _embed_dict_to_df(embed_dict)
     end
     df
 end
+
 
 function _reconstruct_representation(representation_metadata)
     # TODO it will be easier to combine this with the save artifacts 

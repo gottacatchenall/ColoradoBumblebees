@@ -9,6 +9,16 @@ end
 outdim(ae::RecurrentAutoencoder) = ae.encoder_dims[end]
 outdim(ae::RecurrentAutoencoder, ::Union{Type{Bee},Type{Plant}}) = outdim(ae)
 
+function DrWatson.savename(ae::RA) where RA<:RecurrentAutoencoder
+    η = ae.opt.eta
+
+    enc_dims = ae.encoder_dims
+    dec_dims = ae.decoder_dims
+    unit = string(ae.unit)
+
+    "unit_$(unit)_learningrate_$(η)_enc_$(enc_dims)_dec_$(dec_dims)_nepochs_$(ae.n_epochs)"
+end
+
 function _embed(data::BeeData, ae::RecurrentAutoencoder{Standard})
     phen = load_phenology(data)
     rnn, enc, _ = _fitmodel(ae, phen)

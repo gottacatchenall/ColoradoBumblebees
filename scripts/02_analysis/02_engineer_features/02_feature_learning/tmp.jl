@@ -116,12 +116,20 @@ prediction, cv = fit_model(df, rf)
 
 
 ra = RecurrentAutoencoder{Variational}(
-    rnn_dims=[1, 8, 1], 
+    rnn_dims=[1,1], 
     encoder_dims=[TEMPORAL_INPUT_DIM, 8], 
     decoder_dims=[8,TEMPORAL_INPUT_DIM], 
     unit=LSTM)
 
+
+
 rep = representations(data, ra)
+
+savename(rep)
+
+
+ColoradoBumblebees.save(rep)
+
 
 
 # Many reps
