@@ -1,6 +1,7 @@
 using DrWatson
 @quickactivate :ColoradoBumblebees
 
+using CUDA
 
 function main(;unit=RNN)
 
