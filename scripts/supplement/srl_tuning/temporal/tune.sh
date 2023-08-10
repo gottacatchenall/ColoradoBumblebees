@@ -9,6 +9,6 @@ module load julia
 module load cudnn 
 
 
-export JULIA_DEPOT_PATH="/project/def-gonzalez/mcatchen/JuliaEnvironments/FluxGPU"
+export JULIA_DEPOT_PATH="/project/def-gonzalez/mcatchen/JuliaEnvironments/COBees"
 
 julia ae_tuning.jl
