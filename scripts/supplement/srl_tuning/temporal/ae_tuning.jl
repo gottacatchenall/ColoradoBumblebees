@@ -18,7 +18,7 @@ function main(;unit=RNN)
     enc_dec_sets = filter(x-> x[:encoder_dims][end] == x[:decoder_dims][begin], a)
 
 
-    models = vcat([RecurrentAutoencoder{Standard}(; unit=unit, opt=ADAM(0.005), e...) for e in enc_dec_sets],
+    models = vcat([RecurrentAutoencoder{Standard}(; unit=unit,opt=ADAM(0.005), e...) for e in enc_dec_sets],
     [RecurrentAutoencoder{Variational}(; unit=unit, opt=ADAM(0.0005), e...) for e in enc_dec_sets])
 
 
