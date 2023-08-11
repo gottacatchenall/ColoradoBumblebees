@@ -1,9 +1,12 @@
 #!/bin/bash
-#SBATCH --account=def-gonzalez
-#SBATCH --mem=16G               # memory per node
-#SBATCH --time=30:00
-#SBATCH --nodes=4
-#SBATCH --ntasks-per-node=1
+#SBATCH --job-name=temporal_batch_fits 
+#SBATCH --output=slurm-%A.%a.out 
+#SBATCH --nodes=1               
+#SBATCH --ntasks=1               
+#SBATCH --cpus-per-task=1        
+#SBATCH --mem-per-cpu=16G      
+#SBATCH --time=00:20:00         
+#SBATCH --array=1-64 
 
 
 module load julia/1.8.5
