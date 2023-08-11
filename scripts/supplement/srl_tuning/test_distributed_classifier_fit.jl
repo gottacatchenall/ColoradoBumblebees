@@ -2,7 +2,7 @@ using DrWatson
 @quickactivate :ColoradoBumblebees
 
 
-function run_model()
+function run_model(; num_replicates = 64)
     rep_dir = joinpath(artifactdir(), "species_representations")
 
     temporal_reps = sort(filter(x->contains(x, "RecurrentAutoencoder"), readdir(rep_dir)))
