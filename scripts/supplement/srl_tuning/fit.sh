@@ -11,4 +11,4 @@ module load julia/1.8.5
 export JULIA_DEPOT_PATH="/project/def-gonzalez/mcatchen/JuliaEnvironments/COBees"
 export CLUSTER="true"
 
-julia test_distributed_classifier_fit.jl
+julia -d 4 test_distributed_classifier_fit.jl
