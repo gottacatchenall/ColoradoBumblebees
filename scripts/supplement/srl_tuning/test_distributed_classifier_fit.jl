@@ -16,3 +16,6 @@ function run_model()
     bf = batch_fit(model, this_embed, feat_df, num_replicates)
     ColoradoBumblebees.save(bf)
 end
+
+
+run_model()
