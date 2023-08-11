@@ -18,6 +18,13 @@ function DrWatson.savename(ae::RA) where RA<:RecurrentAutoencoder
     "unit_$(unit)_learningrate_$(η)_rnn_$(rnn_dims)_dec_$(dec_dims)_nepochs_$(ae.n_epochs)"
 end
 
+function _reconstruct_representation(::Type{RA}, θ::Dict) where {RA<:RecurrentAutoencoder}
+    θ["unit"] = Dict("LSTM"=>LSTM, "RNN"=>RNN, "GRU"=>GRU)[θ["unit"]]
+    η =  parse(Float32, split(θ["opt"],"=")[2]) 
+    θ["opt"] = ADAM(η)
+    θ
+end
+
 function _embed(data::BeeData, ae::RecurrentAutoencoder{Standard})
     phen = load_phenology(data)
     rnn, enc, _ = _fitmodel(ae, phen)

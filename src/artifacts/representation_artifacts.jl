@@ -72,6 +72,7 @@ function _embed_dict_to_df(embed_dict)
     df
 end
 
+_reconstruct_representation(::Type{S}, θ) where S<:ColoradoBumblebees.EmbeddingType = nothing
 
 function _reconstruct_representation(representation_metadata)
     # TODO it will be easier to combine this with the save artifacts 
@@ -82,9 +83,19 @@ function _reconstruct_representation(representation_metadata)
 
     @info representation_metadata
 
+    # okay so 
+
     reps = _get_representation_obj.(keys(representation_metadata))
     
     θs = collect(values(representation_metadata))
+
+    # add dispatch to fix any model specific issues, where fields have to be
+    # replaced with types. e.g. for recurrentautoencodder, the opt field needs
+    # to be replaced with the object, to just the symbol
+
+    for (i,θ) in enumerate(θs)
+        _reconstruct_representation(reps[i], θ)
+    end
 
     reconstructed_reps = [r(; Dict([Symbol(k) => v for (k,v) in θs[i]])...)     for (i,r) in enumerate(reps)]
 end

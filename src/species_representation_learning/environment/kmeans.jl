@@ -2,6 +2,7 @@ Base.@kwdef struct KMeansEnvironmentEmbedding <: Environment
     k::Any = 4 # embedding dimensions
 end
 
+
 outdim(kmee::KMeansEnvironmentEmbedding) = 7kmee.k
 outdim(kmee::KMeansEnvironmentEmbedding, ::Union{Type{Bee},Type{Plant}}) = outdim(kmee)
 
