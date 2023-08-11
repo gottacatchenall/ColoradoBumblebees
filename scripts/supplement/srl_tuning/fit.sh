@@ -1,6 +1,7 @@
 #!/bin/bash
+#SBATCH --account=def-gonzalez
 #SBATCH --job-name=temporal_batch_fits 
-#SBATCH --output=slurm-%A.%a.out 
+#SBATCH --output=slurm-temporal_batch_fits-%A.%a.out 
 #SBATCH --nodes=1               
 #SBATCH --ntasks=1               
 #SBATCH --cpus-per-task=1        
