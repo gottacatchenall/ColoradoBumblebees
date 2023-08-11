@@ -6,7 +6,7 @@ function run_model()
     rep_dir = joinpath(artifactdir(), "species_representations")
 
     temporal_reps = sort(filter(x->contains(x, "RecurrentAutoencoder"), readdir(rep_dir)))
-    job_id = parse(Int, ENV["SLURM_ARRAY_JOB_ID"])
+    job_id = parse(Int, ENV["SLURM_ARRAY_TASK_ID"])
 
     this_embed = temporal_reps[job_id]
 
