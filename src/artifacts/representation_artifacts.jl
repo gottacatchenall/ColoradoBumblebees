@@ -98,7 +98,8 @@ _get_representation_obj(model_string) = Dict(
     "KMeansEnvironmentEmbedding"=>KMeansEnvironmentEmbedding,
     "Pooled"=>Pooled,
     "DenseAutoencoder"=>DenseAutoencoder,
-    "RecurrentAutoencoder"=>RecurrentAutoencoder
+    "RecurrentAutoencoder{Standard}"=>RecurrentAutoencoder{Standard},
+    "RecurrentAutoencoder{Variational}"=>RecurrentAutoencoder{Variational}
     )[model_string]
 
 

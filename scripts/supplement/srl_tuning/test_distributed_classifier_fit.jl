@@ -8,7 +8,8 @@ function run_model()
     temporal_reps = sort(filter(x->contains(x, "RecurrentAutoencoder"), readdir(rep_dir)))
     job_id = parse(Int, ENV["SLURM_ARRAY_TASK_ID"])
 
-    this_embed = temporal_reps[job_id]
+    jp = joinpath(rep_dir, temporal_reps[job_id])
+    this_embed = ColoradoBumblebees.load(jp)
 
     data = load_data()
     model = RandomForest()
