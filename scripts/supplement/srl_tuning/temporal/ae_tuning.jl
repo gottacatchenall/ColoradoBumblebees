@@ -3,7 +3,7 @@ using DrWatson
 
 using CUDA
 
-function main(;unit=RNN)
+function main(;unit=RNN, n_epochs=1000)
 
     data = load_data()
 
@@ -18,8 +18,8 @@ function main(;unit=RNN)
     enc_dec_sets = filter(x-> x[:encoder_dims][end] == x[:decoder_dims][begin], a)
 
 
-    models = vcat([RecurrentAutoencoder{Standard}(; unit=unit,opt=ADAM(0.005), e...) for e in enc_dec_sets],
-    [RecurrentAutoencoder{Variational}(; unit=unit, opt=ADAM(0.0005), e...) for e in enc_dec_sets])
+    models = vcat([RecurrentAutoencoder{Standard}(;  n_epochs=n_epochs, unit=unit,opt=ADAM(0.005), e...) for e in enc_dec_sets],
+    [RecurrentAutoencoder{Variational}(; n_epochs=n_epochs, unit=unit, opt=ADAM(0.001), e...) for e in enc_dec_sets])
 
 
     for m in models
@@ -30,6 +30,5 @@ end
 
 
 main(unit=LSTM)
-
-#main(unit=RNN)
-#main(unit=GRU)
+main(unit=RNN)
+main(unit=GRU)

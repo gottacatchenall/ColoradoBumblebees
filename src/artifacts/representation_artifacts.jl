@@ -12,10 +12,14 @@ function ColoradoBumblebees.save(x::SpeciesRepresentations{T}) where T
 end
 
 function _load_species_representation(path)
-    metadata = _read_json(joinpath(path, "metadata.json"))
+    # todo: gotta change the path save in species rep is relative to projectdir,
+    # and isn't absolute
+    relative_path = "."*string(split(path, "ColoradoBumblebees")[2])
+    @info relative_path
+    metadata = _read_json(joinpath(relative_path, "metadata.json"))
     embed_model = _reconstruct_representation(metadata["representations"])[1]
-    embed_dict = _embed_df_to_embed_dict(CSV.read(joinpath(path, "representation.csv"), DataFrame)) 
-    SpeciesRepresentations(embed_model, embed_dict, path)
+    embed_dict = _embed_df_to_embed_dict(CSV.read(joinpath(relative_path, "representation.csv"), DataFrame)) 
+    SpeciesRepresentations(embed_model, embed_dict, relative_path)
 end
 
 function _representations_to_dict(reps::Vector{S}) where S<:SpeciesRepresentations

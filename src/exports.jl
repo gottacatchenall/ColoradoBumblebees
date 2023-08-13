@@ -83,7 +83,11 @@ export getfeatures
 export feature_dataframe, label_dataframe
 export embed
 
-export representations
+export representations, representation
+export model
+export predictions
+export fit_stats
+export prauc, praucs
 
 export MetawebSVD, LFSVD 
 export SimulatedTraits, PhylogeneticNode2Vec
