@@ -7,6 +7,11 @@
     - On the _Trees_ tab, change the Tree Prior to a Yule Process.
     - Export the XML file with _Generate Beast File_
 
+    1.a Enforce the constraints of clades level.
+        - Go to the _Taxa_ tab and load in each taxa set in the
+        `data/phylogeny/taxa_groups` via the "Import Taxon Sets" button. Select
+        "Stem" for all groups.
+
 2. Run BEAST on the two XML configuration files for each species group.
 
 3. Run TreeAnnotater on the `.trees` output file for the `BEAST` run to create a

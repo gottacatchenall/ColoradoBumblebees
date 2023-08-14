@@ -12,7 +12,7 @@ model(cf::ClassificationFit) = cf.model
 fit_stats(cf::ClassificationFit) = cf.fit_stats
 predictions(cf::ClassificationFit) = cf.predictions
 representation(cf::ClassificationFit) = cf.representation
-prauc(cf::ClassificationFit) = fit_stats(cf)["prauc"]
+prauc(cf::ClassificationFit) = haskey(fit_stats(cf), "prauc") ? fit_stats(cf)["prauc"] : fit_stats(cf)[:prauc]
 
 struct BatchFit{M,V}
     fits::Vector{ClassificationFit{M,V}}

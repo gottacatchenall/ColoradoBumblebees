@@ -26,7 +26,7 @@ function _run_node2vec(pn2v::PhylogeneticNode2Vec, tree, data)
         isbee = split(sp, " ")[1] == "Bombus"
         f = isbee ? bee : plant
         speciesobj = f(data, sp)
-        merge!(dict, Dict(speciesobj => vecs[:, i]))
+        !isnothing(speciesobj) && merge!(dict, Dict(speciesobj => vecs[:, i]))
     end
     return dict
 end
