@@ -4,7 +4,7 @@ using DrWatson
 using CUDA
 
 function main(;unit=RNN)
-
+    print("GPU: $(ColoradoBumblebees.GPU_AVAILABLE)")
     data = load_data()
 
     d = Dict(
