@@ -89,7 +89,7 @@ export predictions
 export fit_stats
 export prauc, praucs
 
-export MetawebSVD, LFSVD 
+export MetawebSVD, LFSVD, GraphAutoencoder
 export SimulatedTraits, PhylogeneticNode2Vec
 export KMeansEnvironmentEmbedding
 export Pooled

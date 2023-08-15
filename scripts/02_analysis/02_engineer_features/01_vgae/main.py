@@ -123,8 +123,8 @@ def fit_model(edgelist, node_ids, input_feature_dim, embed_dims):
     
     os.makedirs("./artifacts/vgae/fits",exist_ok=True)
     
-    vgae_out_path = "./artifacts/vgae/fits/VGAE_inputdim_%d_embeddim%d.csv"  % (input_feature_dim, embed_dims)
-    gae_out_path = "./artifacts/vgae/fits/GAE_inputdim_%d_embeddim%d.csv" % (input_feature_dim, embed_dims)
+    vgae_out_path = "./artifacts/vgae/fits/VGAE_inputdim_%d_embeddim_%d.csv"  % (input_feature_dim, embed_dims)
+    gae_out_path = "./artifacts/vgae/fits/GAE_inputdim_%d_embeddim_%d.csv" % (input_feature_dim, embed_dims)
     gae_df.to_csv(gae_out_path)
     vgae_df.to_csv(vgae_out_path)
     return  
