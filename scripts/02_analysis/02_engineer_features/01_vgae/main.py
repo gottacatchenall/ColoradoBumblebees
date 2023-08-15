@@ -8,30 +8,21 @@ from torch_geometric.utils import negative_sampling
 from torch_geometric.nn import GATv2Conv
 
 import sys 
-sys.path.append('./scripts/02_analysis/02_engineer_features/01_vgae')
-from load_metaweb import load_edgelist
+import pandas as pd
+import os
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-transform = T.Compose([
-    T.NormalizeFeatures(),
-    T.ToDevice(device),
-    T.RandomLinkSplit(num_val=0.05, num_test=0.1, is_undirected=True,
-                      split_labels=True, add_negative_train_samples=True,
-                      neg_sampling_ratio=4.0),
-])
+def load_edgelist():
+    edgelist_df = pd.read_csv("./artifacts/vgae/edgelist.csv")
+    el = []    
+    for index, row in edgelist_df.iterrows():
+        el.append([row['bee']-1, row['plant']-1])
+    return torch.tensor(el, dtype=torch.long).transpose(0,1)
 
-edgelist = load_edgelist()
+def load_node_ids():
+    return pd.read_csv("./artifacts/vgae/node_ids.csv")
 
-noise_features = torch.randn_like(feature_mat)
-
-data = Data(edge_index=edgelist, x=noise_features)
-train_data, val_data, test_data = transform(data)
-
-
-
-#dataset = Planetoid("", "Cora", transform=transform)
-#cora, _, _ = dataset[0]
-
+def lookup_species_name(node_ids, id):
+    return(node_ids[node_ids.node_id.values == (id+1)].species.values)
 
 class GCNEncoder(torch.nn.Module):
     def __init__(self, in_channels, out_channels):
@@ -55,37 +46,7 @@ class VariationalGCNEncoder(torch.nn.Module):
         x = self.conv1(x, edge_index).relu()
         return self.conv_mu(x, edge_index), self.conv_logstd(x, edge_index)
 
-
-class LinearEncoder(torch.nn.Module):
-    def __init__(self, in_channels, out_channels):
-        super().__init__()
-        self.conv = GCNConv(in_channels, out_channels)
-
-    def forward(self, x, edge_index):
-        return self.conv(x, edge_index)
-
-
-class VariationalLinearEncoder(torch.nn.Module):
-    def __init__(self, in_channels, out_channels):
-        super().__init__()
-        self.conv_mu = GCNConv(in_channels, out_channels)
-        self.conv_logstd = GCNConv(in_channels, out_channels)
-
-    def forward(self, x, edge_index):
-        return self.conv_mu(x, edge_index), self.conv_logstd(x, edge_index)
-
-""" 
-if not args.variational and not args.linear:
-    model = GAE(GCNEncoder(in_channels, out_channels))
-elif not args.variational and args.linear:
-    model = GAE(LinearEncoder(in_channels, out_channels))
-elif args.variational and not args.linear:
-    model = VGAE(VariationalGCNEncoder(in_channels, out_channels))
-elif args.variational and args.linear:
-    model = VGAE(VariationalLinearEncoder(in_channels, out_channels))
-"""
-
-def train(variational=False):
+def train(model, optimizer, train_data, variational=False):
     model.train()
     optimizer.zero_grad()
     z = model.encode(train_data.x, train_data.edge_index)
@@ -97,64 +58,92 @@ def train(variational=False):
     optimizer.step()
     return float(loss)
 
-
 @torch.no_grad()
-def test(data):
+def test(model, data):
     model.eval()
     z = model.encode(data.x, data.edge_index)
     return model.test(z, data.pos_edge_label_index, data.neg_edge_label_index)
 
 
-in_channels, out_channels = train_data.num_features, 8
+def get_embedding_df(embedding, node_ids):
+    df = pd.DataFrame()
+
+    num_species, emb_dim = embedding.size()
+    
+    for i in range(emb_dim):
+        df["dim_%d" % i] = [0.0 for i in range(num_species)]
+    df["species"] = ["" for i in range(num_species)]
+    
+    for i,x in enumerate(embedding):
+        sp = lookup_species_name(node_ids, i)
+        df["species"][i] = sp[0]
+        for j,y in enumerate(x):
+            df["dim_%d" % j][i] = y.item()
+        
+        #for j in range(emb_dim):
+            #=for k in range(num_species):
+            #   df["dim_%d" % j][k] = embedding[i][j,k].item()
+    return df
 
 
-models = [
-    GAE(LinearEncoder(in_channels, out_channels)),
-    VGAE(VariationalLinearEncoder(in_channels, out_channels)),
-    GAE(GCNEncoder(in_channels, out_channels)),
-    VGAE(VariationalGCNEncoder(in_channels, out_channels)),
-]
+def fit_model(edgelist, node_ids, input_feature_dim, embed_dims):   
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    transform = T.Compose([
+        T.NormalizeFeatures(),
+        T.ToDevice(device),
+        T.RandomLinkSplit(num_val=0., num_test=0.5, is_undirected=True,
+                        split_labels=True, add_negative_train_samples=True,
+                        neg_sampling_ratio=1.),
+    ])
+    
+    noise_features = torch.randn_like(torch.zeros(NUM_SPECIES, input_feature_dim))
+    data = Data(edge_index=edgelist, x=noise_features)
+    train_data, val_data, test_data = transform(data)
+    
+    gae = GAE(GCNEncoder(input_feature_dim, embed_dims))
+    vgae = VGAE(VariationalGCNEncoder(input_feature_dim, embed_dims))
 
-is_variational = [False, True, False, True]
+    models = [gae, vgae]
+    is_variational = [False, True]
+
+    for i,model in enumerate(models):
+        model = model.to(device)
+        optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+
+        num_epochs = 50
+        for epoch in range(1, num_epochs + 1):
+            loss = train(model, optimizer, train_data, variational=is_variational[i])
+            auc, ap = test(model, test_data)
+            print(f'Model: {model}, Epoch: {epoch:03d}, AUC: {auc:.4f}, AP: {ap:.4f}')
+
+    embeddings = [model.encode(noise_features, data.edge_index) for model in models]
+    
+    gae_df = get_embedding_df(embeddings[0], node_ids)
+    vgae_df = get_embedding_df(embeddings[1], node_ids)
+    
+    os.makedirs("./artifacts/vgae/fits",exist_ok=True)
+    
+    vgae_out_path = "./artifacts/vgae/fits/VGAE_inputdim_%d_embeddim%d.csv"  % (input_feature_dim, embed_dims)
+    gae_out_path = "./artifacts/vgae/fits/GAE_inputdim_%d_embeddim%d.csv" % (input_feature_dim, embed_dims)
+    gae_df.to_csv(gae_out_path)
+    vgae_df.to_csv(vgae_out_path)
+    return  
+    
 
 
-for i,model in enumerate(models):
-    model = model.to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-
-    num_epochs = 1500
-    for epoch in range(1, num_epochs + 1):
-        loss = train(variational=is_variational[i])
-        auc, ap = test(test_data)
-        print(f'Model: {model}, Epoch: {epoch:03d}, AUC: {auc:.4f}, AP: {ap:.4f}')
+edgelist = load_edgelist()
+node_ids = load_node_ids()
 
 
+NUM_SPECIES = 175
 
-# this is the embedding for each node
-embeddings = [model.encode(noise_features, data.edge_index) for model in models]
+input_feature_dim = [1028, 256, 64, 16]
+embed_dims = [64, 32, 16, 8, 4]
 
-import pandas as pd
-feature_df = pd.read_csv("data/features.csv")
 
-def lookup_species_name(id):
-    return feature_df[feature_df["node_id"] == id].species.values[0]
-
-model_names = ["Linear_GAE", "Linear_VGAE", "GAE", "VGAE"]
-
-dict = {}
-
-for model_id,e in enumerate(embeddings):
-    this_dict = {}
-    for i,x in enumerate(e):
-        this_dict[lookup_species_name(i)] = str(list(x.detach().numpy()))
-    dict[model_names[model_id]] = this_dict
+for inp in input_feature_dim:
+    for emb in embed_dims:
+        fit_model(edgelist, node_ids, inp, emb)
 
 
 
-import json
-json_object = json.dumps(dict, indent=4)
-
-json_object
-
-with open("emb.json", "w") as outfile:
-    outfile.write(json_object)
