@@ -12,6 +12,7 @@ module ColoradoBumblebees
     @reexport using Distributions
     @reexport using DrWatson    
     @reexport using EcologicalNetworks
+    @reexport using EvoTrees
     @reexport using Flux
     @reexport using Graphs
     @reexport using JSON
@@ -20,6 +21,7 @@ module ColoradoBumblebees
     @reexport using MLJ
     @reexport using MultivariateStats
     @reexport using NewickTree
+    @reexport using OffsetArrays
     @reexport using Phylo
     @reexport using ProgressMeter
     @reexport using Random

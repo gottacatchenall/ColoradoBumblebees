@@ -40,7 +40,7 @@ export LogisticRegression
 
 # Contants     
 export TEMPORAL_INPUT_DIM, EXTENT, BIOLAYERS
-
+export TIMESPANS 
 export RANDOM_FOREST, LOGISTIC_MODEL, BOOSTED_REGRESSION_TREE, XGBOOST
 
 # -----------------------------------------------------------------
@@ -69,6 +69,7 @@ export load_baseline_layers
 export load_interaction_data
 export load_newick
 export load_phenology
+export load_sdm
 
 export save 
 export path
@@ -106,12 +107,15 @@ export balance_sample
 export compute_fit_stats
 
 
-export TIMESPAN
-
 export Scenario 
 
 export Baseline 
+export Timespan
 export SSP1_26 
 export SSP2_45 
 export SSP3_70 
 export baseline
+
+export BoostedRegressionSDM
+export SpeciesDistribution
+export make_sdms

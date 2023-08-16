@@ -1,70 +1,132 @@
-function fit_and_project_sdms(; cluster=false)
-    occurrence_df = load_occurrence_data()
-    species = unique(occurrence_df.species)
-    dfs = [filter(r->r.species == s, occurrence_df) for s in species]
-
-    lk = ReentrantLock()
-
-    Threads.@threads for i in eachindex(species)
-        @info "Species: $(species[i])\tThread:$(Threads.threadid())"
-        this_df = dfs[i]
-        fit_sdm(species[i], this_df, lk, cluster=cluster)
-        return
-    end
-end
-
-function fit_sdm(species_name, occurrence_df, filelock; cluster=false)
+function make_sdms(species_name, occurrence_df; cluster=false, pa_buffer_distance=20.)
+    data = load_data()
+    
     outdir = cluster ? joinpath("/scratch/mcatchen/BeeSDMs", species_name, "baseline") : joinpath(datadir("artifacts", "SDMs", species_name, "baseline"))
     mkpath(outdir)
 
     baseline_layers = load_chelsa_baseline() 
-
     occurrence_layer = SimpleSDMPredictor(zeros(Bool, size(baseline_layers[1])); SpeciesDistributionToolkit.boundingbox(baseline_layers[begin])... )
     convert_occurrence_to_tif!(occurrence_layer, occurrence_df)
-    pres, abs, bgmask = get_pres_and_abs(occurrence_layer)
+
+    pres, abs, bgmask = get_pres_and_abs(occurrence_layer; pa_buffer_distance=pa_buffer_distance)
 
     X, y, pres_and_abs = get_features_and_labels(pres, abs, baseline_layers)
     Xtrain, Ytrain, Xtest, Ytest = test_train_split(X, y)
 
     model = fit_evotree(
-        brt_params(GaussianBRT()); x_train=Xtrain, y_train=Ytrain, x_eval=Xtest, y_eval=Ytest
+        brt_params(BoostedRegressionSDM()); 
+        x_train=Xtrain, 
+        y_train=Ytrain, 
+        x_eval=Xtest, 
+        y_eval=Ytest
     )
 
-    pred, uncert = predict_single_sdm(model, baseline_layers)
-    fit_dict = compute_fit_stats_and_cutoff(pred, pres_and_abs, y)    
+    prob, uncert = predict_single_sdm(model, baseline_layers)
+    fit_dict = compute_fit_stats_and_cutoff(prob, pres_and_abs, y)    
+    
+    species = contains(species_name, "Bombus") ? bee(data, species_name) : plant(data, species_name)
 
-    lock(filelock) do
-        SpeciesDistributionToolkit.save(joinpath(outdir, "prediction.tif"), pred)
-        SpeciesDistributionToolkit.save(joinpath(outdir, "uncertainty.tif"), uncert)
-        json_string = JSON.json(fit_dict)
-        open(joinpath(outdir, "fit.json"), "w") do f
-            JSON.print(f, json_string)
-        end
-    end 
+    baseline_sdm = SpeciesDistribution(species, prob, uncert, fit_dict, baseline(), Baseline)
 
-    project_sdms(model, species_name, filelock, cluster=cluster)
+    future_projections = project_sdms(model, species, fit_dict, cluster=cluster)
+
+    [baseline_sdm, future_projections...]
 end
 
-function project_sdms(model, species, lk; cluster=false)
+function project_sdms(model, species, fit_dict; cluster=false)
     ssps = [SSP1_26, SSP2_45, SSP3_70]
-    years = TIMESPANS
+    years = TIMESPANS[2:end]
+
+    distributions = []
+
+    progbar = ProgressMeter.Progress(length(ssps)*length(years))
+          
 
     for ssp in ssps
         for year in years
-            layers = load_layers(layer_paths)
+            layers = load_chelsa(year, ssp)
             
-            outdir = cluster ?  joinpath(datadir("/scratch/mcatchen/BeeSDMs", species, ssp, year)) : joinpath(datadir("artifacts", "SDMs", species, ssp, year))
+            outdir = cluster ?  joinpath(datadir("/scratch/mcatchen/BeeSDMs", species.name, string(ssp), string(year))) : joinpath(datadir("artifacts", "SDMs", species.name, string(ssp), string(year)))
             mkpath(outdir)
 
-            pred, uncert = predict_single_sdm(model, layers)
+            prob, uncert = predict_single_sdm(model, layers)
             
-            lock(lk) do 
-                SpeciesDistributionToolkit.save(joinpath(outdir, "prediction.tif"), pred)
-                SpeciesDistributionToolkit.save(joinpath(outdir, "uncertainty.tif"), uncert)
-            end
+
+            push!(distributions, SpeciesDistribution(species, prob, uncert, fit_dict, year, ssp))
+            ProgressMeter.next!(
+                progbar; showvalues=[(Symbol("SSP"), ssp), (Symbol("Years"), year)]
+            )
         end
     end
+    distributions
 end
+
+function get_pres_and_abs(presences; pa_buffer_distance = 10.)
+    @time buffer = _new_pa(presences; distance = pa_buffer_distance)
+    bgmask = (.!buffer)
+    absences = SpeciesDistributionToolkit.sample(bgmask, floor(Int, 0.5sum(presences)))
+    replace!(absences, false => nothing)
+
+    return presences, absences, bgmask
+end
+
+function _check_bounds(template, i)
+    sz = size(template)
+    i[1] <= 0 && return false
+    i[2] <= 0 && return false
+    i[1] > sz[1] && return false
+    i[2] > sz[2] && return false
+    return true
+end
+
+function _new_pa(
+    presences::T;
+    distance::Number = 100.0,
+) where {T <: SimpleSDMLayer}
+    presence_only = mask(presences, presences)
+    presence_idx = findall(x->x==1,presence_only.grid)
+
+    background = similar(presences, Bool)
+    background.grid .= true
+
+    y,x = size(presences)
+    bbox = boundingbox(presences)
+    Δx = (bbox[:right] - bbox[:left])/ x   # how much a given cell is in long
+    Δy = (bbox[:top] - bbox[:bottom])/ y   # how much a given cell is in lat
+    
+    lon = zeros(Float64, 2)
+    lat = zeros(Float64, 2)
+    for (i, angl) in enumerate((0:1) / 4)
+        α = deg2rad(360.0angl)
+        lon[i], lat[i] = SpeciesDistributionToolkit._known_point([0.0, 0.0], distance, α)
+    end
+
+    max_cells_x, max_cells_y =  Int32.(floor.([lon[2] / Δx, lat[1] / Δy])) 
+
+    radius_mask = OffsetArray(ones(Bool, 2max_cells_x+1, 2max_cells_y+1), -max_cells_x:max_cells_x, -max_cells_y:max_cells_y) 
+
+    for i in CartesianIndices(radius_mask)
+        long_offset, lat_offset = abs.([i[1], i[2]]) .* [Δx, Δy]
+
+        total_dist = sqrt(long_offset^2 + lat_offset^2)
+        radius_mask[i] = total_dist <= max(lon[2], lat[1])
+    end
+
+    # Mask radius around each presence point 
+    for occ_idx in presence_idx
+        offs = CartesianIndices((-max_cells_x:max_cells_x, -max_cells_y:max_cells_y))
+        I = offs .+ occ_idx
+
+        for (i, idx) in enumerate(I)
+            if _check_bounds(background, idx) && radius_mask[offs[i]]
+                background[idx] = false
+            end 
+        end 
+    end
+    
+    return background
+end
+ 
 
 function predict_single_sdm(model, layers)
     mat = zeros(Float32, length(layers), prod(size(layers[begin])))
