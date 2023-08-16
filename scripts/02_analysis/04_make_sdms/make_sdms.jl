@@ -12,6 +12,11 @@ function main()
     @info "Species: $(species[job_id])"
     cluster = ColoradoBumblebees.CLUSTER
     sdms = make_sdms(species[job_id], occurrence_df; cluster=cluster)
+    
+    for sdm in sdms
+        ColoradoBumblebees.save(sdm)
+    end
+
 end
 
 main()
