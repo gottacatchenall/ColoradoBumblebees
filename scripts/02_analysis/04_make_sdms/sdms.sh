@@ -7,7 +7,7 @@
 #SBATCH --cpus-per-task=1        
 #SBATCH --mem-per-cpu=16G 
 #SBATCH --array=1-180 
-#SBATCH --time=20:00:00         
+#SBATCH --time=30:00         
 
 
 module load julia/1.8.5
