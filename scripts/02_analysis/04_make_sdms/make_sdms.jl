@@ -10,7 +10,7 @@ function main()
     for s in species 
         sdms = make_sdms(s, occurrence_df; cluster=cluster)
         
-        SpeciesDistributionToolkit.save("tmp.tif", sdms[1])
+        SpeciesDistributionToolkit.save("tmp.tif", sdms[1].probability)
         return 
 
         for sdm in sdms
