@@ -9,6 +9,10 @@ function main()
 
     for s in species 
         sdms = make_sdms(s, occurrence_df; cluster=cluster)
+        
+        SpeciesDistributionToolkit.save("tmp.tif", sdms[1])
+        return 
+
         for sdm in sdms
             ColoradoBumblebees.save(sdm)
         end
