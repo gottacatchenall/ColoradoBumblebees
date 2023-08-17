@@ -13,7 +13,7 @@ function main()
         return 
 
         for (i,sdm) in enumerate(sdms)
-            SpeciesDistributionToolkit.save("$s_tmp$i.tif", sdms.probability)
+            SpeciesDistributionToolkit.save("$s_tmp$i.tif", sdm.probability)
             #ColoradoBumblebees.save(sdm)
         end
     end 
