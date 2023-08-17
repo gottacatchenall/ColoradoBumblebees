@@ -45,10 +45,6 @@ function project_sdms(model, species, fit_dict; cluster=false)
     for ssp in ssps
         for year in years
             layers = load_chelsa(year, ssp)
-            
-            outdir = cluster ?  joinpath(datadir("/scratch/mcatchen/BeeSDMs", species.name, string(ssp), string(year))) : joinpath(datadir("artifacts", "SDMs", species.name, string(ssp), string(year)))
-            mkpath(outdir)
-
             prob, uncert = predict_single_sdm(model, layers)
             
 

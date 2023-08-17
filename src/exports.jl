@@ -52,7 +52,7 @@ export bee
 export plants
 export bees
 
-export artifactdir
+export artifactdir, sdmdir
 
 export cooccurence
 export occurrence
