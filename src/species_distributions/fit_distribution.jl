@@ -1,9 +1,6 @@
 function make_sdms(species_name, occurrence_df; cluster=false, pa_buffer_distance=20.)
     data = load_data()
     
-    outdir = cluster ? joinpath("/scratch/mcatchen/BeeSDMs", species_name, "baseline") : joinpath(datadir("artifacts", "SDMs", species_name, "baseline"))
-    mkpath(outdir)
-
     baseline_layers = load_chelsa_baseline() 
     occurrence_layer = SimpleSDMPredictor(zeros(Bool, size(baseline_layers[1])); SpeciesDistributionToolkit.boundingbox(baseline_layers[begin])... )
     convert_occurrence_to_tif!(occurrence_layer, occurrence_df)
