@@ -1,13 +1,13 @@
 #!/bin/bash
 #SBATCH --account=def-gonzalez
 #SBATCH --job-name=make_sdms 
-#SBATCH --output=slurm-make_sdms-%j.out
+#SBATCH --output=slurm-make_sdms.%A.%a.out
 #SBATCH --nodes=1               
 #SBATCH --ntasks=1               
 #SBATCH --cpus-per-task=1        
 #SBATCH --mem-per-cpu=16G 
 #SBATCH --array=1-180 
-#SBATCH --time=30:00         
+#SBATCH --time=45:00         
 
 
 module load julia/1.8.5
