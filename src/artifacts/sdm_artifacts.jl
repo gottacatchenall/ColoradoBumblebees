@@ -1,10 +1,10 @@
-sdmdir() = joinpath(artifactdir(), "sdms") 
+sdmdir() = joinpath("/scratch/mcatchen/sdms") #joinpath(artifactdir(), "sdms") 
 sdmdir(sp::S) where S<:Species = joinpath(artifactdir(), "sdms", sp.name)
 sdmdir(sdm::SpeciesDistribution) = joinpath(sdmdir(sdm.species), string(sdm.timespan), string(sdm.scenario))
 
 function ColoradoBumblebees.save(sdm::SpeciesDistribution)
     sdm_dir = sdmdir(sdm)
-    mkpath(sdm_dir)
+    run(`mkdir -p $sdm_dir`)
 
     SpeciesDistributionToolkit.save(joinpath(sdm_dir, "prediction.tif"), sdm.probability)
     SpeciesDistributionToolkit.save(joinpath(sdm_dir, "uncertainty.tif"), sdm.uncertainty)
