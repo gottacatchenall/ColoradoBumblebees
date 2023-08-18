@@ -6,7 +6,7 @@
 #SBATCH --ntasks=1               
 #SBATCH --cpus-per-task=1        
 #SBATCH --mem-per-cpu=16G      
-#SBATCH --time=00:20:00         
+#SBATCH --time=00:40:00         
 #SBATCH --array=1-64 
 
 
