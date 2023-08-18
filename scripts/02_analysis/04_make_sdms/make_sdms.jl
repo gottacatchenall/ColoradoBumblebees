@@ -15,8 +15,28 @@ function main()
     for (i,sdm) in enumerate(sdms)
         sdm_dir = sdmdir(sdm)
         mkpath(sdm_dir)
-        ColoradoBumblebees.save(sdm)
+        
+        # For some reason theres weird saving issues. 
+        # Attempt 1: assume it is a GDAL <-> filesystem fuckup, and try writing
+        # the same sdm a few times.
+        
+        # This is not ideal, I still think it might be the `similar` call when
+        # constructing the bg point mask. idk
+
+        succeeded = false
+        for attempt in 1:10
+            if succeeded
+                break
+            end
+            try 
+                ColoradoBumblebees.save(sdm)
+                succeeded = true
+            catch e
+                @info "Failed on $(this_species) attempt $attempt"
+            end
+        end 
     end
+
 
 end
 
