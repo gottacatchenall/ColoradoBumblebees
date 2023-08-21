@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --account=def-gonzalez
 #SBATCH --mem=16G               # memory per node
-#SBATCH --time=1-00:00
+#SBATCH --time=1:00:00
 
 module load cuda
 module load julia/1.8.5

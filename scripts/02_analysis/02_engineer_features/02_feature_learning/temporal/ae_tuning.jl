@@ -32,6 +32,5 @@ end
 
 
 main(unit=LSTM)
-
-# main(unit=RNN)
-# main(unit=GRU)
+#main(unit=RNN)
+#main(unit=GRU)

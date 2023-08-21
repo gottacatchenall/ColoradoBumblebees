@@ -2,9 +2,8 @@ using DrWatson
 @quickactivate :ColoradoBumblebees
 
 
-function run_model(; num_replicates = 64)
+function fit_classifier(; num_replicates = 128)
     rep_dir = joinpath(artifactdir(), "species_representations")
-
     temporal_reps = sort(filter(x->contains(x, "RecurrentAutoencoder"), readdir(rep_dir)))
     job_id = parse(Int, ENV["SLURM_ARRAY_TASK_ID"])
 
@@ -16,10 +15,9 @@ function run_model(; num_replicates = 64)
 
     model = RandomForest()
 
-
     bf = batch_fit(model, this_rep, feat_df, num_replicates)
     ColoradoBumblebees.save(bf)
 end
 
 
-run_model()
+fit_classifier()

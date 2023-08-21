@@ -39,10 +39,6 @@ function main()
             catch e
                 @info "Failed on $(this_species) attempt $attempt"
             end
-        end 
-
-        if !succeeded
-            run(`touch ./failed/$(species[i])`)
         end
     end
 
