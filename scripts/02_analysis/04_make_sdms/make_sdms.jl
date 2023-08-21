@@ -11,9 +11,7 @@ function main()
     this_species = species[job_id]
     @info "Job: $job_id, Species: $(this_species)"
 
-    
-    lk = ReentrantLock()
-
+    mkpath("./failed")
 
     sdms = make_sdms(this_species, occurrence_df; cluster=cluster, pa_buffer_distance=8)
     for (i,sdm) in enumerate(sdms)
@@ -24,23 +22,22 @@ function main()
         # Attempt 1: assume it is a GDAL <-> filesystem fuckup, and try writing
         # the same sdm a few times.
         
-        # This is not ideal, I still think it might be the `similar` call when
-        # constructing the bg point mask. idk
-        
         succeeded = false
-        lock(lk) do 
-            for attempt in 1:50
-                if succeeded
-                    break
-                end
-                try 
-                    ColoradoBumblebees.save(sdm)
-                    succeeded = true
-                catch e
-                    @info "Failed on $(this_species) attempt $attempt"
-                end
-            end 
+        for attempt in 1:50
+            if succeeded
+                break
+            end
+            try 
+                ColoradoBumblebees.save(sdm)
+                succeeded = true
+            catch e
+                @info "Failed on $(this_species) attempt $attempt"
+            end
         end 
+
+        if !succeeded
+            run(`touch ./failed/$(species[i])`)
+        end
     end
 
 
