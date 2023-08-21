@@ -11,7 +11,11 @@ function main()
     this_species = species[job_id]
     @info "Job: $job_id, Species: $(this_species)"
 
-    sdms = make_sdms(this_species, occurrence_df; cluster=cluster)
+    
+    lk = ReentrantLock()
+
+
+    sdms = make_sdms(this_species, occurrence_df; cluster=cluster, pa_buffer_distance=8)
     for (i,sdm) in enumerate(sdms)
         sdm_dir = sdmdir(sdm)
         mkpath(sdm_dir)
@@ -22,18 +26,20 @@ function main()
         
         # This is not ideal, I still think it might be the `similar` call when
         # constructing the bg point mask. idk
-
+        
         succeeded = false
-        for attempt in 1:10
-            if succeeded
-                break
-            end
-            try 
-                ColoradoBumblebees.save(sdm)
-                succeeded = true
-            catch e
-                @info "Failed on $(this_species) attempt $attempt"
-            end
+        lock(lk) do 
+            for attempt in 1:50
+                if succeeded
+                    break
+                end
+                try 
+                    ColoradoBumblebees.save(sdm)
+                    succeeded = true
+                catch e
+                    @info "Failed on $(this_species) attempt $attempt"
+                end
+            end 
         end 
     end
 

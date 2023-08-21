@@ -76,48 +76,85 @@ function _new_pa(
     presences::T;
     distance::Number = 100.0,
 ) where {T <: SimpleSDMLayer}
+        
+    function _check_bounds(template, i)
+        sz = size(template)
+        i[1] <= 0 && return false
+        i[2] <= 0 && return false
+        i[1] > sz[1] && return false
+        i[2] > sz[2] && return false
+        return true
+    end
+
     presence_only = mask(presences, presences)
     presence_idx = findall(x->x==1,presence_only.grid)
 
-    background = similar(presences, Bool)
-    background.grid .= true
 
-    y,x = size(presences)
+    y, x = size(presences) # axes returned by size are flipped 
     bbox = boundingbox(presences)
-    Δx = (bbox[:right] - bbox[:left])/ x   # how much a given cell is in long
-    Δy = (bbox[:top] - bbox[:bottom])/ y   # how much a given cell is in lat
-    
-    lon = zeros(Float64, 2)
-    lat = zeros(Float64, 2)
-    for (i, angl) in enumerate((0:1) / 4)
-        α = deg2rad(360.0angl)
-        lon[i], lat[i] = SpeciesDistributionToolkit._known_point([0.0, 0.0], distance, α)
-    end
+    Δx = (bbox[:right] - bbox[:left])/ x   # how much a raster cell is in long
+    Δy = (bbox[:top] - bbox[:bottom])/ y   # how much a raster cell is in lat
 
-    max_cells_x, max_cells_y =  Int32.(floor.([lon[2] / Δx, lat[1] / Δy])) 
+    # It's reasonable to use the centroid of the raster as a basis and use the
+    # same sliding mask for each point.
+    centroid = [0.5(bbox[:right]+bbox[:left]), 0.5(bbox[:bottom]+bbox[:top])]
 
-    radius_mask = OffsetArray(ones(Bool, 2max_cells_x+1, 2max_cells_y+1), -max_cells_x:max_cells_x, -max_cells_y:max_cells_y) 
+    # However, if the extent is large enough, this assumption might break down
+    # and the size of the sliding window should be calculated for each
+    # occurrence (or for some subbdivision of the raster into subsections).
 
+    # The slowest (but most accurrate) version would create an offset mask for
+    # each occurrence. This is still likely faster than the current version
+    # method of filtering coordinates, but may be significantly slower than the
+    # simpler methods.  
+
+    _, lat = SpeciesDistributionToolkit._known_point(centroid, distance, 0)
+    lon, _ = SpeciesDistributionToolkit._known_point(centroid, distance, π/2)
+
+    # magnitude of the maximum offset in lon/lat from raster centroid in each direction 
+    max_offset_x, max_offset_y =  Int32.(floor.([(lon-centroid[1]) / Δx, (lat-centroid[2]) / Δy])) 
+
+    radius_mask = OffsetArrays.OffsetArray(
+        ones(Bool, 2max_offset_x+1, 2max_offset_y+1), 
+        -max_offset_x:max_offset_x, 
+        -max_offset_y:max_offset_y
+    ) 
     for i in CartesianIndices(radius_mask)
         long_offset, lat_offset = abs.([i[1], i[2]]) .* [Δx, Δy]
-
         total_dist = sqrt(long_offset^2 + lat_offset^2)
-        radius_mask[i] = total_dist <= max(lon[2], lat[1])
+        radius_mask[i] = total_dist <= min(lon-centroid[1], lat-centroid[2])  
     end
 
     # Mask radius around each presence point 
-    for occ_idx in presence_idx
-        offs = CartesianIndices((-max_cells_x:max_cells_x, -max_cells_y:max_cells_y))
-        I = offs .+ occ_idx
+    offsets = CartesianIndices((-max_offset_x:max_offset_x, -max_offset_y:max_offset_y))
 
-        for (i, idx) in enumerate(I)
-            if _check_bounds(background, idx) && radius_mask[offs[i]]
-                background[idx] = false
-            end 
+    # 3 states 
+    # State 1: unseen
+    # State 2: seen, still a candidate bg point
+    # State 3: seen, no longer a cnadidate bg point
+    UNSEEN, CANDIDATE, UNAVAILABLE = 1, 2, 3 
+
+    background = similar(presences, Int32)
+    background.grid[findall(!isnothing, background.grid)] .= UNSEEN
+
+    for occ_idx in presence_idx
+        within_radius_idx = offsets .+ occ_idx
+
+        for (i, cartesian_idx) in enumerate(within_radius_idx)
+            if _check_bounds(background, cartesian_idx) && !isnothing(background.grid[cartesian_idx])
+                if background.grid[cartesian_idx] != UNAVAILABLE && !radius_mask[offsets[i]] 
+                    background.grid[cartesian_idx] = CANDIDATE
+                else
+                    background.grid[cartesian_idx] = UNAVAILABLE
+                end 
+            end
         end 
     end
-    
-    return background
+
+    background.grid[findall(isequal(CANDIDATE), background.grid)] .= true
+    background.grid[findall(isequal(UNAVAILABLE), background.grid)] .= false
+
+    return convert(Bool, background)
 end
  
 

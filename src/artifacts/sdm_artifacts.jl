@@ -1,4 +1,4 @@
-sdmdir() = joinpath("/scratch/mcatchen/sdms") #joinpath(artifactdir(), "sdms") 
+sdmdir() = joinpath("/scratch/mcatchen/BeeSDMs") #joinpath(artifactdir(), "sdms") 
 sdmdir(sp::S) where S<:Species = joinpath(artifactdir(), "sdms", sp.name)
 sdmdir(sdm::SpeciesDistribution) = joinpath(sdmdir(sdm.species), string(sdm.timespan), string(sdm.scenario))
 
