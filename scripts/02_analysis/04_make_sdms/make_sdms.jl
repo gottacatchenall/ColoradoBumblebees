@@ -10,6 +10,10 @@ function main()
     job_id = parse(Int, ENV["SLURM_ARRAY_TASK_ID"])
     this_species = species[job_id]
 
+    # Saving using ArchGDAL sometimes writes scratch files to local dir during
+    # the process of writing. Idk if its due to lack of RAM or something else,
+    # but running each species in its own dir stops simulataneous overwriting of
+    # scratch files
     mkpath("./tmp/$(this_species)")
     cd("./tmp/$(this_species)")
     @info "Job: $job_id, Species: $(this_species), WD: $(pwd())"
@@ -19,27 +23,7 @@ function main()
     for (i,sdm) in enumerate(sdms)
         sdm_dir = sdmdir(sdm)
         mkpath(sdm_dir)
-        
-
-        # For some reason theres weird saving issues. 
-        # Attempt 1: assume it is a GDAL <-> filesystem fuckup, and try writing
-        # the same sdm a few times.
-
-        # They all write prediction local scratch files, maybe each job should
-        # cd into its own species specific dir?
-        
-        succeeded = false
-        for attempt in 1:50
-            if succeeded
-                break
-            end
-            try 
-                ColoradoBumblebees.save(sdm)
-                succeeded = true
-            catch e
-                @info "Failed on $(this_species) attempt $attempt"
-            end
-        end
+        ColoradoBumblebees.save(sdm)
     end
 
 
