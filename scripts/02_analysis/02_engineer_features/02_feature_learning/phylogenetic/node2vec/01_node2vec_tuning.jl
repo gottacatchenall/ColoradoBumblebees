@@ -6,7 +6,7 @@ function main()
     data = load_data()
 
     param_dict = Dict(
-        :embedding_dim => [4:4:16],
+        :embedding_dim => collect(4:4:16),
         :number_of_walks => [50, 100, 250, 500],
         :walk_length => [10, 50, 100]
     )
