@@ -14,16 +14,11 @@ function main()
     treatments = dict_list(param_dict)
 
 
-    embs = [representations(data, PhylogeneticNode2Vec())]
+    embs = [representations(data, PhylogeneticNode2Vec(; embedding_dim=t[:embedding_dim], number_of_walks=t[:number_of_walks], walk_length=t[:walk_length])) for t in treatments]
 
     for e in embs
         ColoradoBumblebees.save(e)
     end
 end 
 
-data = load_data()
-x = representations(data, PhylogeneticNode2Vec(embedding_dim=16))
-bf = batch_fit(RandomForest(), x, feature_dataframe(data, x), 64)
-
-
-praucs(bf)
+main()

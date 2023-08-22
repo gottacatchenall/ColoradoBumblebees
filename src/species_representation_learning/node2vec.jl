@@ -14,7 +14,6 @@ end
 function learn_embeddings(walks; outdim::Int=100)
     str_walks = map(x -> string.(x), walks)
 
-    # THIS NEEDS TO BE THREAD SAFE
     rpath = "/tmp"
     the_walks = joinpath(rpath, "str_walk_THREAD$(Threads.threadid()).txt")
     the_vecs = joinpath(rpath, "str_walk-vec_THREAD$(Threads.threadid()).txt")

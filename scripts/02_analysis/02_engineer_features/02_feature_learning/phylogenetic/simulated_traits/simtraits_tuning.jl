@@ -21,9 +21,4 @@ function main()
     end
 end 
 
-data = load_data()
-x = representations(data, SimulatedTraits(500, TruncatedNormal(0,1,0,Inf), 16))
-
-bf = batch_fit(RandomForest(), x, feature_dataframe(data, x), 64)
-
-praucs(bf)
+main()

@@ -28,6 +28,7 @@ include(srcdir("species_representation_learning", "structural", "shared.jl"))
 include(srcdir("species_representation_learning", "structural", "svd.jl"))
 include(srcdir("species_representation_learning", "structural", "lfsvd.jl"))
 include(srcdir("species_representation_learning", "structural", "graph_autoencoder.jl"))
+include(srcdir("species_representation_learning", "structural", "node2vec.jl"))
 
 
 include(srcdir("species_representation_learning", "node2vec.jl"))
