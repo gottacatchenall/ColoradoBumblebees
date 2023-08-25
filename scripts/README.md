@@ -16,20 +16,23 @@ directory.
 
 ## Producing analysis results  (`02_analysis`)
 
-The later steps are designed to be run on a SLURM based cluster. 
+The later steps are designed to be partially run on a SLURM based cluster. 
 
 1. Clean data (`01_clean_data.jl`)
 2. Engineer features (`02_engineer_features`)
-    - `01_vgae.py`
-    - `02_feature_learning.jl`
+    - `01_vgae`
+    - `02_feature_learning`
 3. Interaction prediction (`03_interaction_prediction`)
     - `logistic`
     - `rf`
     - `brt`
     - `xgboost`
-4. Fit SDMs (`04_make_sdms.jl`)
-5. Compute overlap (`05_compute_overlap.jl`)
+4. Fit SDMs (`04_make_sdms`)
+    - `make_sdms.jl`
+5. Compute overlap (`05_compute_overlap`)
+    - foo
 6. Compute interaction richness (`06_interaction_richness`)
+    - foo
 
 ## Visualization (`03_visualization`)
 

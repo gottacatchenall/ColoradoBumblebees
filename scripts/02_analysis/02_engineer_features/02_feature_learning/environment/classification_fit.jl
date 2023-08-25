@@ -16,5 +16,6 @@ function main()
     model = RandomForest()
 
     bf = batch_fit(model, this_rep, feat_df, num_replicates)
+    @info path(bf)
     ColoradoBumblebees.save(bf)
 end
