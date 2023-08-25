@@ -1,14 +1,13 @@
 #!/bin/bash
 #SBATCH --account=def-gonzalez
-#SBATCH --job-name=svd_fits 
-#SBATCH --output=slurm-svd_fits-%A.%a.out 
+#SBATCH --job-name=svd_fit 
+#SBATCH --output=slurm-svd_fit-%A.%a.out 
 #SBATCH --nodes=1               
 #SBATCH --ntasks=1               
 #SBATCH --cpus-per-task=1        
 #SBATCH --mem-per-cpu=16G      
 #SBATCH --time=01:00:00         
 #SBATCH --array=1-30
-
 
 module load julia/1.8.5
 
