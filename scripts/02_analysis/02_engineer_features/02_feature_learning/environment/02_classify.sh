@@ -16,4 +16,4 @@ module load cudnn
 export JULIA_DEPOT_PATH="/project/def-gonzalez/mcatchen/JuliaEnvironments/COBees"
 export CLUSTER="true"
 
-julia 01_kmeans_tuning.jl
+julia classification_fit.jl
