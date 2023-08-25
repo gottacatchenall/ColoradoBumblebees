@@ -1,7 +1,7 @@
 using DrWatson
 @quickactivate :ColoradoBumblebees
 
-function main()
+function main(num_replicates)
     rep_dir = joinpath(artifactdir(), "species_representations")
     gae_reps = sort(filter(x->contains(x, "SimulatedTraits"), readdir(rep_dir)))
    
@@ -18,3 +18,6 @@ function main()
     bf = batch_fit(model, this_rep, feat_df, num_replicates)
     ColoradoBumblebees.save(bf)
 end
+
+
+main(128)
