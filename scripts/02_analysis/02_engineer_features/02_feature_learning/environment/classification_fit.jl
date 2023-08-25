@@ -19,3 +19,5 @@ function main()
     @info path(bf)
     ColoradoBumblebees.save(bf)
 end
+
+main()
