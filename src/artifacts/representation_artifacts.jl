@@ -107,6 +107,7 @@ end
 
 _get_representation_obj(model_string) = Dict(
     "MetawebSVD" => MetawebSVD, 
+    "MetawebNode2Vec" => MetawebNode2Vec,
     "LFSVD" => LFSVD, 
     "SimulatedTraits" => SimulatedTraits, 
     "PhylogeneticNode2Vec"=>PhylogeneticNode2Vec,
@@ -114,7 +115,9 @@ _get_representation_obj(model_string) = Dict(
     "Pooled"=>Pooled,
     "DenseAutoencoder"=>DenseAutoencoder,
     "RecurrentAutoencoder{Standard}"=>RecurrentAutoencoder{Standard},
-    "RecurrentAutoencoder{Variational}"=>RecurrentAutoencoder{Variational}
+    "RecurrentAutoencoder{Variational}"=>RecurrentAutoencoder{Variational},
+    "GraphAutoencoder{Standard}" => GraphAutoencoder{Standard},
+    "GraphAutoencoder{Variational}" => GraphAutoencoder{Variational}
     )[model_string]
 
 
