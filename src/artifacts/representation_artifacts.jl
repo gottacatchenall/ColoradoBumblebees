@@ -14,11 +14,19 @@ end
 function _load_species_representation(path)
     # todo: gotta change the path save in species rep is relative to projectdir,
     # and isn't absolute
-    relative_path = "."*string(split(path, "ColoradoBumblebees")[2])
 
-    metadata = _read_json(joinpath(path, "metadata.json"))
+    # okay this is use both by batch_fit and by loading fits. it might be better
+    # if there were two different functions for this. 
+
+    is_relative = path[1] == "." 
+
+    relative_path = is_relative ? "."*string(split(path, "ColoradoBumblebees")[2]) : path
+
+    full_path = joinpath(projectdir(), relative_path)
+
+    metadata = _read_json(joinpath(full_path, "metadata.json"))
     embed_model = _reconstruct_representation(metadata["representations"])[1]
-    embed_dict = _embed_df_to_embed_dict(CSV.read(joinpath(path, "representation.csv"), DataFrame)) 
+    embed_dict = _embed_df_to_embed_dict(CSV.read(joinpath(full_path, "representation.csv"), DataFrame)) 
     SpeciesRepresentations(embed_model, embed_dict, relative_path)
 end
 

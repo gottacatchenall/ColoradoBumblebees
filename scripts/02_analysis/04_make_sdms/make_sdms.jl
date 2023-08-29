@@ -28,5 +28,20 @@ function main()
 
 
 end
-
+ 
 main()
+
+
+#=
+sdms = make_sdms("Ericameria parryi", load_occurrence_data(); cluster=false, pa_buffer_distance=8)
+
+heatmap(sdms[1].probability.grid)
+
+
+for (i,sdm) in enumerate(sdms)
+    sdm_dir = sdmdir(sdm)
+    mkpath(sdm_dir)
+    ColoradoBumblebees.save(sdm)
+end
+=#
+

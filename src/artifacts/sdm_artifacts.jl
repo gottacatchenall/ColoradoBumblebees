@@ -1,5 +1,5 @@
-sdmdir() = joinpath("/scratch/mcatchen/BeeSDMs") #joinpath(artifactdir(), "sdms") 
-sdmdir(sp::S) where S<:Species = joinpath(artifactdir(), "sdms", sp.name)
+sdmdir() = ColoradoBumblebees.CLUSTER ? joinpath("/scratch/mcatchen/BeeSDMs") : joinpath(artifactdir(), "sdms") 
+sdmdir(sp::S) where S<:Species = joinpath(sdmdir(), sp.name)
 sdmdir(sdm::SpeciesDistribution) = joinpath(sdmdir(sdm.species), string(sdm.timespan), string(sdm.scenario))
 
 function ColoradoBumblebees.save(sdm::SpeciesDistribution)

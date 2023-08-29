@@ -89,6 +89,7 @@ export model
 export predictions
 export fit_stats
 export prauc, praucs
+export rocauc, rocaucs
 
 export MetawebSVD, LFSVD, GraphAutoencoder, MetawebNode2Vec
 export SimulatedTraits, PhylogeneticNode2Vec

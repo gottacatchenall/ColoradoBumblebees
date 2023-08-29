@@ -6,13 +6,14 @@ struct ClassificationFit{M<:ClassificationModel,V<:SR}
     predictions::DataFrame  # todo: add column that is whether int was in train or test
     fit_stats::Dict
 end
-Base.show(io::IO, cf::ClassificationFit{M,V}) where {M,V} = Base.print(io, "ClassificationFit with $M on $(_name_reptypes(cf.representation))")
+Base.show(io::IO, cf::ClassificationFit{M,V}) where {M,V} = Base.print(io, "ClassificationFit with $M on $(representation(cf))")
 
 model(cf::ClassificationFit) = cf.model
 fit_stats(cf::ClassificationFit) = cf.fit_stats
 predictions(cf::ClassificationFit) = cf.predictions
 representation(cf::ClassificationFit) = cf.representation
 prauc(cf::ClassificationFit) = haskey(fit_stats(cf), "prauc") ? fit_stats(cf)["prauc"] : fit_stats(cf)[:prauc]
+rocauc(cf::ClassificationFit) = haskey(fit_stats(cf), "rocauc") ? fit_stats(cf)["rocauc"] : fit_stats(cf)[:rocauc]
 
 struct BatchFit{M,V}
     fits::Vector{ClassificationFit{M,V}}
@@ -23,6 +24,7 @@ fit_stats(bf::BatchFit) = fit_stats.(bf.fits)
 predictions(bf::BatchFit) = predictions.(bf.fits)
 representation(bf::BatchFit) = representation(bf.fits[1])
 praucs(bf::BatchFit) = prauc.(bf.fits)
+rocaucs(bf::BatchFit) = rocauc.(bf.fits)
 
 
 _name_reptypes(::ClassificationFit{M,S}) where {M,S} = typeof(S)
