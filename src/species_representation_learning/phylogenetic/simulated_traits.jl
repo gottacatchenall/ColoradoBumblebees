@@ -1,6 +1,6 @@
 Base.@kwdef struct SimulatedTraits <: Phylogenetic
     numtraits = 1000
-    variance_distribution = Exponential(1.0)
+    stddev_of_stddev = 0.1
     truncated_dims = 8
 end
 outdim(st::SimulatedTraits) = st.truncated_dims
@@ -12,7 +12,8 @@ function _embed(data::BeeData, st::SimulatedTraits)
 
     bee_tree, plant_tree = parsenewick.(load_newick())
     df = vcat(
-        _simulated_trait_features(st, bee_tree), _simulated_trait_features(st, plant_tree)
+        _simulated_trait_features(st, bee_tree; numsims=st.numtraits, σ=st.stddev_of_stddev), 
+        _simulated_trait_features(st, plant_tree; numsims=st.numtraits, σ=st.stddev_of_stddev)
     )
     
     for r in eachrow(df)
@@ -41,10 +42,10 @@ function _simulated_trait_features(st, tree; kwargs...)
     return pcadf
 end
 
-function _simulate_traits(tree; numsims=1000)
+function _simulate_traits(tree; numsims=1000, σ=1.)
     df = DataFrame(; nodename=getnodename.(tree, traversal(tree, preorder)))
     for rep in 1:numsims
-        σ² = rand(Exponential(1.0))
+        σ² = rand(TruncatedNormal(0, σ, 0, Inf))
         rand!(BrownianTrait(tree, "Trait($rep)"; σ²=σ²), tree)
         d = DataFrame(;
             nodename=getnodename.(tree, traversal(tree, preorder)),

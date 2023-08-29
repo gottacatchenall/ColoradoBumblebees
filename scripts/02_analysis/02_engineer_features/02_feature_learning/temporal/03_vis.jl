@@ -95,7 +95,14 @@ function build_plot(ra_set, model_name)
                     J = findall(isequal(hl), num_hidden_layers[I])
                     K = findall(isequal(hc), hidden_channels[I][J])
 
-                    
+                    if ylabel=="PRAUC"
+                    @info "Model: $(model_name)"
+                    @info "Hidden Layers: $hl"
+                    @info "Hidden Channel: $hc"
+                    @info "Embed Dims: $e"
+                    @info "PRAUC: $(mean(data[I][J][K]))"
+                    @info "\n\n"
+                    end 
                     category_labels = vcat(category_labels, [x_position for _ in 1:n_reps])
                     x_position += 0.5
                     data_matrix = vcat(data_matrix, data[I][J][K])
@@ -142,6 +149,6 @@ f = build_plot(ra_sets[1], ra_names[1])
 for i in eachindex(ra_sets)
     f = build_plot(ra_sets[i], ra_names[i])
 
-    save(plotsdir("S$(i+8)_$(ra_names[i]).png"), f)
+#    save(plotsdir("S$(i+8)_$(ra_names[i]).png"), f)
 end 
 

@@ -7,7 +7,7 @@ function main()
 
     param_dict = Dict(
         :numtraits => [100, 1000, 10000], 
-        :variance_distribution => [TruncatedNormal(0.,σ, 0, Inf) for σ in [1.0,2.0,3.0]],
+        :stddev_of_stddev => [1.0,2.0,3.0],
         :truncated_dims => [i for i in 2:2:16]
     )
 
