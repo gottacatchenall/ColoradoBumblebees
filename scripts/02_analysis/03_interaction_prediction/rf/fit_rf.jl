@@ -10,6 +10,7 @@ function main(num_replicates)
 
     model = RandomForest()
     bf = compare_representations(model, num_replicates, this_treatment)
+    @info "Saving to $(path(bf))"
     ColoradoBumblebees.save(bf)
 end 
 
