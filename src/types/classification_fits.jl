@@ -33,11 +33,16 @@ _name_reptypes(cf::ClassificationFit{M,Vector{S}}) where {M,S} = string("(", ["$
 Base.show(io::IO, bf::BatchFit{M,V}) where {M,V} = Base.print(io, "BatchFit with $(length(bf.fits)) replicates fit with $M on $(_name_reptypes(bf.fits[1]))")
 
 
-ColoradoBumblebees.path(bf::BatchFit) = joinpath(
-    artifactdir(), 
-    "classification_fits", 
-    savename(bf)
-)
+function ColoradoBumblebees.path(bf::BatchFit{M,V}) where {M,V}
+    subdir = V <: Vector ? "single_representation" : "multiple_representations"
+
+    joinpath(
+        artifactdir(), 
+        "classification_fits", 
+        subdir, 
+        savename(bf)
+    )
+end
 
 
 function DrWatson.savename(bf::BatchFit{M,Vector{S}}) where {M,S}
