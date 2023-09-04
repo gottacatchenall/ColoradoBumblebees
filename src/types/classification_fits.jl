@@ -34,7 +34,7 @@ Base.show(io::IO, bf::BatchFit{M,V}) where {M,V} = Base.print(io, "BatchFit with
 
 
 function ColoradoBumblebees.path(bf::BatchFit{M,V}) where {M,V}
-    subdir = V <: Vector ? "single_representation" : "multiple_representations"
+    subdir = V <: Vector ? "multiple_representations" :  "single_representation" 
 
     joinpath(
         artifactdir(), 
