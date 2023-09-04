@@ -106,7 +106,7 @@ export batch_fit
 export fit_classifier
 export balance_sample
 export compute_fit_stats
-
+export compare_representations
 
 export Scenario 
 
@@ -120,3 +120,5 @@ export baseline
 export BoostedRegressionSDM
 export SpeciesDistribution
 export make_sdms
+
+export BEST_REPRESENTATIONS

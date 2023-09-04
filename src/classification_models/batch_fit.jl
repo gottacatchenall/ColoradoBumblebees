@@ -1,4 +1,4 @@
-
+#=
 function get_metadata(mach::Machine)
     fn = fieldnames(typeof(mach.model))
     dict = Dict()
@@ -59,3 +59,4 @@ function batch(model_factory, model_name, reps=64)
         )
     end
 end
+=#

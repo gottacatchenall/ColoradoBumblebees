@@ -4,6 +4,7 @@ module ColoradoBumblebees
     @reexport using AbstractTrees
     @reexport using BSON
     @reexport using Clustering 
+    @reexport using Combinatorics
     @reexport using CSV
     @reexport using CUDA
     @reexport using Dates
@@ -37,4 +38,17 @@ module ColoradoBumblebees
     CLUSTER = "CLUSTER" ∈ collect(keys(ENV))
 
     include(srcdir("includes.jl"))
+
+    const BEST_REPRESENTATIONS = [
+        PhylogeneticNode2Vec(number_of_walks=250, walk_length=100, embedding_dim=16),
+        Pooled(),
+        RecurrentAutoencoder{Standard}(
+            rnn_dims = [1, 8, 1],
+            encoder_dims = [TEMPORAL_INPUT_DIM, 16],
+            decoder_dims = [16, TEMPORAL_INPUT_DIM],
+            opt = ADAM(0.005)
+        ),
+        LFSVD(truncation_dims=6, embed_dims=6),
+        KMeansEnvironmentEmbedding(k=7),
+    ]
 end 

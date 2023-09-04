@@ -51,6 +51,7 @@ include(srcdir("classification_models", "classification_stats.jl"))
 include(srcdir("classification_models", "balance_sample.jl"))
 include(srcdir("classification_models", "fit_classifier.jl"))
 include(srcdir("classification_models", "batch_fit.jl"))
+include(srcdir("classification_models", "comparing_representations.jl"))
 
 include(srcdir("artifacts", "shared.jl"))
 include(srcdir("artifacts", "representation_artifacts.jl"))

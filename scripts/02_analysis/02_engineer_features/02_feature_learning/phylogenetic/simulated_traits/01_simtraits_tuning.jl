@@ -14,7 +14,7 @@ function main()
     treatments = dict_list(param_dict)
 
 
-    embs = [representations(data, SimulatedTraits(numtraits=r[:numtraits], variance_distribution=r[:variance_distribution], truncated_dims=r[:truncated_dims])) for r in treatments]
+    embs = [representations(data, SimulatedTraits(numtraits=r[:numtraits], stddev_of_stddev=r[:stddev_of_stddev], truncated_dims=r[:truncated_dims])) for r in treatments]
 
     for e in embs
         ColoradoBumblebees.save(e)

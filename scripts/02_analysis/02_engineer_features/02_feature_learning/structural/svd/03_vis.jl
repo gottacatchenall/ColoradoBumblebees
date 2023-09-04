@@ -6,6 +6,7 @@ using ColorSchemes
 CairoMakie.activate!(; px_per_unit=3)
 fontsize_theme = Theme(fontsize=32)
 set_theme!(fontsize_theme)
+n_reps =128
 
 svd_dirs = [joinpath(artifactdir(), "classification_fits", x) for x in filter(x->contains(x, "MetawebSVD"), readdir(joinpath(artifactdir(), "classification_fits")))]
 lfsvd_dirs = [joinpath(artifactdir(), "classification_fits", x) for x in filter(x->contains(x, "LFSVD"), readdir(joinpath(artifactdir(), "classification_fits")))]
@@ -23,8 +24,8 @@ rocs_lfsvd = vcat(rocaucs.(lfsvd_reps)...)
 trunc_dims = sort(unique([representation(r)[1].embed_model.truncation_dims for r in svd_reps]))
 embed_dims = sort(unique([representation(r)[1].embed_model.embed_dims for r in svd_reps]))
 
-truncs = vcat([[representation(r)[1].embed_model.truncation_dims for _ in 1:n_reps] for r in reps]...)
-embed = vcat([[representation(r)[1].embed_model.embed_dims for _ in 1:n_reps] for r in reps]...)
+truncs = vcat([[representation(r)[1].embed_model.truncation_dims for _ in 1:n_reps] for r in svd_reps]...)
+embed = vcat([[representation(r)[1].embed_model.embed_dims for _ in 1:n_reps] for r in svd_reps]...)
 
 
 
@@ -100,6 +101,6 @@ begin
     fig_roc
 end 
 
-save(plotsdir("S6_metaweb_svd_pr.png"), fig_pr)
+save(plotsdir("S6_metaweb_svd_pr.svg"), fig_pr)
 
-save(plotsdir("S6_metaweb_svd_roc.png"), fig_roc )
+save(plotsdir("S6_metaweb_svd_roc.svg"), fig_roc )

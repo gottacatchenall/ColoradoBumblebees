@@ -15,14 +15,25 @@ function _load_species_representation(path)
     # todo: gotta change the path save in species rep is relative to projectdir,
     # and isn't absolute
 
-    # okay this is use both by batch_fit and by loading fits. it might be better
-    # if there were two different functions for this. 
+    # okay this is use both by `batch_fit` and by `load_species_representation`
+    # (which itself is used by `load_classification_fit`). 
+    
+    # It might be better if there were two different functions for this. 
+    
+    # It also must able to deal with multiple cases:
+    #. 1. Running `batch_fit` locally with representations generated either
+    #locally or on the cluster 
+    #  2. Loading batch fits where the batch fit is run on either local/cluster
+    #     and the representation is generated on either. 
 
     is_relative = path[1] == "." 
 
     relative_path = is_relative ? "."*string(split(path, "ColoradoBumblebees")[2]) : path
+    full_path = is_relative ? joinpath(artifactdir()) : joinpath(projectdir(), "."*string(split(path, "ColoradoBumblebees")[2])) 
 
-    full_path = joinpath(projectdir(), relative_path)
+    #@info is_relative 
+    #@info string(split(path, "ColoradoBumblebees")[2]) 
+    #@info full_path, relative_path, path
 
     metadata = _read_json(joinpath(full_path, "metadata.json"))
     embed_model = _reconstruct_representation(metadata["representations"])[1]

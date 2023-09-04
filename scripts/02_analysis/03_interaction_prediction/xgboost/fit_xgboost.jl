@@ -8,9 +8,9 @@ function main(num_replicates)
     job_id = parse(Int, ENV["SLURM_ARRAY_TASK_ID"])
     this_treatment = treatments[job_id]
 
-    model = RandomForest()
+    model = XGBoost()
     bf = compare_representations(model, num_replicates, this_treatment)
     ColoradoBumblebees.save(bf)
 end 
 
-main(128) # 1371 seconds
+main(128) 

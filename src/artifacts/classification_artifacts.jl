@@ -1,5 +1,5 @@
-function ColoradoBumblebees.save(x::BatchFit)
-    outdir = path(x)
+function ColoradoBumblebees.save(bf::BatchFit)
+    outdir = path(bf)
     mkpath(outdir) 
 
     fit_stats_dir = joinpath(outdir, FIT_STATS_DIR) 
@@ -11,12 +11,11 @@ function ColoradoBumblebees.save(x::BatchFit)
 
     # write representation file if it doesn't exist
     # and add the pat hto metadata
-    
-    rep_file_path = _representation_file(x)
+    rep_file_path = _representation_file(bf)
     @info rep_file_path
 
 
-    classification_model_metadata = _classification_model_to_dict(x.fits[1].model)
+    classification_model_metadata = _classification_model_to_dict(bf.fits[1].model)
     metadata = Dict(
         :classifier => classification_model_metadata,
         :representation_paths => rep_file_path, 
@@ -25,7 +24,7 @@ function ColoradoBumblebees.save(x::BatchFit)
     )
     _write_json(joinpath(outdir, "metadata.json"), metadata)
 
-    for (i,fit) in enumerate(x.fits)
+    for (i,fit) in enumerate(bf.fits)
         _write_json(joinpath(fit_stats_dir, "fit$i.json"), fit.fit_stats)
         CSV.write(joinpath(prediction_dir, "fit$i.csv"), fit.predictions)
     end
@@ -37,6 +36,12 @@ function _load_classification_fit(path)
 
     classifier = _reconstruct_classifier(metadata["classifier"])
     @info metadata
+
+    # Okay, perhaps this should be smarter about realizing where this was run
+    # (e.g. local hostname or on cluster) and where it is currntly being run, to
+    # make sure the path is valid.
+    metadata["representation_paths"]
+    
     reps = ColoradoBumblebees.load.(metadata["representation_paths"])
 
     predictions = _load_predictions(path)
@@ -45,7 +50,11 @@ function _load_classification_fit(path)
     BatchFit([ClassificationFit(classifier, reps, predictions[i], fit_stats[i]) for i in eachindex(fit_stats)])
 end
 
-function _representation_file(x)
+# What does this function do?
+# Returns the paths to each species representation.
+# If it is being used to write a batch fit (`bf`) and the representation hasn't
+# been saved, it saves it.
+function _representation_file(bf)
     function _create_if_nonexistant!(paths, r)
         if isnothing(r.path)
             @warn "This representation has not been saved. Saving representation before BatchFit."
@@ -56,7 +65,7 @@ function _representation_file(x)
         end 
     end
 
-    reps = x.fits[begin].representation
+    reps = bf.fits[begin].representation
     paths = []
     if typeof(reps) <: Vector
         for r in reps
