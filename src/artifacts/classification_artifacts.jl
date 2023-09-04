@@ -1,5 +1,7 @@
-function ColoradoBumblebees.save(bf::BatchFit)
-    outdir = path(bf)
+function ColoradoBumblebees.save(bf::BatchFit; outdir=nothing)
+    if isnothing(outdoor)
+        outdir = path(bf)
+    end
     mkpath(outdir) 
 
     fit_stats_dir = joinpath(outdir, FIT_STATS_DIR) 
