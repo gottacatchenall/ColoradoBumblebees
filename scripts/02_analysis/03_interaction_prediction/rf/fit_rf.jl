@@ -12,7 +12,7 @@ function main(num_replicates)
     this_treatment = treatments[job_id]
     
     this_name = names[job_id]
-    this_outpath = joinpath(artifactdir(), "classification_fits", "multiple_reprsentations", "rf", this_name)
+    this_outpath = joinpath(artifactdir(), "classification_fits", "multiple_representations", "rf", this_name)
 
 
     model = RandomForest()
