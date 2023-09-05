@@ -14,7 +14,7 @@ function main(num_replicates)
 
     model = XGBoost()
     bf = compare_representations(model, num_replicates, this_treatment)
-    ColoradoBumblebees.save(bf; outpath=this_outpath)
+    ColoradoBumblebees.save(bf; outdir=this_outpath)
 end 
 
 main(128) 

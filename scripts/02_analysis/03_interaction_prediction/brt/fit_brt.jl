@@ -14,7 +14,7 @@ function main(num_replicates)
 
     model = BoostedRegressionTree()
     bf = compare_representations(model, num_replicates, this_treatment)
-    ColoradoBumblebees.save(bf; output=this_outpath)
+    ColoradoBumblebees.save(bf; outdir=this_outpath)
 end 
 
 main(128) 
