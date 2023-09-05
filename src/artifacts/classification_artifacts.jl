@@ -1,5 +1,5 @@
 function ColoradoBumblebees.save(bf::BatchFit; outdir=nothing)
-    if isnothing(outdoor)
+    if isnothing(outdir)
         outdir = path(bf)
     end
     mkpath(outdir) 
