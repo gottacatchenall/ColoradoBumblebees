@@ -36,3 +36,5 @@ Base.@kwdef struct LogisticRegression <: ClassificationModel
     penalty = :l2
 end 
 (lr::LogisticRegression)() = LOGISTIC_MODEL(lambda=lr.lambda, penalty = lr.penalty)
+
+struct Ensemble <: ClassificationModel end 

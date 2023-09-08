@@ -16,6 +16,37 @@ function compare_representations(model, num_replicates, this_treatment)
     return bf
 end
 
+function compare_representation_ensemble(num_replicates, this_treatment; kwargs...)
+    rep_dir = joinpath(artifactdir(), "species_representations")
+    reps = [ColoradoBumblebees.load(joinpath(rep_dir, _get_srl_dir(emb))) for emb in this_treatment]
+    data = load_data()
+    feat_df = feature_dataframe(data, reps)
+
+    y, X, _ = unpack(feat_df, ==(:interaction), ∉([:bee, :plant]))
+    y = coerce(y, Multiclass{2})
+
+    train_idx, test_idx, catvec = _cv_test_train_split(X; kwawgs...)
+
+    mods = [XGBoost(), RandomForest(), BoostedRegressionTree(), Logistic()]
+
+    
+    fits = []
+
+    for r in 1:num_replicates
+        dfs = [ensemble_of_balanced_classifiers(m(), feat_df, X, y, train_idx, test_idx, catvec)[1] for m in mods]
+            
+        total_p_vec = sum([df.prediction for df in dfs]) ./ length(mods)
+
+        predict_df = dfs[1]
+        predict_df.prediction .= total_p_vec
+        pred, obs = predict_df.prediction, predict_df.interaction
+        fit_stats = compute_fit_stats(obs, pred)
+
+        push!(fits, ClassificationFit(Ensemble(), reps, predict_df, fit_stats))
+    end 
+    return BatchFit(fits)
+end
+
 
 # Best representations. This will probably become a constant?
 # Phylogenetic: 

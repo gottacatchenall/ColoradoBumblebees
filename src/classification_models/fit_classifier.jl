@@ -13,23 +13,21 @@ function fit_classifier(
     classifier::ClassificationModel, 
     rep::Union{SpeciesRepresentations,Vector{S}}, 
     embedding_df::DataFrame; 
-    kwargs...
 ) where S<:SpeciesRepresentations
     model = classifier()
-    predict_df, fit_stats = ensemble_of_balanced_classifiers(model, embedding_df)
-    ClassificationFit(classifier, rep, predict_df, fit_stats)
-end
-
-function ensemble_of_balanced_classifiers(model, embedding_df::DataFrame; num_models::I=256, batch_size::I=64, train_balance::F=0.5, kwawgs...) where {I<:Integer,F<:AbstractFloat}
+    
     y, X, _ = unpack(embedding_df, ==(:interaction), ∉([:bee, :plant]))
     y = coerce(y, Multiclass{2})
 
+    train_idx, test_idx, catvec = _cv_test_train_split(X)
+    predict_df, fit_stats = ensemble_of_balanced_classifiers(model, embedding_df, X, y, train_idx, test_idx, catvec)
+
+    ClassificationFit(classifier, rep, predict_df, fit_stats)
+end
+
+function ensemble_of_balanced_classifiers(model, embedding_df, X, y, train_idx, test_idx, catvec; num_models::I=256, batch_size::I=64, train_balance::F=0.5, kwawgs...) where {I<:Integer,F<:AbstractFloat}
     y_bool = [i == true for i in y]
-
-    train_idx, test_idx, catvec = _cv_test_train_split(X; kwawgs...)
-
     y_test = Bool[x == true for x in y[test_idx]]
-
     y_predict_total = zeros(Float32, nrow(X))
     y_predict_test = zeros(Float32, length(y_test))
 

@@ -29,7 +29,7 @@ function _load_species_representation(path)
     is_relative = path[1] == "." 
 
     relative_path = is_relative ? "."*string(split(path, "ColoradoBumblebees")[2]) : path
-    full_path = is_relative ? joinpath(artifactdir()) : joinpath(projectdir(), "."*string(split(path, "ColoradoBumblebees")[2])) 
+    full_path = is_relative ? joinpath(artifactdir()) : joinpath(projectdir(), relative_path) 
 
     #@info is_relative 
     #@info string(split(path, "ColoradoBumblebees")[2]) 
@@ -103,8 +103,6 @@ function _reconstruct_representation(representation_metadata)
     # initialized to nothing initially. 
     # any time `batch_fit` gets called, if the representations aren't saved,
     # make sure they get saved. 
-
-    @info representation_metadata
 
     # okay so 
 

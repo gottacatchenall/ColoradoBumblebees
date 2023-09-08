@@ -36,7 +36,7 @@ export XGBoost
 export BoostedRegressionTree
 export RandomForest
 export LogisticRegression 
-
+export Ensemble
 
 # Contants     
 export TEMPORAL_INPUT_DIM, EXTENT, BIOLAYERS
@@ -107,6 +107,7 @@ export fit_classifier
 export balance_sample
 export compute_fit_stats
 export compare_representations
+export compare_representation_ensemble
 
 export Scenario 
 
@@ -120,5 +121,8 @@ export baseline
 export BoostedRegressionSDM
 export SpeciesDistribution
 export make_sdms
+
+export ProjectedOverlap
+export compute_overlap
 
 export BEST_REPRESENTATIONS

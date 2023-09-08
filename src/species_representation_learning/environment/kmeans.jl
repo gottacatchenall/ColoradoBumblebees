@@ -3,7 +3,7 @@ Base.@kwdef struct KMeansEnvironmentEmbedding <: Environment
 end
 
 
-outdim(kmee::KMeansEnvironmentEmbedding) = 7kmee.k
+outdim(kmee::KMeansEnvironmentEmbedding) = 6kmee.k
 outdim(kmee::KMeansEnvironmentEmbedding, ::Union{Type{Bee},Type{Plant}}) = outdim(kmee)
 
 function _embed(data::BeeData, kmee::KMeansEnvironmentEmbedding)
@@ -34,4 +34,11 @@ function _feat(kmse::KMeansEnvironmentEmbedding, env::DataFrame)
         return vcat([[mean(env[!, "w_BIO_$i"]) for i in 1:size(X, 1)] for i in 1:(kmse.k)]...)
         #vcat([[mean(occ.longitude), mean(occ.latitude)] for i in 1:kmse.k]...)
     end
+end
+
+
+function _feat2(env, dim)
+    X = Matrix(env[!, 2:end])'
+    res = kmeans(X, dim)
+    return vcat([res.centers[:, i] for i in 1:(dim)]...)
 end

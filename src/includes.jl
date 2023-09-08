@@ -11,6 +11,7 @@ include(srcdir("types", "classification_models.jl"))
 include(srcdir("types", "classification_fits.jl"))
 include(srcdir("types", "confusion_matrix.jl"))
 include(srcdir("types", "species_distributions.jl"))
+include(srcdir("types", "projected_overlap.jl"))
 
 include(srcdir("load_data", "load_chelsa.jl"))
 include(srcdir("load_data", "load_networks.jl"))
@@ -50,7 +51,6 @@ include(srcdir("species_representation_learning", "embed.jl"))
 include(srcdir("classification_models", "classification_stats.jl"))
 include(srcdir("classification_models", "balance_sample.jl"))
 include(srcdir("classification_models", "fit_classifier.jl"))
-include(srcdir("classification_models", "batch_fit.jl"))
 include(srcdir("classification_models", "comparing_representations.jl"))
 
 include(srcdir("artifacts", "shared.jl"))
@@ -63,3 +63,7 @@ include(srcdir("artifacts", "sdm_artifacts.jl"))
 include(srcdir("species_distributions", "distribution_models.jl"))
 include(srcdir("species_distributions", "utils.jl"))
 include(srcdir("species_distributions", "fit_distribution.jl"))
+
+# Project overlap
+
+include(srcdir("overlap_projection", "project.jl"))
