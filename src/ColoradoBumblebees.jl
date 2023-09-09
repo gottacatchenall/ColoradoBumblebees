@@ -46,7 +46,8 @@ module ColoradoBumblebees
             rnn_dims = [1, 8, 1],
             encoder_dims = [TEMPORAL_INPUT_DIM, 16],
             decoder_dims = [16, TEMPORAL_INPUT_DIM],
-            opt = ADAM(0.005)
+            opt = ADAM(0.005),
+            unit = GRU
         ),
         LFSVD(truncation_dims=6, embed_dims=6),
         KMeansEnvironmentEmbedding(k=3),
