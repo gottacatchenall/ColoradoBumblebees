@@ -2,7 +2,7 @@ using DrWatson
 @quickactivate :ColoradoBumblebees
 
 
-function main(num_replicates)
+function main(num_replicates; outdir="")
     treatments = filter(x->length(x)>0,collect(powerset(BEST_REPRESENTATIONS)))
     treatments = treatments[sortperm([string(t) for t in treatments])]
  
@@ -11,7 +11,7 @@ function main(num_replicates)
     job_id = parse(Int, ENV["SLURM_ARRAY_TASK_ID"])
     this_treatment = treatments[job_id]
     this_name = names[job_id]
-    this_outpath = joinpath(artifactdir(), "classification_fits", "multiple_representations", "rf", this_name)
+    this_outpath = joinpath(outdir, "classification_fits", "multiple_representations", "rf", this_name)
 
 
     model = RandomForest()
@@ -20,4 +20,4 @@ function main(num_replicates)
     ColoradoBumblebees.save(bf; outdir=this_outpath)
 end 
 
-main(128) # 1371 seconds
+main(128; outdir = "/scratch/mcatchen") # 1371 seconds
