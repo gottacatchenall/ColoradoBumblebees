@@ -49,6 +49,6 @@ module ColoradoBumblebees
             opt = ADAM(0.005)
         ),
         LFSVD(truncation_dims=6, embed_dims=6),
-        KMeansEnvironmentEmbedding(k=7),
+        KMeansEnvironmentEmbedding(k=3),
     ]
 end 
