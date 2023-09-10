@@ -16,4 +16,4 @@ module load cudnn
 export JULIA_DEPOT_PATH="/project/def-gonzalez/mcatchen/JuliaEnvironments/COBees"
 export CLUSTER="true"
 
-julia fit_logistic.jl
+julia fit_ensemble.jl
