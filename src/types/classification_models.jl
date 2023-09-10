@@ -38,3 +38,4 @@ end
 (lr::LogisticRegression)() = LOGISTIC_MODEL(lambda=lr.lambda, penalty = lr.penalty)
 
 struct Ensemble <: ClassificationModel end 
+(es::Ensemble)() = Ensemble()
