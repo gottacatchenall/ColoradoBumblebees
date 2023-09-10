@@ -27,7 +27,7 @@ function compare_representation_ensemble(num_replicates, this_treatment)
 
     train_idx, test_idx, catvec = _cv_test_train_split(X)
 
-    mods = [XGBoost(), RandomForest(), BoostedRegressionTree(), Logistic()]
+    mods = [XGBoost(), RandomForest(), BoostedRegressionTree(), LogisticRegression()]
 
     
     fits = []
