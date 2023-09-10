@@ -11,7 +11,7 @@ function main(num_replicates; outdir="")
     this_outpath = joinpath(outdir, "classification_fits", "multiple_representations", "logistic", this_name)
 
 
-    model = Logistic()
+    model = LogisticRegression()
     bf = compare_representations(model, num_replicates, this_treatment)
     ColoradoBumblebees.save(bf; outdir = this_outpath)
 end 
