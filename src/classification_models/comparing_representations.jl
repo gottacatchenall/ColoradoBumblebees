@@ -16,7 +16,7 @@ function compare_representations(model, num_replicates, this_treatment)
     return bf
 end
 
-function compare_representation_ensemble(num_replicates, this_treatment; kwargs...)
+function compare_representation_ensemble(num_replicates, this_treatment)
     rep_dir = joinpath(artifactdir(), "species_representations")
     reps = [ColoradoBumblebees.load(joinpath(rep_dir, _get_srl_dir(emb))) for emb in this_treatment]
     data = load_data()
@@ -25,7 +25,7 @@ function compare_representation_ensemble(num_replicates, this_treatment; kwargs.
     y, X, _ = unpack(feat_df, ==(:interaction), ∉([:bee, :plant]))
     y = coerce(y, Multiclass{2})
 
-    train_idx, test_idx, catvec = _cv_test_train_split(X; kwawgs...)
+    train_idx, test_idx, catvec = _cv_test_train_split(X)
 
     mods = [XGBoost(), RandomForest(), BoostedRegressionTree(), Logistic()]
 
