@@ -106,4 +106,4 @@ function _load_fit_stats(path)
     _read_json.(joinpath.(fit_stats_dir, readdir(fit_stats_dir)))
 end
 
-_get_model_obj(model_string) = Dict("XGBoost" => XGBoost, "RandomForest" => RandomForest, "BoostedRegressionTree" => BoostedRegressionTree, "LogisticRegression"=>LogisticRegression)[model_string]
+_get_model_obj(model_string) = Dict("XGBoost" => XGBoost, "RandomForest" => RandomForest, "BoostedRegressionTree" => BoostedRegressionTree, "LogisticRegression"=>LogisticRegression, "Ensemble"=>Ensemble)[model_string]

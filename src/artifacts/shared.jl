@@ -28,9 +28,11 @@ end
 
 
 
-function load(path::String)
-    split(path, "/")[end-1] == "classification_fits"  && return _load_classification_fit(path)
-    split(path, "/")[end-1] == "species_representations" && return _load_species_representation(path)
-    split(path, "/")[end-1] == "sdms" && return _load_sdm(path)
 
+function load(path::String)
+    dirs = split(path, "/")
+    idx = findfirst(isequal("artifacts"), dirs)
+    dirs[idx+1] == "classification_fits"  && return _load_classification_fit(path)
+    dirs[idx+1] == "species_representations" && return _load_species_representation(path)
+    dirs[idx+-1] == "sdms" && return _load_sdm(path)
 end
