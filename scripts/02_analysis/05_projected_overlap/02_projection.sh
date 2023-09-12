@@ -6,7 +6,7 @@
 #SBATCH --ntasks=1               
 #SBATCH --cpus-per-task=1        
 #SBATCH --mem-per-cpu=16G 
-#SBATCH --array=1-27
+#SBATCH --array=1-24
 #SBATCH --time=45:00         
 
 
@@ -14,3 +14,5 @@ module load julia/1.8.5
 
 export JULIA_DEPOT_PATH="/project/def-gonzalez/mcatchen/JuliaEnvironments/COBees"
 export CLUSTER="true"
+
+julia project_future_overlap.jl
