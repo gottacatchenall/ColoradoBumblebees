@@ -42,9 +42,10 @@ function _load_classification_fit(path)
     # Okay, perhaps this should be smarter about realizing where this was run
     # (e.g. local hostname or on cluster) and where it is currntly being run, to
     # make sure the path is valid.
-    metadata["representation_paths"]
+    rep_path = metadata["representation_paths"]
     
-    reps = ColoradoBumblebees.load.(metadata["representation_paths"])
+    rep_path = [contains(x, "ColoradoBumblebees") ? x : joinpath("ColoradoBumblebees", x) for x in rep_path] 
+    reps = ColoradoBumblebees.load.(rep_path)
 
     predictions = _load_predictions(path)
     fit_stats = _load_fit_stats(path)

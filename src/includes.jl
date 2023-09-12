@@ -57,6 +57,7 @@ include(srcdir("artifacts", "shared.jl"))
 include(srcdir("artifacts", "representation_artifacts.jl"))
 include(srcdir("artifacts", "classification_artifacts.jl"))
 include(srcdir("artifacts", "sdm_artifacts.jl"))
+include(srcdir("artifacts", "projection_artifacts.jl"))
 
 # SDMs
 

@@ -16,23 +16,29 @@ directory.
 
 ## Producing analysis results  (`02_analysis`)
 
-The later steps are designed to be partially run on a SLURM based cluster. 
+The later steps are designed to be run (in large part) on a SLURM based cluster.
+Repredocuing the entire analysis on a local machine with limited cores/RAM may
+prove difficult. 
 
 1. Clean data (`01_clean_data.jl`)
 2. Engineer features (`02_engineer_features`)
     - `01_vgae`
     - `02_feature_learning`
+        - reps
+            - Each directory also contains a `vis.jl`
+      file for producing the supplemental visualizatoin figures for each
 3. Interaction prediction (`03_interaction_prediction`)
-    - `logistic`
-    - `rf`
-    - `brt`
-    - `xgboost`
+    - This directory contains a folder which fits each classification model on
+      each set of species representations. Each is designed to run on SLURM
+      clusters as parallel job-arrays.  
+        - `logistic`
+        - `rf`
+        - `brt`
+        - `xgboost`
+        - `ensemble`
 4. Fit SDMs (`04_make_sdms`)
     - `make_sdms.jl`
 5. Compute overlap (`05_compute_overlap`)
     - foo
-6. Compute interaction richness (`06_interaction_richness`)
-    - foo
 
-## Visualization (`03_visualization`)
 

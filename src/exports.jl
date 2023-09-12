@@ -124,5 +124,10 @@ export make_sdms
 
 export ProjectedOverlap
 export compute_overlap
+export get_predicted_network
+export get_empirical_network
+export get_metaweb
+export compute_future_overlap
+export compute_baseline_overlap
 
 export BEST_REPRESENTATIONS

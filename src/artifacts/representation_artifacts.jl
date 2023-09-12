@@ -32,13 +32,15 @@ function _load_species_representation(path)
 
 
     #relative_path = is_relative ? "."*string(split(path, "ColoradoBumblebees")[2]) : split(path, "ColoradoBumblebees")
+    @info "Top"
+    @info split(path, "ColoraodBumblebees")
     relative_path = "."*string(split(path, "ColoradoBumblebees")[2])
     full_path = is_relative ? joinpath(artifactdir()) : joinpath(projectdir(), relative_path) 
 
     @info is_relative 
     #@info string(split(path, "ColoradoBumblebees")[2]) 
     @info full_path, relative_path, path
-
+    @info "Bottom\n"
     metadata = _read_json(joinpath(full_path, "metadata.json"))
     embed_model = _reconstruct_representation(metadata["representations"])[1]
     embed_dict = _embed_df_to_embed_dict(CSV.read(joinpath(full_path, "representation.csv"), DataFrame)) 
