@@ -9,3 +9,4 @@ function main()
     ColoradoBumblebees.save(baseline_po; cluster=ColoradoBumblebees.CLUSTER)
 end 
 
+main()
