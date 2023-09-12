@@ -2,7 +2,7 @@ using DrWatson
 @quickactivate :ColoradoBumblebees
 
 function load_baseline_overlap(cluster)
-    lead = cluster ? "/scratch/mcatchen/projected_overlap" : joinpath(artifactdir(), "projected_overlap")
+    lead = cluster ? "/scratch/mcatchen/artifacts/projected_overlap" : joinpath(artifactdir(), "projected_overlap")
     baseline_path = filter(x->contains(x, "Baseline"), readdir(lead))[1]
     ColoradoBumblebees.load(joinpath(lead, baseline_path))
 end

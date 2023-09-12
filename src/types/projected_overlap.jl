@@ -6,6 +6,6 @@ struct ProjectedOverlap{T,S}
 end
 
 function ColoradoBumblebees.path(po::ProjectedOverlap{T,S}; cluster=false) where {T,S}
-    lead = cluster ? "/scratch/mcatchen" : artifactdir() 
+    lead = cluster ? "/scratch/mcatchen/artifacts/" : artifactdir() 
     joinpath(lead, "projected_overlap", "Scenario_$(string(S))_Timespan_$(string(T))")
 end
