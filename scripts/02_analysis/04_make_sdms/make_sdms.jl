@@ -29,19 +29,34 @@ function main()
 
 end
  
-main()
+#main()
+
 
 
 #=
-sdms = make_sdms("Ericameria parryi", load_occurrence_data(); cluster=false, pa_buffer_distance=8)
-
-heatmap(sdms[1].probability.grid)
-
-
-for (i,sdm) in enumerate(sdms)
-    sdm_dir = sdmdir(sdm)
-    mkpath(sdm_dir)
-    ColoradoBumblebees.save(sdm)
-end
+ [ Info: Bombus californicus is broken
+[ Info: Dodecatheon pulchellum is broken
+[ Info: Ericameria parryi is broken
+[ Info: Iris missouriensis is broken
+[ Info: Pedicularis bracteosa is broken
+[ Info: Verbascum thapsus is broken
 =#
+
+function main2()
+
+    spnames = ["Bombus californicus", "Dodecatheon pulchellum", "Ericameria parryi", "Iris missouriensis", "Pedicularis bracteosa", "Verbascum thapsus"]
+
+    for sp in spnames
+        sdms = make_sdms(sp, load_occurrence_data(); cluster=false, pa_buffer_distance=8)
+        for (i,sdm) in enumerate(sdms)
+            sdm_dir = sdmdir(sdm)
+            mkpath(sdm_dir)
+            ColoradoBumblebees.save(sdm)
+        end
+    end 
+
+end 
+
+main2()
+
 

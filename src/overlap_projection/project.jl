@@ -91,6 +91,9 @@ function compute_future_overlap(baseline_overlap, best_dir_path, timespan::Type{
 
     baseline_df, proj_df = baseline_overlap.cooccurrence_dataframe, projected.cooccurrence_dataframe
 
+    @assert baseline_df.bee == proj_df.bee
+    @assert baseline_df.plant == proj_df.plant
+
     proj_df.mean_cooccurrence .= proj_df.mean_cooccurrence ./ baseline_df.mean_cooccurrence
     proj_df.var_cooccurrence .= proj_df.var_cooccurrence ./ baseline_df.var_cooccurrence
 
@@ -100,6 +103,8 @@ end
 function compute_overlap(best_dir_path, timespan::Type{T}, scenario::Type{S}) where {T,S}
     data = load_data()
     bee_species, plants_species = bees(data), plants(data)
+    bee_species, plants_species = bee_species[sortperm([b.name for b in bee_species])], plants_species[sortperm([p.name for p in plants_species])]
+
     all_species = vcat(bee_species, plants_species);
 
     binary_prediction, probability_prediction, empirical = get_metaweb(best_dir_path)
