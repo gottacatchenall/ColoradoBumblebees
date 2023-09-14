@@ -76,30 +76,6 @@ function get_empirical_network()
     empirical_metaweb
 end
 
-function compute_baseline_overlap(best_dir_path)
-    compute_overlap(best_dir_path, baseline(), Baseline)
-end
-
-function compute_future_overlap(baseline_overlap, best_dir_path, timespan::Type{T}, scenario::Type{S}) where {T,S}
-    projected = compute_overlap(best_dir_path, timespan, scenario)
-
-    int_richness_map, int_uncertainty_map, sdm_uncertainty_map = [similar(baseline_overlap.interaction_richness) for _ in 1:3]
-
-    int_richness_map.grid .= projected.interaction_richness.grid ./ baseline_overlap.interaction_richness.grid
-    int_uncertainty_map.grid .= projected.interaction_uncertainty.grid ./ baseline_overlap.interaction_uncertainty.grid
-    sdm_uncertainty_map.grid .= projected.sdm_uncertainty.grid ./ baseline_overlap.sdm_uncertainty.grid
-
-    baseline_df, proj_df = baseline_overlap.cooccurrence_dataframe, projected.cooccurrence_dataframe
-
-    @assert baseline_df.bee == proj_df.bee
-    @assert baseline_df.plant == proj_df.plant
-
-    proj_df.mean_cooccurrence .= proj_df.mean_cooccurrence ./ baseline_df.mean_cooccurrence
-    proj_df.var_cooccurrence .= proj_df.var_cooccurrence ./ baseline_df.var_cooccurrence
-
-    ProjectedOverlap{T,S}(int_richness_map, int_uncertainty_map, sdm_uncertainty_map, projected.cooccurrence_dataframe)
-end
-
 function compute_overlap(best_dir_path, timespan::Type{T}, scenario::Type{S}) where {T,S}
     data = load_data()
     bee_species, plants_species = bees(data), plants(data)

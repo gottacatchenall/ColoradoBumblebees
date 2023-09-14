@@ -11,7 +11,7 @@ function ColoradoBumblebees.save(overlap::ProjectedOverlap{T,S}; cluster=false) 
     _write_json(joinpath(outdir, "metadata.json"), metadata)
 
     CSV.write(joinpath(outdir, "cooccurrence.csv"), overlap.cooccurrence_dataframe)
-    SpeciesDistributionToolkit.save(joinpath(outdir, "interaction_richess.tif"), overlap.interaction_richness)
+    SpeciesDistributionToolkit.save(joinpath(outdir, "interaction_richness.tif"), overlap.interaction_richness)
     SpeciesDistributionToolkit.save(joinpath(outdir, "interaction_uncertainty.tif"), overlap.interaction_uncertainty)
     SpeciesDistributionToolkit.save(joinpath(outdir, "sdm_uncertainty.tif"), overlap.sdm_uncertainty)
 end
@@ -39,7 +39,7 @@ function _timespan_and_scenario(metadata)
 end
 
 function _load_projected_overlap(po_path)
-    int_richness = SimpleSDMPredictor(joinpath(po_path, "interaction_richess.tif"))
+    int_richness = SimpleSDMPredictor(joinpath(po_path, "interaction_richness.tif"))
     int_uncert = SimpleSDMPredictor(joinpath(po_path, "interaction_uncertainty.tif"))
     sdm_uncert = SimpleSDMPredictor(joinpath(po_path, "sdm_uncertainty.tif"))
     cooc_df = CSV.read(joinpath(po_path, "cooccurrence.csv"), DataFrame)

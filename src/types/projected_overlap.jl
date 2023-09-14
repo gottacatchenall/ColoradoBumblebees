@@ -9,3 +9,5 @@ function ColoradoBumblebees.path(po::ProjectedOverlap{T,S}; cluster=false) where
     lead = cluster ? "/scratch/mcatchen/artifacts/" : artifactdir() 
     joinpath(lead, "projected_overlap", "Scenario_$(string(S))_Timespan_$(string(T))")
 end
+
+Base.show(io::IO, po::ProjectedOverlap{T,S}) where {T,S} = Base.print(io, "Projected overlap $T $S")
