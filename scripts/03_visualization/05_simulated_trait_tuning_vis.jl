@@ -1,3 +1,12 @@
+# List of figures:
+
+# Supplement:
+# ----------------------------------------------------------------------
+# - S007_phylo_simtraits_turning_pr.png   
+# - S008_phylo_simtraits_turning_roc.png   
+
+
+
 using DrWatson
 @quickactivate :ColoradoBumblebees
 
@@ -80,7 +89,9 @@ end
 
 f
 end
-save(plotsdir("S15_phylo_simulated_traits_pr.png"), f)
+save(plotsdir("S007_phylo_simtraits_turning_pr.png"), f)
+save(plotsdir("S007_phylo_simtraits_turning_pr.svg"), f)
+
 begin 
     f = Figure(resolution=(2000,2000))
     ax1 = Axis(f[1,1])
@@ -121,6 +132,7 @@ begin
     end
     
     f
-    end
+end
 
-    save(plotsdir("S16_phylo_simulated_traits_roc.png"), f)
+save(plotsdir("S008_phylo_simtraits_turning_roc.png"), f)
+save(plotsdir("S008_phylo_simtraits_turning_roc.svg"), f)

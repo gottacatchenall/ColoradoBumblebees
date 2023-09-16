@@ -1,3 +1,11 @@
+# List of figures:
+
+# Supplement:
+# ----------------------------------------------------------------------
+# - S017_metaweb_svd_tuning_pr.png   
+# - S018_metaweb_svd_tuning_roc.png 
+
+
 using DrWatson
 @quickactivate :ColoradoBumblebees
 
@@ -101,6 +109,8 @@ begin
     fig_roc
 end 
 
-save(plotsdir("S6_metaweb_svd_pr.svg"), fig_pr)
+save(plotsdir("S017_metaweb_svd_tuning_pr.png"), fig_pr)
+save(plotsdir("S017_metaweb_svd_tuning_pr.svg"), fig_pr)
 
-save(plotsdir("S6_metaweb_svd_roc.svg"), fig_roc )
+save(plotsdir("S018_metaweb_svd_tuning_roc.png"), fig_roc )
+save(plotsdir("S018_metaweb_svd_tuning_roc.svg"), fig_roc )

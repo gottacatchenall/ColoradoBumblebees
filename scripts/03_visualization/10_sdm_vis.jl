@@ -38,10 +38,10 @@ function plot_sdm(fig_slice, sdm::SpeciesDistribution)
     
     l = Matrix{Float32}(sdm.probability.grid)
 
-    l[findall(x-> x < thres, l)] .= 0
+   # l[findall(x-> x < thres, l)] .= 0
     lats = collect(LinRange(EXTENT[:bottom], EXTENT[:top], size(l, 1)))
     longs = collect(LinRange(EXTENT[:left], EXTENT[:right], size(l, 2)))
-    hm = heatmap!(ax, longs, lats, l'; colormap=:magma, colorrange=(0.4,1))
+    hm = heatmap!(ax, longs, lats, l'; colormap=:magma, colorrange=(0,1))
     
     state, counties = load_geojsons()
 
@@ -59,6 +59,10 @@ function plot_uncertainty(sdm::SpeciesDistribution)
     fig
 end
 
+
+this_sdm = load_sdm(allspecies[1], baseline(), Baseline)
+plot_sdm(Figure()[1,1], this_sdm)
+current_figure()
 
 # Each fig will be 4 rows, 3 cols?
 
@@ -96,15 +100,10 @@ for b in 1:n_batches
         end
     end 
 
-    Colorbar(f[2:3,5], limits=(0.4,1), size=30, ticks=0.4:0.1:1, colormap = :magma, label="Probability")
+    Colorbar(f[2:3,5], limits=(0,1), size=30, ticks=0:0.1:1, colormap = :magma, label="Probability")
 
-    save(plotsdir("sdm_set$b.png"), f)
+    save(plotsdir("S0$(b+19)_sdm_set_$b.png"), f)
 end 
-
-
-
-current_figure()
-save(plotsdir("sdm_test.png"), f)
 
 
 #=

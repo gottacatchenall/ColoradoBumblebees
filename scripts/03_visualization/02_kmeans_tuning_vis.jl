@@ -1,3 +1,11 @@
+# List of figures:
+
+# Supplement:
+# ----------------------------------------------------------------------
+# - S001_kmeans_tuning.png   
+#   - Fit stats for classification models trained on k-means with different k 
+
+
 using DrWatson
 @quickactivate :ColoradoBumblebees
 
@@ -73,4 +81,5 @@ begin
     f
 end 
 
-save(plotsdir("S1_kmeans.png"), f)
+save(plotsdir("S001_kmeans_tuning.png"), f)
+save(plotsdir("S001_kmeans_tuning.svg"), f)

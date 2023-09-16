@@ -1,7 +1,6 @@
-install.packages("BiocManager")
-install.packages("ggplot2")
-
-BiocManager::install("ggtree")
+#install.packages("BiocManager")
+#install.packages("ggplot2")
+#BiocManager::install("ggtree")
 
 require(ggtree)
 require(treeio)
@@ -24,7 +23,6 @@ plantdf = read.csv("data/public/phylogeny/raw_sequences/plant_sequences.csv")
 beedf = read.csv("data/public/phylogeny/raw_sequences/bee_sequences.csv")
 beetree = rename_taxa(beetree, beedf, Species.Codename, Bee)
 
-p_bee =  
 p_plant = ggtree(
     planttree,  
     layout="circular",
@@ -40,7 +38,7 @@ p_plant = ggtree(
     theme(plot.margin = unit(c(1,1,1,1), "in"))
 p_plant
 
-ggsave("plants.png", width = 4000, height = 4000,dpi=300, units = "px")
+ggsave("./plots/F001_plant_phylogeny.png", width = 4000, height = 4000,dpi=300, units = "px")
 
 
 
@@ -57,5 +55,6 @@ geom_hilight(node=39, fill="#93709e", alpha=.6) # Psithyrus
 
 
 
-ggsave("bees.png", width = 3500, height = 4000,dpi=300, units = "px")
+ggsave("./plots/F002_bee_phylogeny.png", width = 3500, height = 4000,dpi=300, units = "px")
+
 

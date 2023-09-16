@@ -1,3 +1,10 @@
+# List of figures:
+
+# Supplement:
+# ----------------------------------------------------------------------
+# - S002_metaweb_node2vec_tuning_prauc.png   
+# - S003_metaweb_node2vec_tuning_rocauc.png 
+
 using DrWatson
 @quickactivate :ColoradoBumblebees
 
@@ -7,7 +14,7 @@ CairoMakie.activate!(; px_per_unit=3)
 fontsize_theme = Theme(fontsize=32)
 set_theme!(fontsize_theme)
 
-dirs = [joinpath(artifactdir(), "classification_fits", x) for x in filter(x->contains(x, "PhylogeneticNode2Vec"), readdir(joinpath(artifactdir(), "classification_fits")))]
+dirs = [joinpath(artifactdir(), "classification_fits", x) for x in filter(x->contains(x, "MetawebNode2Vec"), readdir(joinpath(artifactdir(), "classification_fits")))]
 
 
 reps = ColoradoBumblebees.load.(dirs)
@@ -23,14 +30,6 @@ n_reps = 128
 walklengths = _splat([representation(r)[1].embed_model.walk_length for r in reps], n_reps)
 embedding_dim = _splat([representation(r)[1].embed_model.embedding_dim for r in reps], n_reps)
 number_of_walks = _splat([representation(r)[1].embed_model.number_of_walks for r in reps], n_reps)
-
-
-
-# Its going to be a 4 x 3 panel grid, each with four categories.
-
-# Number of walks: columns (50, 100, 250, 500)
-# Walk length: rows (10, 50, 100)
-# Embedding dim: elements (4,8,12,16)
 
 axargs = (; titlesize=28,xticks=4:4:16, yticks=0.4:0.05:1)
 
@@ -99,6 +98,12 @@ fig_pr
 fig_roc
 end
 
+fig_pr
 
-save(plotsdir("S2_phylo_node2vec_pr.png"), fig_pr)
-save(plotsdir("S3_phylo_node2vec_roc.png"), fig_roc)
+fig_roc
+
+save(plotsdir("S002_metaweb_node2vec_tuning_prauc.png"), fig_pr)
+save(plotsdir("S002_metaweb_node2vec_tuning_prauc.svg"), fig_pr)
+
+save(plotsdir("S003_metaweb_node2vec_tuning_rocauc.png"), fig_roc)
+save(plotsdir("S003_metaweb_node2vec_tuning_rocauc.svg"), fig_roc)

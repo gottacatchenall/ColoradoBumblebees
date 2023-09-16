@@ -1,3 +1,15 @@
+# List of figures:
+
+# Supplement:
+# ----------------------------------------------------------------------
+# - S009_Standard_RNN_tuning.png   
+# - S010_Variational_RNN_tuning.png   
+# - S011_Standard_LSTM_tuning.png
+# - S012_Variational_LSTM_tuning.png
+# - S013_Standard_GRU_tuning.png
+# - S014_Variational_GRU_tuning.png
+
+
 using DrWatson
 @quickactivate :ColoradoBumblebees
 
@@ -37,6 +49,7 @@ gru_variational = filter_representations(GRU, Variational)
 
 ra_sets = [rnn_standard, rnn_variational, lstm_standard, lstm_variational, gru_standard, gru_variational]
 ra_names = ["Standard RNN", "Variational RNN", "Standard LSTM", "Variational LSTM", "Standard GRU", "Variational GRU"]
+ra_filenames = ["S009_Standard_RNN_tuning", "S010_Variational_RNN_tuning", "S011_Standard_LSTM_tuning", "S012_Variational_LSTM_tuning", "S013_Standard_GRU_tuning", "S014_Variational_GRU_tuning"]
 
 n_reps = 128
 
@@ -146,9 +159,12 @@ end
 f = build_plot(ra_sets[1], ra_names[1])
 
 
+
+
 for i in eachindex(ra_sets)
     f = build_plot(ra_sets[i], ra_names[i])
 
-#    save(plotsdir("S$(i+8)_$(ra_names[i]).png"), f)
+    save(plotsdir("$(ra_filenames[i]).png"), f)
+    save(plotsdir("$(ra_filenames[i]).svg"), f)
 end 
 

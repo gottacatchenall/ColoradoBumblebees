@@ -1,8 +1,25 @@
+# List of figures:
+
+# Main text:
+# ----------------------------------------------------------------------
+# - F004_baseline_bivariate.png Baseline interaction-richess/sdm-uncertainty bivariate map
+# - F005_bee_overlap_midcentury.png Each bee species overlap distribution across plants taken as a slice from SSP370, 2050s
+# - F006_overlap_over_time.png The mean overlap relative to baseline across all species pairs over each decade, with each SSP in colors
+
+# Supplement:
+# ----------------------------------------------------------------------
+# S?? - SDM Uncertainty: Each row: year range, Each column: SSP
+# S?? - Interaction Richness: Each row: year range, Each column: SSP
+# S?? - Relative Interaction Richness
+# S?? - Bivariate: Each row : year, Each column, SSP 
+# S(??-??) - Bee overlap raincloud -- each row is a decade, 3 figs for each SSP
+
+
+
 using DrWatson
 @quickactivate :ColoradoBumblebees
 
 using CairoMakie, GeoMakie, GeoJSON, ColorSchemes
-
 using HypothesisTests
 
 projected_overlap_dirs = [joinpath(artifactdir(), "projected_overlap", x) for x in readdir(joinpath(artifactdir(), "projected_overlap"))]
@@ -20,16 +37,6 @@ M = BipartiteNetwork( Matrix{Bool}(any.(binary_prediction .∪ empirical)), [str
 CairoMakie.activate!(; px_per_unit=3)
 fontsize_theme = Theme(; fontsize=32)
 set_theme!(fontsize_theme)
-
-
-
-# List of figures:
-
-# Main text:
-# ----------------------------------------------------------------------
-# - F1 Baseline interaction-richess/sdm-uncertainty bivariate map
-# - F2 Each bee species overlap distribution across plants taken as a slice from SSP370, 2050s
-# - F3 The mean overlap relative to baseline across all species pairs over each decade, with each SSP in colors
 
 
 function standardize_layer(layer)
@@ -155,8 +162,8 @@ begin
     f
 end
 
-save(plotsdir("F02_bivariate.svg"), f)
-save(plotsdir("F02_bivariate.png"), f)
+save(plotsdir("F004_baseline_bivariate.svg"), f)
+save(plotsdir("F004_baseline_bivariate.png"), f)
 
 #
 # - F2 Each bee species overlap distribution across plants taken as a slice from SSP245, 2050s
@@ -253,7 +260,7 @@ begin
         gap=-0.3,
         xticklabelcolor=:blue,
         color=cols,
-        colormap=my,
+        colormap=cols,
         colorrange=(0.4, 1.75),
     )
 
@@ -278,14 +285,14 @@ begin
     fig
 end
 
-save(plotsdir("F??_bee_overlap_2050s.png"), fig)
+save(plotsdir("F005_bee_overlap_midcentury.png"), fig)
+save(plotsdir("F005_bee_overlap_midcentury.svg"), fig)
 
 #
 # - F3 The mean overlap relative to baseline across all species pairs over each decade, with each SSP in colors
 #
 baseline_po = proj_overlaps[1]
 futures = proj_overlaps[2:end]
- 
 
 _timespan(::ProjectedOverlap{T,S}) where {T,S} = T
 _scenario(::ProjectedOverlap{T,S}) where {T,S} = S
@@ -293,51 +300,45 @@ _scenario(::ProjectedOverlap{T,S}) where {T,S} = S
 xvals = Dict([t => i for (i,t) in enumerate(TIMESPANS[2:end])])
 
 begin 
-fig = Figure(resolution=(2000, 1000))
-axes = [Axis(
-        fig[1,x],
-        limits=(0, 5, 0.5,1.5)
-    ) for x in values(xvals)]
-cols = Dict([
-    SSP1_26=>colorant"#2e81e8",
-    SSP2_45=>colorant"#555",
-    SSP3_70=>colorant"#e63e3e",
-])
+    fig = Figure(resolution=(2000, 1000))
+    axes = [Axis(
+            fig[1,x],
+            limits=(0, 5, 0.7,1.3)
+        ) for x in values(xvals)]
+    cols = Dict([
+        SSP1_26=>colorant"#2e81e8",
+        SSP2_45=>colorant"#555",
+        SSP3_70=>colorant"#e63e3e",
+    ])
 
-baseline = proj_overlaps[1]
+    baseline = proj_overlaps[1]
 
-I = [M[String(r.bee), String(r.plant)] for r in eachrow(baseline.cooccurrence_dataframe)]
+    I = [M[String(r.bee), String(r.plant)] for r in eachrow(baseline.cooccurrence_dataframe)]
 
 
-for (i,f) in enumerate(reverse(futures))
-    t, s = _timespan(f), _scenario(f)
-    ax = axes[xvals[t]]
-    y = f.cooccurrence_dataframe.mean_cooccurrence[I] ./ baseline.cooccurrence_dataframe.mean_cooccurrence[I]
-    density!(ax, y, direction=:y, color=(cols[s], 0.4))
+    for (i,f) in enumerate(reverse(futures))
+        t, s = _timespan(f), _scenario(f)
+        ax = axes[xvals[t]]
+        y = f.cooccurrence_dataframe.mean_cooccurrence[I] ./ baseline.cooccurrence_dataframe.mean_cooccurrence[I]
+        density!(ax, y, direction=:y, color=(cols[s], 0.4))
+    end
+
+    fig
+
+
+    fw = PolyElement(color = (cols[SSP1_26], 0.7),)
+    pp = PolyElement(color = (cols[SSP2_45], 0.7),)
+    hp = PolyElement(color = (cols[SSP3_70], 0.7),)
+
+    Legend(fig[:,0], width=220, [fw,pp,hp], ["SSP1-2.6", "SSP2-4.5", "SSP3-7.0"])
+    fig 
 end
 
-fig
+save(plotsdir("F006_overlap_over_time.png"), fig)
+save(plotsdir("F006_overlap_over_time.svg"), fig)
 
 
-fw = PolyElement(color = (cols[SSP1_26], 0.7),)
-pp = PolyElement(color = (cols[SSP2_45], 0.7),)
-hp = PolyElement(color = (cols[SSP3_70], 0.7),)
-
-Legend(fig[:,0], width=220, [fw,pp,hp], ["SSP1-2.6", "SSP2-4.5", "SSP3-7.0"])
-fig 
-
-end
-
-
-
-# Supplement:
-# ----------------------------------------------------------------------
-# S?? - SDM Uncertainty: Each row: year range, Each column: SSP
-# S?? - Interaction Richness: Each row: year range, Each column: SSP
-# S?? - Relative Interaction Richness
-# S?? - Bivariate: Each row : year, Each column, SSP 
-# S?? - Bee overlap raincloud -- each row is a decade, 3 figs for each SSP
-
+# SUPPLEMENT FIGS
 grouped_fig_params = (;resolution=(2400,1400))
 grouped_axis_params = ()
 
@@ -402,7 +403,7 @@ begin
     Colorbar(fig[2,end+1], hms[end], width=25 ,label="Interaction Richness")
     fig
 end
-save(plotsdir("S18_interaction_richness.png"), fig)
+save(plotsdir("S031_interaction_richness.png"), fig)
 
 
 # Relative richness
@@ -461,10 +462,10 @@ begin
 
     fig
 end
-save(plotsdir("S19_int_richness_relative_to_baseline.png"), fig)
+save(plotsdir("S032_int_richness_relative_to_baseline.png"), fig)
  
 # Uncert
- begin
+begin
     colormax = maximum(vcat([[extrema(x.sdm_uncertainty)...] for x in proj_overlaps]...))
 
     fig = Figure(;grouped_fig_params...)
@@ -514,7 +515,7 @@ save(plotsdir("S19_int_richness_relative_to_baseline.png"), fig)
     fig
 end
 
-save(plotsdir("S20_sdm_uncertainty.png"),fig)
+save(plotsdir("S033_sdm_uncertainty.png"),fig)
 
 #
 # S?? - Bivariate: Each row : year, Each column, SSP 
@@ -578,7 +579,7 @@ begin
     fig
 end
 
-save(plotsdir("S21_bivariate_overlap_futures.png"), fig)
+save(plotsdir("S034_bivariate_overlap_futures.png"), fig)
 
 # S?? - Bee overlap raincloud -- each row is a decade, 3 figs for each SSP
 

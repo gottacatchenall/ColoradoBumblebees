@@ -1,3 +1,10 @@
+# List of figures:
+
+# Supplement:
+# ----------------------------------------------------------------------
+# - S015_vgae_tuning_pr.png
+# - S016_vgae_tuning_roc.png
+
 using DrWatson
 @quickactivate :ColoradoBumblebees
 
@@ -153,5 +160,8 @@ begin
 end 
 
 
-save(plotsdir("S7_metaweb_gae_pr.png"), fig_pr)
-save(plotsdir("S8_metaweb_gae_roc.png"), fig_roc)
+save(plotsdir("S015_vgae_tuning_pr.png"), fig_pr)
+save(plotsdir("S015_vgae_tuning_pr.svg"), fig_pr)
+
+save(plotsdir("S016_vgae_tuning_roc.png"), fig_roc)
+save(plotsdir("S016_vgae_tuning_roc.svg"), fig_roc)

@@ -1,3 +1,12 @@
+# List of figures:
+
+# Main text:
+# ----------------------------------------------------------------------
+# - F003_representation_comparison.png
+#
+# Supplement
+# - S019_ROC_PR_correlation.png
+
 using DrWatson
 @quickactivate :ColoradoBumblebees
 using CairoMakie
@@ -121,9 +130,10 @@ for x in 1:length(rep_dirs)
 end
 
 f
-save(plotsdir("01_model_fit.png"), f)
 
-save(plotsdir("01_model_fit.svg"), f)
+save(plotsdir("F003_representation_comparison.png"), f)
+save(plotsdir("F003_representation_comparison.svg"), f)
+
 end 
 
 
@@ -140,5 +150,7 @@ limits!(0.4, 1, 0.4 ,1)
 scatter!(ax, xs,ys, markersize=30, color=(:dodgerblue, 0.4))
 lines!(ax, [0, 1], [0, 1])
 f
-save(plotsdir("S17_ROC_PR_correlation.png"), f)
+save(plotsdir("S019_ROC_PR_correlation.png"), f)
+save(plotsdir("S019_ROC_PR_correlation.svg"), f)
+
 end
