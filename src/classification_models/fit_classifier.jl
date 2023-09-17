@@ -57,7 +57,8 @@ function ensemble_of_balanced_classifiers(model, embedding_df, X, y, train_idx, 
 end
 
 function _cv_test_train_split(X; train_proportion=0.7)
-    Is = shuffle(1:nrow(X))
+
+    Is = Random.shuffle(Random.seed!(Dates.datetime2unix(now())), 1:nrow(X))
     cut = Int32(floor(train_proportion * nrow(X)))
     Itrain, Itest = Is[1:cut], Is[(cut + 1):end]
 

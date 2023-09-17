@@ -25,7 +25,6 @@ function compare_representation_ensemble(num_replicates, this_treatment)
     y, X, _ = unpack(feat_df, ==(:interaction), ∉([:bee, :plant]))
     y = coerce(y, Multiclass{2})
 
-    train_idx, test_idx, catvec = _cv_test_train_split(X)
 
     mods = [XGBoost(), RandomForest(), BoostedRegressionTree(), LogisticRegression()]
 
@@ -33,6 +32,7 @@ function compare_representation_ensemble(num_replicates, this_treatment)
     fits = []
 
     for r in 1:num_replicates
+        train_idx, test_idx, catvec = _cv_test_train_split(X)
         dfs = [ensemble_of_balanced_classifiers(m(), feat_df, X, y, train_idx, test_idx, catvec)[1] for m in mods]
             
         total_p_vec = sum([df.prediction for df in dfs]) ./ length(mods)

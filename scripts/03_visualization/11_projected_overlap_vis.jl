@@ -3,7 +3,7 @@
 # Main text:
 # ----------------------------------------------------------------------
 # - F004_baseline_bivariate.png Baseline interaction-richess/sdm-uncertainty bivariate map
-# - F005_bee_overlap_midcentury.png Each bee species overlap distribution across plants taken as a slice from SSP370, 2050s
+# - F005_bee_ove rlap_midcentury.png Each bee species overlap distribution across plants taken as a slice from SSP370, 2050s
 # - F006_overlap_over_time.png The mean overlap relative to baseline across all species pairs over each decade, with each SSP in colors
 
 # Supplement:
@@ -588,9 +588,9 @@ save(plotsdir("S034_bivariate_overlap_futures.png"), fig)
 begin
 
 pltnames = Dict(
-    SSP1_26=>"S22_bee_overlap_ssp126.png",
-    SSP2_45=>"S23_bee_overlap_ssp245.png",
-    SSP3_70=>"S24_bee_overlap_ssp370.png",
+    SSP1_26=>"S035_bee_overlap_ssp126.png",
+    SSP2_45=>"S036_bee_overlap_ssp245.png",
+    SSP3_70=>"S037_bee_overlap_ssp370.png",
 )
 
 for ssp in [SSP1_26, SSP2_45, SSP3_70]
