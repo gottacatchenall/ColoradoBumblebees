@@ -40,9 +40,11 @@ function compare_representation_ensemble(num_replicates, this_treatment)
         predict_df = dfs[1]
         predict_df.prediction .= total_p_vec
         pred, obs = predict_df.prediction, predict_df.interaction
-        fit_stats, _ = compute_fit_stats(obs, pred)
 
-        push!(fits, ClassificationFit(Ensemble(), reps, predict_df, fit_stats))
+        stats_dict, thres = compute_fit_stats(obs, pred)
+        stats_dict[:threshold] = thres
+    
+        push!(fits, ClassificationFit(Ensemble(), reps, predict_df, stats_dict))
     end 
 
     fits = convert.(typeof(fits[1]), fits)
