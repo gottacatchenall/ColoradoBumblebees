@@ -52,4 +52,8 @@ module ColoradoBumblebees
         LFSVD(truncation_dims=6, embed_dims=6),
         KMeansEnvironmentEmbedding(k=3),
     ]
+
+    const BEST_REP = "RelativeAbundance_Structural"
+    const BEST_REP_DIR = joinpath(artifactdir(), "classification_fits", "multiple_representations", "ensemble", BEST_REP)
+    export BEST_REP, BEST_REP_DIR
 end 

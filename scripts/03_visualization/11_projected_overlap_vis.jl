@@ -25,13 +25,10 @@ using HypothesisTests
 projected_overlap_dirs = [joinpath(artifactdir(), "projected_overlap", x) for x in readdir(joinpath(artifactdir(), "projected_overlap"))]
 proj_overlaps = ColoradoBumblebees.load.(projected_overlap_dirs)
 
-best_rep = "RelativeAbundance_Structural_Environment"
-best_fit_dir = joinpath(artifactdir(), "classification_fits", "multiple_representations", "brt", best_rep)
-
 data = load_data()
 bee_species, plants_species = bees(data), plants(data)
 bee_species, plants_species = bee_species[sortperm([b.name for b in bee_species])], plants_species[sortperm([p.name for p in plants_species])]
-binary_prediction, probability_prediction, empirical = ColoradoBumblebees.get_metaweb(best_fit_dir)
+binary_prediction, probability_prediction, empirical = ColoradoBumblebees.get_metaweb(BEST_FIT_DIR)
 M = BipartiteNetwork( Matrix{Bool}(any.(binary_prediction .∪ empirical)), [string(b.name) for b in bee_species], [string(p.name) for p in plants_species],)
 
 CairoMakie.activate!(; px_per_unit=3)

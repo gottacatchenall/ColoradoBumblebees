@@ -114,11 +114,14 @@ xlabel_ax = Axis(
     yticksvisible=false,
     yticks=(0:4, ticklabs),
     xticksvisible=false,
-    xticklabelsvisible=false
+    xticklabelsvisible=false,
+    xgridvisible=false,
+    ygridvisible=false
 )
 xlims!(xlabel_ax, 0,32)
 ylims!(xlabel_ax, -0.5,5)
-#hidedecorations!(xlabel_ax)
+
+hidedecorations!(xlabel_ax)
 hidespines!(xlabel_ax)
 
 yheight = Dict([y=>5-findfirst(isequal(y), xlabels[end]) for y in xlabels[end]])

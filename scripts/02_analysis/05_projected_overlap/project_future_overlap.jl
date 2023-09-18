@@ -2,9 +2,6 @@ using DrWatson
 @quickactivate :ColoradoBumblebees
 
 function main()    
-    best_rep = "RelativeAbundance_Structural_Environment"
-    best_fit_dir = joinpath(artifactdir(), "classification_fits", "multiple_representations", "brt", best_rep)
-
     job_id = parse(Int, ENV["SLURM_ARRAY_TASK_ID"])
 
     SSPs = [SSP1_26, SSP2_45, SSP3_70]
@@ -21,7 +18,7 @@ function main()
     cd("./tmp/$(treatment_str)")
     @info "Job: $job_id, Species: $(treatment_str), WD: $(pwd())"
 
-    overlap = compute_overlap(best_fit_dir, this_timespan, this_ssp)
+    overlap = compute_overlap(BEST_FIT_DIR, this_timespan, this_ssp)
 
     ColoradoBumblebees.save(overlap; cluster=ColoradoBumblebees.CLUSTER)
 end
