@@ -1,9 +1,11 @@
-function make_sdms(species_name, occurrence_df; cluster=false, pa_buffer_distance=20.)
+function make_sdms(species_name, occurrence_df; cluster=false, pa_buffer_distance=15.)
     data = load_data()
+
+    this_species_df = filter(x->x.species == species_name, occurrence_df)
     
     baseline_layers = load_chelsa_baseline() 
     occurrence_layer = SimpleSDMPredictor(zeros(Bool, size(baseline_layers[1])); SpeciesDistributionToolkit.boundingbox(baseline_layers[begin])... )
-    convert_occurrence_to_tif!(occurrence_layer, occurrence_df)
+    convert_occurrence_to_tif!(occurrence_layer, this_species_df)
 
     pres, abs, bgmask = get_pres_and_abs(occurrence_layer; pa_buffer_distance=pa_buffer_distance)
 
@@ -54,9 +56,15 @@ function project_sdms(model, species, fit_dict; cluster=false)
     distributions
 end
 
-function get_pres_and_abs(presences; pa_buffer_distance = 10.)
-    @time buffer = _new_pa(presences; distance = pa_buffer_distance)
-    bgmask = (.!buffer)
+function get_pres_and_abs(presences; radius=50., pa_buffer_distance = 3.)
+    valid_regions = pseudoabsencemask(WithinRadius, presences; distance = radius)
+    
+    nothing_idx = findall(isnothing, valid_regions.grid)
+    valid_regions.grid[nothing_idx] .= false
+    
+    too_close = _new_pa(presences; distance = pa_buffer_distance)
+
+    bgmask = .!valid_regions .& too_close
     absences = SpeciesDistributionToolkit.sample(bgmask, floor(Int, 0.5sum(presences)))
     replace!(absences, false => nothing)
 

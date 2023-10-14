@@ -39,10 +39,10 @@ bee_label = M.T[col_perm]
 plant_label = M.B[row_perm]
 
 mat = zeros(Int64,size(E))
-
 mat[findall(!iszero, P)] .= 2
 mat[findall(!iszero, E)] .= 1
 
+begin 
 
 f = Figure(; resolution=(2900, 550))
 ax = Axis(
@@ -63,9 +63,11 @@ getcol(val) = [:lightgrey, :deepskyblue2, :teal, :red][val + 1]
 hm = heatmap!(ax, zeros(size(mat))'; colormap=[:grey95])
 for (i, b) in enumerate(bee_label), (j, p) in enumerate(plant_label)
     mat[i, j] > 0 &&
-        scatter!(ax, [j], [i]; marker=:rect, color=getcol(mat[i, j]), markersize=20)
+        scatter!(ax, [size(mat,2) - j], [i]; marker=:rect, color=getcol(mat[i, j]), markersize=20)
+end
+f
+
 end
 
-
-
-f
+save(plotsdir("F007_predicted_metaweb.png"), f)
+save(plotsdir("F007_predicted_metaweb.svg"), f)

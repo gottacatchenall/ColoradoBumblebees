@@ -300,7 +300,8 @@ begin
     fig = Figure(resolution=(2000, 1000))
     axes = [Axis(
             fig[1,x],
-            limits=(0, 5, 0.7,1.3)
+            limits=(0, 5, 0.65,1.3),
+            
         ) for x in values(xvals)]
     cols = Dict([
         SSP1_26=>colorant"#2e81e8",

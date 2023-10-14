@@ -121,7 +121,7 @@ xlabel_ax = Axis(
 xlims!(xlabel_ax, 0,32)
 ylims!(xlabel_ax, -0.5,5)
 
-hidedecorations!(xlabel_ax)
+#hidedecorations!(xlabel_ax)
 hidespines!(xlabel_ax)
 
 yheight = Dict([y=>5-findfirst(isequal(y), xlabels[end]) for y in xlabels[end]])
@@ -134,10 +134,10 @@ end
 
 f
 
+end 
+
 save(plotsdir("F003_representation_comparison.png"), f)
 save(plotsdir("F003_representation_comparison.svg"), f)
-
-end 
 
 
 

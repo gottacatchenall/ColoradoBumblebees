@@ -15,7 +15,7 @@ CairoMakie.activate!(; px_per_unit=3)
 fontsize_theme = Theme(fontsize=32)
 set_theme!(fontsize_theme)
 
-dirs = [joinpath(artifactdir(), "classification_fits", x) for x in filter(x->contains(x, "PhylogeneticNode2Vec"), readdir(joinpath(artifactdir(), "classification_fits")))]
+dirs = [joinpath(artifactdir(), "classification_fits", x) for x in filter(x->contains(x, "SimulatedTraits"), readdir(joinpath(artifactdir(), "classification_fits")))]
 
 
 reps = ColoradoBumblebees.load.(dirs)

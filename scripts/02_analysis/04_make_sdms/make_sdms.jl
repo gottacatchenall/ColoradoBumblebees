@@ -19,7 +19,7 @@ function main()
     @info "Job: $job_id, Species: $(this_species), WD: $(pwd())"
 
 
-    sdms = make_sdms(this_species, occurrence_df; cluster=cluster, pa_buffer_distance=8)
+    sdms = make_sdms(this_species, occurrence_df; cluster=cluster, pa_buffer_distance=10)
     for (i,sdm) in enumerate(sdms)
         sdm_dir = sdmdir(sdm)
         mkpath(sdm_dir)
