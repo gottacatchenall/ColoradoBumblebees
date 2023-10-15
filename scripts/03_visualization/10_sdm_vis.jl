@@ -60,23 +60,21 @@ function plot_uncertainty(sdm::SpeciesDistribution)
 end
 
 
+allspecies = vcat(bees(data), plants(data))
+allspecies = allspecies[sortperm(map(x->x.name, allspecies))]
+
 this_sdm = load_sdm(allspecies[1], baseline(), Baseline)
 plot_sdm(Figure()[1,1], this_sdm)
 current_figure()
-
-# Each fig will be 4 rows, 3 cols?
-
-allspecies = vcat(bees(data), plants(data))
-allspecies = allspecies[sortperm(map(x->x.name, allspecies))]
 
 n_batches = (length(allspecies) ÷ 16) + 1 
 
 startidx = 1
 for b in 1:n_batches
-    startidx +=1 
     endidx = min(startidx + 16, length(allspecies) )
 
     these_species = allspecies[startidx:endidx]
+    startidx +=1 
 
     f = Figure(resolution=(2400, 3600))
     done = false
@@ -99,8 +97,8 @@ for b in 1:n_batches
             break
         end
     end 
-
-    Colorbar(f[2:3,5], limits=(0,1), size=30, ticks=0:0.1:1, colormap = :magma, label="Probability")
+    r = b == n_batches ? 1 : 2:3
+    Colorbar(f[r,5], limits=(0,1), size=30, ticks=0:0.1:1, colormap = :magma, label="Probability")
 
     save(plotsdir("S0$(b+19)_sdm_set_$b.png"), f)
 end 

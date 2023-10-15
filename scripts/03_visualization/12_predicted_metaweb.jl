@@ -20,6 +20,8 @@ M = BipartiteNetwork( Matrix{Bool}(any.(binary_prediction .∪ empirical)), [str
 row_perm = sortperm(sum(eachrow(adjacency(M))))
 col_perm = sortperm(sum(eachcol(adjacency(M))))
 
+sorted_bees = M.T[col_perm]
+sorted_plants = M.B[row_perm]
 
 E = empirical[col_perm, row_perm]
 P = binary_prediction[col_perm, row_perm]
@@ -71,3 +73,13 @@ end
 
 save(plotsdir("F007_predicted_metaweb.png"), f)
 save(plotsdir("F007_predicted_metaweb.svg"), f)
+
+
+# Pt 2:
+# Predicted interaction table sorted by probability
+
+predicted_idx = findall(!iszero, P)
+for I in predicted_idx
+    @info I
+    @info sorted_bees[I[1]], sorted_plants[I[2]]
+end 

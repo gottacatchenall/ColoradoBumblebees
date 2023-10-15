@@ -159,7 +159,7 @@ begin
     f
 end
 
-save(plotsdir("F004_baseline_bivariate.svg"), f)
+#save(plotsdir("F004_baseline_bivariate.svg"), f)
 save(plotsdir("F004_baseline_bivariate.png"), f)
 
 #
@@ -283,7 +283,7 @@ begin
 end
 
 save(plotsdir("F005_bee_overlap_midcentury.png"), fig)
-save(plotsdir("F005_bee_overlap_midcentury.svg"), fig)
+#save(plotsdir("F005_bee_overlap_midcentury.svg"), fig)
 
 #
 # - F3 The mean overlap relative to baseline across all species pairs over each decade, with each SSP in colors
@@ -296,29 +296,53 @@ _scenario(::ProjectedOverlap{T,S}) where {T,S} = S
 
 xvals = Dict([t => i for (i,t) in enumerate(TIMESPANS[2:end])])
 
+
+pltsettings = (;clouds=nothing,
+    side=:right,
+boxplot_width=2,
+markersize= 10,
+jitter_width= 2,
+boxplot_nudge = 3.5)
+
+
+#titles = [split(string(f), "_")[1]*"s" for f in TIMESPANS[2:end]]
+
 begin 
-    fig = Figure(resolution=(2000, 1000))
+    fig = Figure(resolution=(2500, 1000))
     axes = [Axis(
-            fig[1,x],
-            limits=(0, 5, 0.65,1.3),
-            
-        ) for x in values(xvals)]
+            fig[1,x],            
+            yticks=0.5:0.1:1.5,
+            ylabel = x == 1 ? "Overlap Relative to Baseline" : "",
+            title=titles[x]
+        ) for (i,x) in enumerate(values(xvals))]
+    [ylims!(ax, 0.5, 1.5) for ax in axes]
+    
+    
+    hidexdecorations!.(axes)
     cols = Dict([
         SSP1_26=>colorant"#2e81e8",
         SSP2_45=>colorant"#555",
         SSP3_70=>colorant"#e63e3e",
     ])
 
+    markeralpha = 0.1
+
     baseline = proj_overlaps[1]
 
     I = [M[String(r.bee), String(r.plant)] for r in eachrow(baseline.cooccurrence_dataframe)]
 
 
-    for (i,f) in enumerate(reverse(futures))
+    xs = Float32[]
+    ys = Float32[]
+    for (i,f) in enumerate(futures)
         t, s = _timespan(f), _scenario(f)
         ax = axes[xvals[t]]
+        hlines!(ax, [1], color=:grey30, linestyle=:dash, linewidth=2)
         y = f.cooccurrence_dataframe.mean_cooccurrence[I] ./ baseline.cooccurrence_dataframe.mean_cooccurrence[I]
-        density!(ax, y, direction=:y, color=(cols[s], 0.4))
+        rainclouds!(ax, [i for _ in y], y, color=[(cols[s], markeralpha) for _ in y]; pltsettings...)
+       
+        #boxplot!(ax, Float32[i for _ in 1:length(y)], y, color=(cols[s], markeralpha))
+        #density!(ax, y, direction=:y, color=(cols[s], 0.4))
     end
 
     fig
@@ -406,7 +430,6 @@ save(plotsdir("S031_interaction_richness.png"), fig)
 
 # Relative richness
 begin
-
     fig = Figure(;grouped_fig_params...)
 
     g = GridLayout(fig[1,1])
@@ -460,6 +483,9 @@ begin
 
     fig
 end
+
+fig
+
 save(plotsdir("S032_int_richness_relative_to_baseline.png"), fig)
  
 # Uncert
