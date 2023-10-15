@@ -22,9 +22,11 @@ col_perm = sortperm(sum(eachcol(adjacency(M))))
 
 sorted_bees = M.T[col_perm]
 sorted_plants = M.B[row_perm]
+sorted_probability_prediction = probability_prediction[col_perm, row_perm]
 
 E = empirical[col_perm, row_perm]
 P = binary_prediction[col_perm, row_perm]
+
 
 f = Figure()
 ax = Axis(f[1,1])
@@ -78,8 +80,18 @@ save(plotsdir("F007_predicted_metaweb.svg"), f)
 # Pt 2:
 # Predicted interaction table sorted by probability
 
+df = DataFrame(bee=[], plant=[], probability=[])
+
 predicted_idx = findall(!iszero, P)
 for I in predicted_idx
-    @info I
-    @info sorted_bees[I[1]], sorted_plants[I[2]]
+    x,y = I[1], I[2]
+    b, p =  sorted_bees[x], sorted_plants[y]
+    prob = sorted_probability_prediction[x,y]
+    push!(df.bee, b)
+    push!(df.plant, p)
+    push!(df.probability, prob)
 end 
+
+sort!(df, :probability, rev=true)
+
+CSV.write(joinpath(artifactdir(), "predicted_interactions.csv"), df)
