@@ -313,6 +313,7 @@ begin
             fig[1,x],            
             yticks=0.5:0.1:1.5,
             ylabel = x == 1 ? "Overlap Relative to Baseline" : "",
+            yticklabelsvisible = x==1,
             title=titles[x]
         ) for (i,x) in enumerate(values(xvals))]
     [ylims!(ax, 0.5, 1.5) for ax in axes]
@@ -337,6 +338,7 @@ begin
     for (i,f) in enumerate(futures)
         t, s = _timespan(f), _scenario(f)
         ax = axes[xvals[t]]
+        #i != 1 && hideydecorations!(ax)
         hlines!(ax, [1], color=:grey30, linestyle=:dash, linewidth=2)
         y = f.cooccurrence_dataframe.mean_cooccurrence[I] ./ baseline.cooccurrence_dataframe.mean_cooccurrence[I]
         rainclouds!(ax, [i for _ in y], y, color=[(cols[s], markeralpha) for _ in y]; pltsettings...)
