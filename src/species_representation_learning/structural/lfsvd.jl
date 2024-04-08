@@ -11,7 +11,7 @@ function _embed(data::BeeData, s::LFSVD)
     emb_dims = s.embed_dims
 
     mw = ColoradoBumblebees.metaweb(data)
-    lf = linearfilter(mw, s.α)
+    lf = _lf(mw, s.α)
 
     truncated_M = _get_truncated_metaweb(lf, trunc_dims)
  
@@ -20,7 +20,7 @@ function _embed(data::BeeData, s::LFSVD)
     _create_embedding_dict(data, embedding_dict, emb_dims)
 end
 
-function linearfilter(N, α) 
+function _lf(N, α) 
     α = α ./ sum(α)
 
     gen = [mean(x) for x in eachrow(N.edges)]

@@ -104,6 +104,13 @@ for b in 1:n_batches
 end 
 
 
+
+# Compute mean rocauc
+
+fitpaths = [joinpath(sdmdir(s), "2000_2015/Baseline/fit.json") for s in allspecies] 
+
+mean([d["rocauc"] for d in JSON.parse.(JSON.parsefile.(fitpaths))])
+
 #=
 dodec = load_sdm(plant(load_data(), "Ericameria parryi"), baseline(), Baseline)
 plot_sdm(Figure()[1,1], dodec)

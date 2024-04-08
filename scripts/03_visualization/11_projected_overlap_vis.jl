@@ -138,7 +138,7 @@ function setup_axis(fig_slice, layer)
 
 
     hm = heatmap!(ga, longs, lats, l', colormap=blue_red_5)
-    poly!(
+    poly!( 
         ga,
         counties;
         strokecolor=:white,
@@ -297,23 +297,29 @@ _scenario(::ProjectedOverlap{T,S}) where {T,S} = S
 xvals = Dict([t => i for (i,t) in enumerate(TIMESPANS[2:end])])
 
 
-pltsettings = (;clouds=nothing,
-    side=:right,
+pltsettings = (;
 boxplot_width=2,
+cloudwidth = 1.7,
+side=:right,
 markersize= 10,
-jitter_width= 2,
-boxplot_nudge = 3.5)
+boxplot_nudge = 3.5,
+jitter_width= 2
+)
 
 
-#titles = [split(string(f), "_")[1]*"s" for f in TIMESPANS[2:end]]
+titles = [split(string(f), "_")[1]*"s" for f in TIMESPANS[2:end]]
 
 begin 
     fig = Figure(resolution=(2500, 1000))
     axes = [Axis(
             fig[1,x],            
             yticks=0.5:0.1:1.5,
+            backgroundcolor = ((parse(Int32,titles[x][3])+1) % 2 == 0) == 0 ? :white : :grey97,
             ylabel = x == 1 ? "Overlap Relative to Baseline" : "",
             yticklabelsvisible = x==1,
+            yticksvisible = x == 1,
+            ygridwidth=2,
+            yminorgridvisible=true,
             title=titles[x]
         ) for (i,x) in enumerate(values(xvals))]
     [ylims!(ax, 0.5, 1.5) for ax in axes]
@@ -326,7 +332,7 @@ begin
         SSP3_70=>colorant"#e63e3e",
     ])
 
-    markeralpha = 0.1
+    markeralpha = 0.09
 
     baseline = proj_overlaps[1]
 
@@ -342,7 +348,7 @@ begin
         hlines!(ax, [1], color=:grey30, linestyle=:dash, linewidth=2)
         y = f.cooccurrence_dataframe.mean_cooccurrence[I] ./ baseline.cooccurrence_dataframe.mean_cooccurrence[I]
         rainclouds!(ax, [i for _ in y], y, color=[(cols[s], markeralpha) for _ in y]; pltsettings...)
-       
+        hidespines!(ax)
         #boxplot!(ax, Float32[i for _ in 1:length(y)], y, color=(cols[s], markeralpha))
         #density!(ax, y, direction=:y, color=(cols[s], 0.4))
     end
@@ -357,6 +363,8 @@ begin
     Legend(fig[:,0], width=220, [fw,pp,hp], ["SSP1-2.6", "SSP2-4.5", "SSP3-7.0"])
     fig 
 end
+
+
 
 save(plotsdir("F006_overlap_over_time.png"), fig)
 save(plotsdir("F006_overlap_over_time.svg"), fig)

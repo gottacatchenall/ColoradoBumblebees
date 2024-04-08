@@ -27,7 +27,7 @@ function _read_json(datapath)
 end 
 
 
-function load(path::String)
+function open(path::String)
     dirs = split(path, "/")
     idx = findfirst(isequal("artifacts"), dirs)
     dirs[idx+1] == "classification_fits"  && return _load_classification_fit(path)

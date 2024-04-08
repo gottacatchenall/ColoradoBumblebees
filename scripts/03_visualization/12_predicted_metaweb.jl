@@ -8,6 +8,11 @@ using DrWatson
 using CairoMakie
 @quickactivate :ColoradoBumblebees
 
+CairoMakie.activate!(; px_per_unit=3)
+fontsize_theme = Theme(; fontsize=18)
+set_theme!(fontsize_theme)
+
+
 data = load_data()
 bee_species, plants_species = bees(data), plants(data)
 bee_species, plants_species = bee_species[sortperm([b.name for b in bee_species])], plants_species[sortperm([p.name for p in plants_species])]
