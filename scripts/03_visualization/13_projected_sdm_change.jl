@@ -52,9 +52,9 @@ function plot_sdm(fig_slice, sdm::SpeciesDistribution)
 end
 
 
-#species_name = "Bombus pensylvanicus"
+species_name = "Bombus pensylvanicus"
 
-species_name = "Bombus californicus"
+species_name = "Aconitum columbianum"
 
 data = load_data()
 sp = occursin("Bombus", species_name) ? bee(data, species_name) : plant(data, species_name)

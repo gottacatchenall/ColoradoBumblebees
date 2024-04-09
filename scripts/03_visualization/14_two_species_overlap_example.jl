@@ -92,9 +92,11 @@ function plot_overlap(fig_slice, bee_sdm::SpeciesDistribution, plant_sdm::Specie
 end
 
 
-bee_name = "Bombus pensylvanicus"
-plant_name = "Linaria vulgaris"
+#bee_name = "Bombus pensylvanicus"
+#plant_name = "Linaria vulgaris"
 
+bee_name = "Bombus fervidus"
+plant_name = "Achillea millefolium"
 
 bee_layers = load_future_binary_layers(bee_name)
 plant_layers = load_future_binary_layers(plant_name)

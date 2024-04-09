@@ -42,7 +42,7 @@ function get_metaweb(best_fit_dir)
 end
 
 function get_predicted_network(batch_fit_dir)
-    bf = ColoradoBumblebees.load(batch_fit_dir)
+    bf = ColoradoBumblebees.open(batch_fit_dir)
     mean_prediction = mean([f.predictions.prediction for f in bf.fits])
 
     mean_prediction_df = copy(bf.fits[1].predictions)
@@ -65,10 +65,11 @@ end
 
 function get_empirical_network()
     data = load_data()
-    data = load_data()
     all_bees, all_plants = bees(data), plants(data)
 
     empirical_metaweb = zeros(Bool, length(all_bees), length(all_plants))
+
+    
 
     for (i,b) in enumerate(all_bees), (j,p) in enumerate(all_plants)
         empirical_metaweb[i,j] = length(ColoradoBumblebees.interactions(data, b,p)) > 0
