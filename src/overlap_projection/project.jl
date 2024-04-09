@@ -99,6 +99,7 @@ function compute_overlap(best_dir_path, timespan::Type{T}, scenario::Type{S}) wh
     # this sdm is invalid, it should be dropped from the rest but this is a
     # quick fix 
     filter!(x-> x.name != "Oxytropis lambertii", all_species)
+    filter!(x-> x.name != "Oxytropis lambertii", plants_species)
 
     binary_prediction, P, empirical = get_metaweb(best_dir_path)
 
