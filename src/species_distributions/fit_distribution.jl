@@ -58,7 +58,7 @@ end
 
 function get_pres_and_abs(presences, radius, buffer, bias)
     absences = background_thickening(presences, radius=radius, buffer=buffer, num_points=bias * sum(presences))
-    replace!(absences, false => nothing)
+    #replace!(absences, false => nothing)
 
     return presences, absences
 end

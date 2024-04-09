@@ -96,6 +96,10 @@ function compute_overlap(best_dir_path, timespan::Type{T}, scenario::Type{S}) wh
 
     all_species = vcat(bee_species, plants_species);
 
+    # this sdm is invalid, it should be dropped from the rest but this is a
+    # quick fix 
+    filter!(x-> x.name != "Oxytropis lambertii", all_species)
+
     binary_prediction, P, empirical = get_metaweb(best_dir_path)
 
     meta = zeros(size(binary_prediction.adjacency_matrix))
