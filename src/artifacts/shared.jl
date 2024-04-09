@@ -3,7 +3,7 @@ const PREDICTION_DF_DIR = "predictions"
 
 artifactdir() = projectdir("artifacts")
 
-_write_json(writepath, d::Dict) = open(writepath, "w") do f
+_write_json(writepath, d::Dict) = Base.open(writepath, "w") do f
     write(f, JSON.json(d))
 end
 

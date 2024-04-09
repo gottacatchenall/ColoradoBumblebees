@@ -19,6 +19,14 @@ bee_species, plants_species = bee_species[sortperm([b.name for b in bee_species]
 
 binary_prediction, probability_prediction, empirical = ColoradoBumblebees.get_metaweb(BEST_FIT_DIR)
 
+f = Figure()
+ax = Axis(f[1,1])
+heatmap!(b')
+ax = Axis(f[2,1])
+heatmap!(empirical')
+f
+
+
 M = BipartiteNetwork( Matrix{Bool}(any.(binary_prediction .∪ empirical)), [string(b.name) for b in bee_species], [string(p.name) for p in plants_species],)
 
 # Make nested 
