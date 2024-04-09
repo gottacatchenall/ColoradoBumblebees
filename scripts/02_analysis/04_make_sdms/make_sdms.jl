@@ -1,6 +1,8 @@
 using DrWatson
 @quickactivate :ColoradoBumblebees
 
+const RADIUS = 400.0
+const BUFFER = 40.0
 
 function main()
     occurrence_df = load_occurrence_data()
@@ -19,16 +21,14 @@ function main()
     @info "Job: $job_id, Species: $(this_species), WD: $(pwd())"
 
 
-    sdms = make_sdms(this_species, occurrence_df; cluster=cluster, pa_buffer_distance=10)
-    for (i,sdm) in enumerate(sdms)
+    sdms = make_sdms(this_species, occurrence_df; cluster=cluster, radius=RADIUS, buffer=BUFFER)
+    for (i, sdm) in enumerate(sdms)
         sdm_dir = sdmdir(sdm)
         mkpath(sdm_dir)
         ColoradoBumblebees.save(sdm)
     end
-
-
 end
- 
+
 main()
 
 

@@ -10,9 +10,9 @@
 #SBATCH --time=45:00         
 
 
-module load julia/1.8.5
-
 export JULIA_DEPOT_PATH="/project/def-gonzalez/mcatchen/JuliaEnvironments/COBees"
 export CLUSTER="true"
 
+
+module load julia/1.10.0
 julia make_sdms.jl
