@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --account=def-gonzalez
-#SBATCH --job-name=make_sdms 
-#SBATCH --output=slurm-make_sdms.%A.%a.out
+#SBATCH --job-name=project_overlap 
+#SBATCH --output=slurm-project_overlap.%A.%a.out
 #SBATCH --nodes=1               
 #SBATCH --ntasks=1               
 #SBATCH --cpus-per-task=1        
@@ -10,9 +10,10 @@
 #SBATCH --time=45:00         
 
 
-module load julia/1.8.5
 
 export JULIA_DEPOT_PATH="/project/def-gonzalez/mcatchen/JuliaEnvironments/COBees"
 export CLUSTER="true"
+
+module load julia/1.10.0
 
 julia project_future_overlap.jl
