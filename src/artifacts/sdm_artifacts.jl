@@ -29,6 +29,7 @@ end
 
 function _load_sdm(path)
     data = load_data()
+    @info path
     pred = SimpleSDMPredictor(joinpath(path, "prediction.tif"))
     uncert = SimpleSDMPredictor(joinpath(path, "uncertainty.tif"))
 

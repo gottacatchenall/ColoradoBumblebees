@@ -7,7 +7,7 @@ function make_sdms(species_name, occurrence_df; cluster=false, radius=400, buffe
     occurrence_layer = SimpleSDMPredictor(zeros(Bool, size(baseline_layers[1])); SpeciesDistributionToolkit.boundingbox(baseline_layers[begin])...)
     convert_occurrence_to_tif!(occurrence_layer, this_species_df)
 
-    pres, abs  = get_pres_and_abs(occurrence_layer, radius, buffer, bias)
+    pres, abs = get_pres_and_abs(occurrence_layer, radius, buffer, bias)
 
     X, y, pres_and_abs = get_features_and_labels(pres, abs, baseline_layers)
     Xtrain, Ytrain, Xtest, Ytest = test_train_split(X, y)

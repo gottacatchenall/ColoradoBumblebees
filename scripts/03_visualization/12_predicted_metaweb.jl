@@ -1,6 +1,6 @@
 # List of figures:
 
-# Main text:
+# Main text:[]
 # ----------------------------------------------------------------------
 # - F007_predicted_metaweb.png
 
@@ -19,34 +19,53 @@ bee_species, plants_species = bee_species[sortperm([b.name for b in bee_species]
 
 binary_prediction, probability_prediction, empirical = ColoradoBumblebees.get_metaweb(BEST_FIT_DIR)
 
-f = Figure()
-ax = Axis(f[1,1])
-heatmap!(b')
-ax = Axis(f[2,1])
-heatmap!(empirical')
-f
+#dir = "/home/michael/Papers/ColoradoBumblebees/artifacts/classification_fits/multiple_representations/ensemble/Temporal"
+#binary_prediction, probability_prediction, empirical = ColoradoBumblebees.get_metaweb(dir)
 
+meta = zeros(length(bee_species), length(plants_species))
 
-M = BipartiteNetwork( Matrix{Bool}(any.(binary_prediction .∪ empirical)), [string(b.name) for b in bee_species], [string(p.name) for p in plants_species],)
+for (i,b) in enumerate(bee_species), (j,p) in enumerate(plants_species)
+    predicted = binary_prediction[b,p]
+    observed = empirical[b,p]
+
+    if observed
+        meta[i,j] = 1
+    end
+    if predicted
+        #meta[i,j] = 2
+    end
+    if predicted && observed
+        meta[i,j] = 3
+    end
+end
+
+M = BipartiteNetwork( 
+    Matrix{Bool}(meta .> 0), 
+    [string(b.name) for b in bee_species], 
+    [string(p.name) for p in plants_species]
+)
 
 # Make nested 
-row_perm = sortperm(sum(eachrow(adjacency(M))))
-col_perm = sortperm(sum(eachcol(adjacency(M))))
+row_perm = sortperm(sum(eachrow(empirical.adjacency_matrix)))
+col_perm = sortperm(sum(eachcol(empirical.adjacency_matrix)))
+sorted_bees = empirical.bees[col_perm]
+sorted_plants = empirical.plants[row_perm]
 
-sorted_bees = M.T[col_perm]
-sorted_plants = M.B[row_perm]
-sorted_probability_prediction = probability_prediction[col_perm, row_perm]
+meta = meta[col_perm,row_perm]
 
-E = empirical[col_perm, row_perm]
-P = binary_prediction[col_perm, row_perm]
+#E = empirical[col_perm, row_perm]
+#P = binary_prediction[col_perm, row_perm]
 
 
 f = Figure()
 ax = Axis(f[1,1])
-for i in findall(E)
-    scatter!(ax, [i[1]], [i[2]], color=:blue)
+for i in findall(isequal(1), meta)
+    scatter!(ax, [i[1]], [i[2]], color=:green) # only obs
 end
-for i in findall(P)
+for i in findall(isequal(2), meta)
+    scatter!(ax, [i[1]], [i[2]], color=:blue) # only predicted
+end
+for i in findall(isequal(3), meta)
     scatter!(ax,  [i[1]], [i[2]], color=:red)
 end
 f
@@ -55,9 +74,7 @@ f
 bee_label = M.T[col_perm]
 plant_label = M.B[row_perm]
 
-mat = zeros(Int64,size(E))
-mat[findall(!iszero, P)] .= 2
-mat[findall(!iszero, E)] .= 1
+mat = meta
 
 begin 
 
@@ -75,7 +92,7 @@ ax = Axis(
 )
 limits!(ax, 0.5, length(plant_label) + 0.5, 0.5, length(bee_label) + 0.5)
 
-getcol(val) = [:lightgrey, :deepskyblue2, :teal, :red][val + 1]
+getcol(val) = [:lightgrey, :red, :deepskyblue2, :teal, ][Int32(val + 1)]
 
 hm = heatmap!(ax, zeros(size(mat))'; colormap=[:grey95])
 for (i, b) in enumerate(bee_label), (j, p) in enumerate(plant_label)

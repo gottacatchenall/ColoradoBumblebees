@@ -34,6 +34,19 @@
 # this should probably be two scripts: the first does the baseline, the second
 # loads the baseline and does the rest (this avoids i/o issues in parallel)
 
+struct Metaweb
+    adjacency_matrix
+    bees
+    plants
+end
+
+function Base.getindex(mw::Metaweb, bee::Bee, plant::Plant)
+    bee_index = findfirst(isequal(bee), mw.bees)
+    plant_index = findfirst(isequal(plant), mw.plants)
+    return mw.adjacency_matrix[bee_index, plant_index]
+end 
+Base.getindex(mw::Metaweb, plant::Plant,  bee::Bee) = mw[bee,plant] 
+
 function get_metaweb(best_fit_dir)
     Pbin, P = get_predicted_network(best_fit_dir)
     O = get_empirical_network()
@@ -60,7 +73,7 @@ function get_predicted_network(batch_fit_dir)
         binary_metaweb[i,j] = y > mean_threshold
         probabilistic_metaweb[i,j] = y
     end
-    binary_metaweb, probabilistic_metaweb
+    Metaweb(binary_metaweb, all_bees, all_plants), Metaweb(probabilistic_metaweb, all_bees, all_plants)
 end
 
 function get_empirical_network()
@@ -69,12 +82,11 @@ function get_empirical_network()
 
     empirical_metaweb = zeros(Bool, length(all_bees), length(all_plants))
 
-    
 
     for (i,b) in enumerate(all_bees), (j,p) in enumerate(all_plants)
         empirical_metaweb[i,j] = length(ColoradoBumblebees.interactions(data, b,p)) > 0
     end
-    empirical_metaweb
+    Metaweb(empirical_metaweb, all_bees, all_plants)
 end
 
 function compute_overlap(best_dir_path, timespan::Type{T}, scenario::Type{S}) where {T,S}
@@ -84,10 +96,16 @@ function compute_overlap(best_dir_path, timespan::Type{T}, scenario::Type{S}) wh
 
     all_species = vcat(bee_species, plants_species);
 
-    binary_prediction, probability_prediction, empirical = get_metaweb(best_dir_path)
+    binary_prediction, P, empirical = get_metaweb(best_dir_path)
 
-    M = BipartiteNetwork( Matrix{Bool}(any.(binary_prediction .∪ empirical)), [b.name for b in bee_species], [p.name for p in plants_species],)
-    P = BipartiteProbabilisticNetwork(probability_prediction, [b.name for b in bee_species], [p.name for p in plants_species],)
+    meta = zeros(size(binary_prediction.adjacency_matrix))
+    for (i,b) in enumerate(bee_species), (j,p) in enumerate(plants_species)
+        if binary_prediction[b,p] || empirical[b,p]
+            meta[i,j] = 1
+        end
+    end 
+    M = Metaweb(meta, bee_species, plants_species)
+   
 
     sdms = Dict([sp=>load_sdm(sp, timespan, scenario) for sp in all_species])
 
@@ -118,11 +136,11 @@ function compute_overlap(best_dir_path, timespan::Type{T}, scenario::Type{S}) wh
         push!(cooc_df.var_cooccurrence, var(expected_cooc))
 
         # this uses cutoff. not sure if that is ideal
-        if M[b.name,p.name] == 1
+        if M[b,p] == 1
             int_richness_map.grid .+= expected_cooc
         end
 
-        H = StatsBase.entropy([P[b.name,p.name], 1-P[b.name,p.name]])
+        H = StatsBase.entropy([P[b,p], 1-P[b,p]])
         int_uncertainty_map.grid .+= H * (bee_sdm.probability.grid .* plant_sdm.probability.grid)
     end
 
