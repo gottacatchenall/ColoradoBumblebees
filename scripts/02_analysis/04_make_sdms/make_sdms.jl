@@ -1,7 +1,7 @@
 using DrWatson
 @quickactivate :ColoradoBumblebees
 
-const RADIUS = 300.0
+const RADIUS = 400.0
 const BUFFER = 20.0
 
 function main()
@@ -29,7 +29,15 @@ function main()
         buffer=BUFFER
     )
     
- 
+    # sometimes the default buffer, thickening radius, and bias give weird fits.
+    # for the sake of brevity, lets hope its a few species with similar
+    # properties
+    if sdms[1].fit_stats[:rocauc] < 0.5  
+        iostream =  Base.open("sdms_to_fix.txt","a")
+        write(iostream, "$(s.name)\n");
+        return 
+    end 
+
     for (i, sdm) in enumerate(sdms)
         sdm_dir = sdmdir(sdm)
         mkpath(sdm_dir)
