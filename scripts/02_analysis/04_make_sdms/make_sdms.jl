@@ -3,6 +3,29 @@ using DrWatson
 
 const RADIUS = 400.0
 const BUFFER = 20.0
+const BIAS = 2.
+
+
+const bias_one_species = [
+    "Asclepias speciosa",           # Bias = 1
+    "Eremogone fendleri",           # Bias = 1
+    "Ipomopsis aggregata",          # Bias = 1
+    "Taraxacum officinale",         # Bias = 1
+    "Melilotus officinalis",        # Bias = 1
+    "Lupinus argenteus",            # Bias = 1
+    "Verbascum thapsus",            # Bias = 1
+    "Geranium richardsonii",        # Bias = 1
+    "Rosa woodsii",                 # Bias = 1
+    "Mertensia lanceolata",         # Bias = 1
+    "Frasera speciosa",             # Bias = 1
+    "Oxytropis lambertii",          # Bias = 1
+    "Thermopsis rhombifolia",       # bias = 1
+    "Galium boreale",
+   ]            
+
+
+#    "Achillea millefolium",         # Bias = 0.7
+#    "Galium boreale"    # Buffer = 40, Bias = 1
 
 function main()
     occurrence_df = load_occurrence_data()
@@ -20,23 +43,24 @@ function main()
     cd("./tmp/$(this_species)")
     @info "Job: $job_id, Species: $(this_species), WD: $(pwd())"
 
+    b = this_species ∈ bias_one_species ? 1. : BIAS
+    buffer = BUFFER 
+    if this_species == "Achillea millefolium"
+        b = 0.7
+    end 
+    if this_species == "Galium boreale"
+        buffer = 40.
+    end 
 
     sdms = make_sdms(
         this_species,
         occurrence_df; 
         cluster=cluster, 
         thickening_distance=RADIUS, 
-        buffer=BUFFER
+        buffer=buffer,
+        bias=b 
     )
-    
-    # sometimes the default buffer, thickening radius, and bias give weird fits.
-    # for the sake of brevity, lets hope its a few species with similar
-    # properties
-    if sdms[1].fit_stats[:rocauc] < 0.5  
-        iostream =  Base.open("../../sdms_to_fix.txt","a")
-        write(iostream, "$(s.name)\n");
-        return 
-    end 
+
 
     for (i, sdm) in enumerate(sdms)
         sdm_dir = sdmdir(sdm)
