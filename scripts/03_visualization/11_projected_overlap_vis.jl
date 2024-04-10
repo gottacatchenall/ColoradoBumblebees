@@ -23,13 +23,28 @@ using CairoMakie, GeoMakie, GeoJSON, ColorSchemes
 using HypothesisTests
 
 projected_overlap_dirs = [joinpath(artifactdir(), "projected_overlap", x) for x in readdir(joinpath(artifactdir(), "projected_overlap"))]
-proj_overlaps = ColoradoBumblebees.load.(projected_overlap_dirs)
+proj_overlaps = ColoradoBumblebees.open.(projected_overlap_dirs)
 
 data = load_data()
 bee_species, plants_species = bees(data), plants(data)
 bee_species, plants_species = bee_species[sortperm([b.name for b in bee_species])], plants_species[sortperm([p.name for p in plants_species])]
+
 binary_prediction, probability_prediction, empirical = ColoradoBumblebees.get_metaweb(BEST_FIT_DIR)
-M = BipartiteNetwork( Matrix{Bool}(any.(binary_prediction .∪ empirical)), [string(b.name) for b in bee_species], [string(p.name) for p in plants_species],)
+
+# check for NaNs in SDMs
+bee_species, plants_species = bee_species[sortperm([b.name for b in bee_species])], plants_species[sortperm([p.name for p in plants_species])]
+filter!(x-> x.name != "Oxytropis lambertii", plants_species)
+all_species = vcat(bee_species, plants_species);
+sdms = Dict([sp=>load_sdm(sp, baseline(), Baseline) for sp in all_species])
+
+for (sp, sdm) in sdms
+    if length(findall(isnan, sdm.uncertainty.grid)) > 0
+        @info sp
+    end
+end
+
+
+# M = BipartiteNetwork( Matrix{Bool}(any.(binary_prediction .∪ empirical)), [string(b.name) for b in bee_species], [string(p.name) for p in plants_species],)
 
 CairoMakie.activate!(; px_per_unit=3)
 fontsize_theme = Theme(; fontsize=32)
@@ -169,7 +184,9 @@ save(plotsdir("F004_baseline_bivariate.png"), f)
 function bee_slice(baseline, proj_overlap)
     ov = proj_overlap.cooccurrence_dataframe.mean_cooccurrence ./ baseline.cooccurrence_dataframe.mean_cooccurrence
  
-    I = [M[String(r.bee), String(r.plant)] for r in eachrow(proj_overlap.cooccurrence_dataframe)]
+  #  binary_prediction
+
+    I = [binary_prediction[bee(data, r.bee), plant(data,r.plant)] for r in eachrow(proj_overlap.cooccurrence_dataframe)]
 
     relative_df = DataFrame(bee=proj_overlap.cooccurrence_dataframe.bee[I], plant=proj_overlap.cooccurrence_dataframe.plant[I], overlap=ov[I])
 
@@ -334,9 +351,9 @@ begin
 
     markeralpha = 0.09
 
-    baseline = proj_overlaps[1]
+    base = proj_overlaps[1]
 
-    I = [M[String(r.bee), String(r.plant)] for r in eachrow(baseline.cooccurrence_dataframe)]
+    I = [binary_prediction[bee(data, r.bee), plant(data,r.plant)] for r in eachrow(base.cooccurrence_dataframe)]
 
 
     xs = Float32[]
@@ -346,7 +363,7 @@ begin
         ax = axes[xvals[t]]
         #i != 1 && hideydecorations!(ax)
         hlines!(ax, [1], color=:grey30, linestyle=:dash, linewidth=2)
-        y = f.cooccurrence_dataframe.mean_cooccurrence[I] ./ baseline.cooccurrence_dataframe.mean_cooccurrence[I]
+        y = f.cooccurrence_dataframe.mean_cooccurrence[I] ./ base.cooccurrence_dataframe.mean_cooccurrence[I]
         rainclouds!(ax, [i for _ in y], y, color=[(cols[s], markeralpha) for _ in y]; pltsettings...)
         hidespines!(ax)
         #boxplot!(ax, Float32[i for _ in 1:length(y)], y, color=(cols[s], markeralpha))
@@ -435,6 +452,7 @@ begin
     Colorbar(fig[2,end+1], hms[end], width=25 ,label="Interaction Richness")
     fig
 end
+
 save(plotsdir("S031_interaction_richness.png"), fig)
 
 
