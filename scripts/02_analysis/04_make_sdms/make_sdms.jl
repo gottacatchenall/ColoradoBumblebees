@@ -33,7 +33,7 @@ function main()
     # for the sake of brevity, lets hope its a few species with similar
     # properties
     if sdms[1].fit_stats[:rocauc] < 0.5  
-        iostream =  Base.open("sdms_to_fix.txt","a")
+        iostream =  Base.open("../../sdms_to_fix.txt","a")
         write(iostream, "$(s.name)\n");
         return 
     end 
