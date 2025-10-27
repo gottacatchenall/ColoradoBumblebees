@@ -51,3 +51,9 @@ job_id = parse(Int, ENV["SLURM_ARRAY_TASK_ID"])
 species = sort(get_species_list(data_dir))
 fit_phenology(data_dir, artifact_dir, species[job_id])
 
+
+
+for sp in species
+    fit_phenology(data_dir, artifact_dir, sp)
+end 
+

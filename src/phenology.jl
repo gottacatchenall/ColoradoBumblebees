@@ -102,7 +102,7 @@ function waic(log_liks)
     return (waic=waic_val, lppd=lppd, p_waic=p_waic)
 end
 
-function fit_gmm(x, y, k_max; n_samples=5_000, burn_in = 1_000)
+function fit_gmm(x, y, k_max; n_samples=1_500, burn_in = 500)
     println("Fitting Gaussian Mixture Models...")
     println("="^50)
 
