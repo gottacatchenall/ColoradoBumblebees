@@ -18,7 +18,8 @@ function main(
     #L = [Float32.(l) for l in L]
 
     cluster_chelsa_dir = "/home/mcatchen/projects/def-tpoisot/mcatchen/JuliaEnvironments/ColoradoBees/SimpleSDMDatasets/CHELSA2/BioClim/"
-    chelsa_paths = [joinpath(cluster_chelsa_dir, findfirst(isequal(x), readdir(cluster_chelsa_dir))) for x in ["_bio$(i)_" for i in 1:19]]
+    filenames = readdir(cluster_chelsa_dir)
+    chelsa_paths = [joinpath(cluster_chelsa_dir, filenames[findfirst(y->occursin(x,y), filenames)]) for x in ["_bio$(i)_" for i in 1:19]]
     L = [SDMLayer(p; bbox...) for p in chelsa_paths]
     L = [Float32.(l) for l in L]
 
