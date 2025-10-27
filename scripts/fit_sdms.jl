@@ -49,7 +49,7 @@ end
 artifact_dir = "cluster" in ARGS ? "/scratch/mcatchen/ColoradoBees/artifacts" : "./artifacts"
 data_dir = "cluster" in ARGS ? "/scratch/mcatchen/ColoradoBees/data" : "./data"
 
-job_id = ENV["SLURM_ARRAY_TASK_ID"]
+job_id = parse(Int, ENV["SLURM_ARRAY_TASK_ID"])
 
 species = sort(get_species_list(data_dir))
 main(data_dir, artifact_dir, species[job_id], cluster = "cluster" in ARGS)
