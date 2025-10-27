@@ -1,0 +1,12 @@
+[deps]
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+ColorBlendModes = "60508b50-96e1-4007-9d6c-f475c410f16b"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+EvoTrees = "f6006082-12f8-11e9-0c9c-0d5d367ab1e5"
+JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
+MCMCChains = "c7f686f2-ff18-58e9-bc7b-31028e88f75d"
+SpeciesDistributionToolkit = "72b53823-5c0b-4575-ad0e-8e97227ad13b"
+SpeciesInteractionNetworks = "49e116ef-912f-4766-9e56-896a49944adc"
+Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
