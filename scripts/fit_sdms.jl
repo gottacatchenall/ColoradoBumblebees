@@ -6,12 +6,20 @@ function main(
     data_dir, 
     artifact_dir, 
     species_name;
+    cluster = false,
     k = 5,
     class_balance = 1.
 )
 
     bbox = (left=-109.7, right=-101.8, bottom=34.5,top=42.5)
-    L = [SDMLayer(RasterData(CHELSA2, BioClim); layer=i, bbox...) for i in 1:19]
+
+    #cluster ? 
+    #L = [SDMLayer(RasterData(CHELSA2, BioClim); layer=i, bbox...) for i in 1:19]
+    #L = [Float32.(l) for l in L]
+
+    cluster_chelsa_dir = "/home/mcatchen/projects/def-tpoisot/mcatchen/JuliaEnvironments/ColoradoBees/SimpleSDMDatasets/CHELSA2/BioClim/"
+    chelsa_paths = [joinpath(cluster_chelsa_dir, findfirst(isequal(x), readdir(cluster_chelsa_dir))) for x in ["_bio$(i)_" for i in 1:19]]
+    L = [SDMLayer(p; bbox...) for p in chelsa_paths]
     L = [Float32.(l) for l in L]
 
     occ_records = get_occurrences(data_dir)
@@ -44,5 +52,5 @@ data_dir = "cluster" in ARGS ? "/scratch/mcatchen/ColoradoBees/data" : "./data"
 job_id = ENV["SLURM_ARRAY_TASK_ID"]
 
 species = sort(get_species_list(data_dir))
-main(data_dir, artifact_dir, species[job_id])
+main(data_dir, artifact_dir, species[job_id], cluster = "cluster" in ARGS)
 
