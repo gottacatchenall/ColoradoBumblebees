@@ -4,6 +4,7 @@ using Statistics
 using SpeciesInteractionNetworks
 using ColorBlendModes
 using JSON
+using Dates
 
 const SDT = SpeciesDistributionToolkit
 const AG = SDT.SimpleSDMPolygons.AG
@@ -457,28 +458,44 @@ save("plots/shared_range.png", f)
 
 
 
-function plot_gmm(fig, slice, results, title="")
+function plot_gmm(fig, slice, results; title="")
     x = results["data"]["x"]
     y = results["data"]["y"]
     best_k = results["best_model"]["n_components"]
     components = results["best_model"]["components"]
     waics = results["model_comparison"]["waics"]
     
+
+    begindoy = (Date(2025, 5, 1) - Date(2025, 1, 1)).value
+    enddoy = (Date(2025, 10, 1) - Date(2025, 1, 1)).value
+
+    row, col = slice
+
+    isfirstcol = col == 1
+    islastrow = row == 7
+
+    xlabel = islastrow ? "Day of Year" : ""
+    ylabel = isfirstcol ? "Normalized Number of Observations" : ""
+
     # Create visualization
     #fig = Figure(size=(900, 500))
   
     # Plot 2: Best fit with 95% CI
     ax = Axis(
         fig[slice...],
-        xlabel="x",
-        ylabel="y",
         title=title,
         titlealign=:left,
         aspect=1,
+        xlabel=xlabel,
+        ylabel=ylabel,
+        xticksvisible = islastrow,
+        xticklabelsvisible = islastrow,
+        yticksvisible = isfirstcol,
+        yticklabelsvisible = isfirstcol,
     )
-    
+    xlims!(begindoy, enddoy)
     # Generate prediction curves with CI using posterior samples
-    x_pred = range(1, 365, length=365*2)
+    x_pred = range(begindoy, enddoy, length=365*2)
     
     # Extract posterior samples for all components
     n_posterior_samples = length(components[1]["mu_samples"])
@@ -508,7 +525,7 @@ function plot_gmm(fig, slice, results, title="")
           label="95% CI")
     
     # Plot data
-    scatter!(ax, x, y, label="Data", markersize=12, color=:black)
+    scatter!(ax, x, y, label="Data", markersize=7, color=(:black, 0.5))
     
     # Plot individual components using mean parameters
     colors = [:red, :green, :orange, :purple,]
@@ -519,11 +536,15 @@ function plot_gmm(fig, slice, results, title="")
         
         y_component = A .* exp.(-(x_pred .- μ).^2 ./ (2 * σ^2))
         
-        lines!(ax, x_pred, y_component, 
-               label="Component $(comp["component_id"])",
-               linestyle=:dash,
-               linewidth=2,
-               color=(colors[mod1(idx, length(colors))], 0.6))
+        lines!(
+            ax, 
+            x_pred, 
+            y_component, 
+            label="Component $(comp["component_id"])",
+            linestyle=:dash,
+            linewidth=2,
+            color=(colors[mod1(idx, length(colors))], 0.6)
+        )
     end
     
     # Plot mean prediction
@@ -539,4 +560,25 @@ function plot_gmm(fig, slice, results, title="")
     #axislegend(ax, position=:rt)
     return fig
 end
+
+
+spnames = readdir("artifacts")
+paths = [joinpath("artifacts", sp, "phenology.json") for sp in spnames]
+
+cidx = CartesianIndices((1:7, 1:7))
+
+fig_id = 2
+
+f = Figure(size=(2000, 2000))
+for (i, ci) in enumerate(cidx)
+    sp_idx = ((fig_id-1) * prod(size(cidx))) + i + 1
+    if sp_idx <= length(spnames)
+        res = load_gmm(paths[sp_idx])
+        plot_gmm(f, (ci[2], ci[1]), res; title=spnames[sp_idx])
+    end
+end 
+f
+
+save("foo.png", f)
+ 
 

@@ -11,7 +11,12 @@ include(joinpath("..", "src", "io.jl"))
 include(joinpath("..", "src", "networks.jl"))
 include(joinpath("..", "src", "phenology.jl"))
 
-function get_phenology(data_dir, species)
+function get_phenology(
+    data_dir, 
+    species; 
+    startdate = Date(2025, 5, 1),
+    enddate = Date(2025, 10, 1)
+)
     gbif_df =  get_gbif_data(data_dir)
     taxa_df = get_taxa_df(data_dir)
 
@@ -21,19 +26,33 @@ function get_phenology(data_dir, species)
     filter!(x->x.speciesKey == key, gbif_df)
     
     dts = [Date(DateTime(replace(d, "Z" => ""))) for d in gbif_df.eventDate]
-    
     doys = [(d - Date(Year(d).value, 1,1)).value + 1 for d in dts]
 
-    phen = zeros(366)
-    doy = collect(1:366)
+    startdoy = (startdate - Date(2025, 1, 1)).value 
+    enddoy = (enddate - Date(2025, 1, 1)).value
+
+    enddoy - startdoy + 1
+
+    phen = zeros(enddoy - startdoy + 1)
+    doy = collect(startdoy:enddoy)
     for i in doys
-        phen[i] += 1
+        arr_idx = i - startdoy + 1
+        if arr_idx > 0 && arr_idx <= length(phen)
+            phen[arr_idx] += 1
+        end
     end
     doy, phen
 end
 
-function fit_phenology(data_dir, artifact_dir, species; max_k=3)
-    x,y = get_phenology(data_dir, species)
+function fit_phenology(
+    data_dir,
+    artifact_dir, 
+    species; 
+    max_k=3, 
+    startdate = Date(2025, 5, 1),
+    enddate = Date(2025, 10, 1)
+)
+    x,y = get_phenology(data_dir, species, startdate=startdate, enddate=enddate)
     result = fit_gmm(
         x, 
         y, 
@@ -51,9 +70,17 @@ job_id = parse(Int, ENV["SLURM_ARRAY_TASK_ID"])
 species = sort(get_species_list(data_dir))
 fit_phenology(data_dir, artifact_dir, species[job_id])
 
+"""
+x,y = get_phenology(data_dir, species[2])
 
+scatter(x,y)
+result = fit_gmm(
+    x, 
+    y, 
+    3;
+)
 
-for sp in species
-    fit_phenology(data_dir, artifact_dir, sp)
-end 
-
+fig = Figure()
+plot_gmm(fig, (1,1), result; title="")
+fig
+"""

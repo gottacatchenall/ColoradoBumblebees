@@ -102,12 +102,10 @@ function waic(log_liks)
     return (waic=waic_val, lppd=lppd, p_waic=p_waic)
 end
 
-function fit_gmm(x, y, k_max; n_samples=1_500, burn_in = 500)
+function fit_gmm(x, y, k_max; n_samples=2_000, burn_in = 1_000)
     println("Fitting Gaussian Mixture Models...")
     println("="^50)
 
-    m, M = extrema(x)
-    x2 = (x .- m) ./ (M - m)
     y2 = y ./ maximum(y)
 
     all_waics = Dict{Int, Float64}()
@@ -116,7 +114,7 @@ function fit_gmm(x, y, k_max; n_samples=1_500, burn_in = 500)
     for k in 1:k_max
         println("Fitting k=$k Gaussians...")
         
-        model = gaussian_mixture_model(x2, y2, k)
+        model = gaussian_mixture_model(x, y2, k)
         chain = sample(model, NUTS(), n_samples)
 
         chain = chain[burn_in:end]
@@ -142,10 +140,14 @@ function fit_gmm(x, y, k_max; n_samples=1_500, burn_in = 500)
     # Extract parameters for best model
     components = []
     for i in 1:best_k
-        μ_samples = m .+ (M - m) .* vec(best_chain[Symbol("μ[$i]")])
-        σ_samples = (M-m) .* vec(best_chain[Symbol("σ[$i]")])
+        #μ_samples = m .+ (M - m) .* vec(best_chain[Symbol("μ[$i]")])
+        #σ_samples = (M-m) .* vec(best_chain[Symbol("σ[$i]")])
         A_samples = vec(best_chain[Symbol("A[$i]")])
         
+        μ_samples = vec(best_chain[Symbol("μ[$i]")])
+        σ_samples = vec(best_chain[Symbol("σ[$i]")])
+
+
         μ_post = mean(μ_samples)
         σ_post = mean(σ_samples)
 
@@ -153,8 +155,8 @@ function fit_gmm(x, y, k_max; n_samples=1_500, burn_in = 500)
         A_post = mean(A_samples)
         
 
-        # Sample posterior for CI computation (take every 10th sample to reduce file size)
-        sample_indices = 1:10:length(μ_samples)
+        # Sample posterior for CI computation (take every 5th sample to reduce file size)
+        sample_indices = 1:5:length(μ_samples)
         
         component_info = Dict(
             "component_id" => i,
