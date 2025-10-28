@@ -522,7 +522,8 @@ function plot_gmm(fig, slice, results; title="")
     # Plot 95% CI band
     band!(ax, x_pred, y_pred_lower, y_pred_upper, 
           color=(:dodgerblue, 0.4), 
-          label="95% CI")
+          label="95% CI"
+    )
     
     # Plot data
     scatter!(ax, x, y, label="Data", markersize=7, color=(:black, 0.5))
@@ -567,8 +568,7 @@ paths = [joinpath("artifacts", sp, "phenology.json") for sp in spnames]
 
 cidx = CartesianIndices((1:7, 1:7))
 
-fig_id = 2
-
+for fig_id in 1:4
 f = Figure(size=(2000, 2000))
 for (i, ci) in enumerate(cidx)
     sp_idx = ((fig_id-1) * prod(size(cidx))) + i + 1
@@ -578,7 +578,8 @@ for (i, ci) in enumerate(cidx)
     end
 end 
 f
+save("$fig_id.png", f)
+end
 
-save("foo.png", f)
  
 

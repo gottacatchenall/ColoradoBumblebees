@@ -50,13 +50,17 @@ function fit_phenology(
     species; 
     max_k=3, 
     startdate = Date(2025, 5, 1),
-    enddate = Date(2025, 10, 1)
+    enddate = Date(2025, 10, 1),
+    num_samples = 10_000,
+    burn_in = 5_000
 )
     x,y = get_phenology(data_dir, species, startdate=startdate, enddate=enddate)
     result = fit_gmm(
         x, 
         y, 
         max_k;
+        num_samples = num_samples,
+        burn_in = burn_in
     )
     mkpath(joinpath(artifact_dir, species))
     write_gmm(result, joinpath(artifact_dir, species, "phenology.json"))
@@ -68,19 +72,26 @@ data_dir = "cluster" in ARGS ? "/scratch/mcatchen/ColoradoBees/data" : "./data"
 job_id = parse(Int, ENV["SLURM_ARRAY_TASK_ID"])
 
 species = sort(get_species_list(data_dir))
-fit_phenology(data_dir, artifact_dir, species[job_id])
+fit_phenology(data_dir, artifact_dir, species[job_id]; max_k = 2)
+
+
 
 """
-x,y = get_phenology(data_dir, species[2])
+x,y = get_phenology(data_dir, "Linaria dalmatica")
 
 scatter(x,y)
 result = fit_gmm(
     x, 
     y, 
     3;
+    num_samples = 10_000,
+    burn_in = 5_000
 )
 
-fig = Figure()
-plot_gmm(fig, (1,1), result; title="")
-fig
+
+result
+
+f = Figure()
+plot_gmm(f, (1,1), result; title="")
+f
 """

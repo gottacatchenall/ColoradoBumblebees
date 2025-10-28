@@ -15,13 +15,13 @@ using Dates
         # Center of component
         μ[i] ~ Normal(mean(x), std(x))
         # Width of component 
-        σ[i] ~ truncated(Normal(2, 2), 0.1, Inf)
+        σ[i] ~ truncated(Normal(1, 1), 0.05, 1.5)
         # Amplitude
-        A[i] ~ truncated(Normal(0, 1), 0, Inf)
+        A[i] ~ truncated(Normal(0, 1), 0, 1)
     end
     
     # Observation noise
-    σ_obs ~ truncated(Normal(0, 0.1), 0, Inf)
+    σ_obs ~ truncated(Normal(0, 0.25), 0, Inf)
     
     # Likelihood
     for j in eachindex(x)
@@ -102,11 +102,21 @@ function waic(log_liks)
     return (waic=waic_val, lppd=lppd, p_waic=p_waic)
 end
 
-function fit_gmm(x, y, k_max; n_samples=2_000, burn_in = 1_000)
+function fit_gmm(x, y, k_max; num_samples=2_000, burn_in = 1_000)
     println("Fitting Gaussian Mixture Models...")
     println("="^50)
 
-    y2 = y ./ maximum(y)
+    # Store original ranges
+    x_min, x_max = minimum(x), maximum(x)
+    y_min, y_max = minimum(y), maximum(y)
+    
+    println("Original ranges:")
+    println("  x: [$x_min, $x_max]")
+    println("  y: [$y_min, $y_max]")
+    
+    # Rescale to [0, 1]
+    x_scaled = (x .- x_min) ./ (x_max - x_min)
+    y_scaled = (y .- y_min) ./ (y_max - y_min)
 
     all_waics = Dict{Int, Float64}()
     all_models = Dict()
@@ -114,8 +124,8 @@ function fit_gmm(x, y, k_max; n_samples=2_000, burn_in = 1_000)
     for k in 1:k_max
         println("Fitting k=$k Gaussians...")
         
-        model = gaussian_mixture_model(x, y2, k)
-        chain = sample(model, NUTS(), n_samples)
+        model = gaussian_mixture_model(x_scaled, y_scaled, k)
+        chain = sample(model, NUTS(), num_samples)
 
         chain = chain[burn_in:end]
         
@@ -137,22 +147,24 @@ function fit_gmm(x, y, k_max; n_samples=2_000, burn_in = 1_000)
     println("Best model: k=$best_k components")
     println("="^50)
     
-    # Extract parameters for best model
+    # Extract parameters for best model and rescale back to original ranges
     components = []
     for i in 1:best_k
-        #μ_samples = m .+ (M - m) .* vec(best_chain[Symbol("μ[$i]")])
-        #σ_samples = (M-m) .* vec(best_chain[Symbol("σ[$i]")])
         A_samples = vec(best_chain[Symbol("A[$i]")])
-        
         μ_samples = vec(best_chain[Symbol("μ[$i]")])
         σ_samples = vec(best_chain[Symbol("σ[$i]")])
 
-
-        μ_post = mean(μ_samples)
-        σ_post = mean(σ_samples)
-
-
-        A_post = mean(A_samples)
+        # Rescale μ back to original x range
+        μ_samples_orig = μ_samples .* (x_max - x_min) .+ x_min
+        μ_post = mean(μ_samples_orig)
+        
+        # Rescale σ back to original x range
+        σ_samples_orig = σ_samples .* (x_max - x_min)
+        σ_post = mean(σ_samples_orig)
+        
+        # Rescale A back to original y range
+        A_samples_orig = A_samples .* (y_max - y_min)
+        A_post = mean(A_samples_orig)
         
 
         # Sample posterior for CI computation (take every 5th sample to reduce file size)
@@ -161,31 +173,34 @@ function fit_gmm(x, y, k_max; n_samples=2_000, burn_in = 1_000)
         component_info = Dict(
             "component_id" => i,
             "mu_mean" => μ_post,
-            "mu_ci_lower" => quantile(μ_samples, 0.025),
-            "mu_ci_upper" => quantile(μ_samples, 0.975),
-            "mu_samples" => collect(μ_samples[sample_indices]),
+            "mu_ci_lower" => quantile(μ_samples_orig, 0.025),
+            "mu_ci_upper" => quantile(μ_samples_orig, 0.975),
+            "mu_samples" => collect(μ_samples_orig[sample_indices]),
             "sigma_mean" => σ_post,
-            "sigma_ci_lower" => quantile(σ_samples, 0.025),
-            "sigma_ci_upper" => quantile(σ_samples, 0.975),
-            "sigma_samples" => collect(σ_samples[sample_indices]),
+            "sigma_ci_lower" => quantile(σ_samples_orig, 0.025),
+            "sigma_ci_upper" => quantile(σ_samples_orig, 0.975),
+            "sigma_samples" => collect(σ_samples_orig[sample_indices]),
             "amplitude_mean" => A_post,
-            "amplitude_ci_lower" => quantile(A_samples, 0.025),
-            "amplitude_ci_upper" => quantile(A_samples, 0.975),
-            "amplitude_samples" => collect(A_samples[sample_indices])
+            "amplitude_ci_lower" => quantile(A_samples_orig, 0.025),
+            "amplitude_ci_upper" => quantile(A_samples_orig, 0.975),
+            "amplitude_samples" => collect(A_samples_orig[sample_indices])
         )
         
         push!(components, component_info)
     end
     
-    # Observation noise
-    σ_obs_post = mean(best_chain[:σ_obs])
+    # Rescale observation noise back to original y range
+    σ_obs_samples = vec(best_chain[:σ_obs])
+    σ_obs_post = mean(σ_obs_samples .* (y_max - y_min))
     
     results = Dict(
         "metadata" => Dict(
             "n_data_points" => length(x),
             "k_max_tested" => k_max,
-            "n_mcmc_samples" => n_samples,
-            "timestamp" => string(now())
+            "n_mcmc_samples" => num_samples,
+            "timestamp" => string(now()),
+            "original_x_range" => [x_min, x_max],
+            "original_y_range" => [y_min, y_max]
         ),
         "model_comparison" => Dict(
             "waics" => Dict(string(k) => all_waics[k] for k in 1:k_max),
@@ -198,11 +213,12 @@ function fit_gmm(x, y, k_max; n_samples=2_000, burn_in = 1_000)
         ),
         "data" => Dict(
             "x" => x,
-            "y" => y2
+            "y" => y
         )
     )
     return results
 end 
+
 
 function write_gmm(results_dict, output_file)
     # Save to JSON file
