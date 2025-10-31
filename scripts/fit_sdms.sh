@@ -22,5 +22,5 @@ julia -e '
 
     job_id = parse(Int, ENV["SLURM_ARRAY_TASK_ID"])
     species = sort(get_species_list(data_dir))
-    create_sdms(data_dir, artifact_dir, chelsa_dir, species[job_id])
+    create_species_distribution_models(data_dir, artifact_dir, chelsa_dir, species[job_id])
 '
