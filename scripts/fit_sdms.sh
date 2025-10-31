@@ -13,8 +13,9 @@ export JULIA_DEPOT_PATH="/project/def-tpoisot/mcatchen/JuliaEnvironments/Colorad
 
 module load julia/1.11.3
 julia -e '
-    include(joinpath("..", "src", "sdm.jl"))
-   
+    include(joinpath("..", "src", "sdms.jl"))
+    include(joinpath("..", "src", "networks.jl"))
+
     artifact_dir = "/scratch/mcatchen/ColoradoBees/artifacts" 
     data_dir = "/scratch/mcatchen/ColoradoBees/data"
     chelsa_dir = "/home/mcatchen/scratch/ColoradoBees/data/CHELSA" 
