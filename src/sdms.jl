@@ -615,7 +615,6 @@ function create_species_distribution_models(
         :metrics => statistics,
     )
     
-    # Step 5: Save all outputs
     @info "[ 5/5 ] Writing results..."
     save_all_sdm_outputs(output_directory, species_name, results)
 end

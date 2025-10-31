@@ -16,6 +16,13 @@ const AG = SDT.SimpleSDMPolygons.AG
 # Most and least overlap among interacting pairs 
 # ROCAUCs & TSS for each species 
 
+
+# Fig Ideas:
+
+# Correlation between overlap change and range area change
+# Elevation displacement by species 
+# 
+
 include("io.jl")
 include("networks.jl")
 CairoMakie.activate!(; px_per_unit=3)
@@ -548,6 +555,9 @@ res = load_gmm(joinpath("artifacts", sp_name, "phenology.json"))
 f = Figure(fonts = (; regular = "Roboto"))
 plot_gmm(f, (1,1), res; title=sp_name)
 f 
+
+
+
 
 
 

@@ -18,7 +18,7 @@ julia -e '
 
     artifact_dir = "/scratch/mcatchen/ColoradoBees/artifacts" 
     data_dir = "/scratch/mcatchen/ColoradoBees/data"
-    chelsa_dir = "/home/mcatchen/scratch/ColoradoBees/data/CHELSA" 
+    chelsa_dir = "/projects/def-tpoisot/mcatchen/CHELSA" 
 
     job_id = parse(Int, ENV["SLURM_ARRAY_TASK_ID"])
     species = sort(get_species_list(data_dir))
