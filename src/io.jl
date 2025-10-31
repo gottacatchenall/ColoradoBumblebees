@@ -1,5 +1,6 @@
 
 function load_sdm(dir_path)
+    @info dir_path
     return Dict(
         :prediction => SDMLayer(joinpath(dir_path, "prediction.tif")),
         :uncertainty => SDMLayer(joinpath(dir_path, "uncertainty.tif")),

@@ -17,7 +17,7 @@ const AG = SDT.SimpleSDMPolygons.AG
 # ROCAUCs & TSS for each species 
 
 include("io.jl")
-include("clean_networks.jl")
+include("networks.jl")
 CairoMakie.activate!(; px_per_unit=3)
 
 us_states = getpolygon(PolygonData(GADM, Countries), country="USA", level=1)
@@ -41,50 +41,8 @@ state_polys = intersect(FeatureCollection(
 
 sdms = load_sdms()
 
-function get_interaction_richness(sdms; threshold=false)
-    metaweb_df = get_metaweb_df()
-    bees, plants = get_valid_bees(), get_valid_plants()      
-    int_richness = deepcopy(collect(values(sdms))[begin][:prediction]) 
-    for b in bees, p in plants
-        if interacts(metaweb_df, p, b)
-            if threshold 
-                bee_range = sdms[b][:prediction] .> sdms[b][:metrics]["threshold"]["mean"]
-                plant_range = sdms[b][:prediction] .> sdms[b][:metrics]["threshold"]["mean"]
 
-                int_richness = int_richness + (bee_range & plant_range)
-            else
-                bee_prediction = sdms[b][:prediction] 
-                plant_prediction = sdms[b][:prediction] 
-                int_richness = int_richness + (bee_prediction .* plant_prediction)
-            end 
-        end
-    end
-    return int_richness
-end 
-
-function get_prediction(dict, threshold) 
-    if threshold 
-        return Int.(dict[:prediction] .> dict[:metrics]["threshold"]["mean"])
-    else
-        return dict[:prediction]
-    end
-end
-
-get_bee_richness(sdms; threshold=false) = sum([get_prediction(v, threshold) for (s,v) in sdms if occursin("Bombus", s)])
-get_plant_richness(sdms; threshold=false) = sum([get_prediction(v, threshold) for (s,v) in sdms if !occursin("Bombus", s)])
-get_total_species_richness(sdms; threshold=false) = sum([get_prediction(v, threshold) for (s,v) in sdms])
-
-get_bee_uncertainty(sdms) = sum([v[:uncertainty] for (s,v) in sdms if occursin("Bombus", s)])
-get_plant_uncertainty(sdms) = sum([v[:uncertainty] for (s,v) in sdms if !occursin("Bombus", s)])
-get_total_uncertainty(sdms) = sum([v[:uncertainty] for (s,v) in sdms])
-
-
-get_total_species_richness(sdms; threshold=true) |> heatmap
-get_total_uncertainty(sdms) |> heatmap
-
-
-int_richness =get_interaction_richness(sdms; threshold=true) 
-int_richness |> heatmap
+int_richness = get_interaction_richness(sdms; threshold=true) 
 
 f = Figure()
 ax = Axis(f[1,1], aspect=DataAspect())
@@ -211,36 +169,6 @@ save("plots/species_richness.png", f)
 
 
 
-function get_local_species_pools(sdms; threshold=true)
-    h,w = size(sdms[first(keys(sdms))][:prediction])
-    species_pools = [[] for i in 1:h, j in 1:w]
-
-    for (k,v) in sdms
-        range = get_prediction(v, threshold)
-        for i in 1:h, j in 1:w
-            if range[i,j] == 1
-                push!(species_pools[i,j], k)
-            end
-        end 
-        
-    end
-    return species_pools
-end
-
-function get_local_networks(metaweb, local_pools)
-    local_nets = Any[undef for _ in CartesianIndices(local_pools)]
-
-    for i in CartesianIndices(local_pools)
-        local_bees, local_plants = String.(filter(x->occursin("Bombus", x), local_pools[i])), String.(filter(x->!occursin("Bombus", x), local_pools[i]))
-        if length(local_bees) > 0 && length(local_plants) > 0
-            local_nets[i] = subgraph(metaweb, local_bees, local_plants)
-        else
-            local_nets[i] = []
-        end
-    end
-    local_nets
-end
-
 
 # --- Compute Network Uniqueness ----
 mw = get_metaweb()
@@ -339,8 +267,8 @@ save("plots/int_richness_vs_uniqueness.png", f)
 
 # ------- Int Richness vs. SDM Uncertainty -------
 f = make_bivariate(
-    int_richness, 
-    get_total_uncertainty(sdms); 
+    Float64.(species_richness),
+    int_richness;
     nbreaks=5,
     xlabel="Interaction Richness",
     ylabel="SDM Uncertainty",
@@ -350,23 +278,23 @@ f
 save("plots/int_richness_vs_uncertainty.png", f)
 
 
-# ------- Highest vs. Lowest overlap -------
+# ------- Int Richness vs. Species Richness -------
+f = make_bivariate(
+    int_richness, 
+    get_total_uncertainty(sdms); 
+    nbreaks=5,
+    xlabel="Interaction Richness",
+    ylabel="SDM Uncertainty",
+)
 
-function get_interacting_species(metaweb, species)
-    args = occursin("Bombus", species) ? [[species], :] : [:, [species]]
-    interaction_idx = occursin("Bombus", species) ? 2 : 1
-    ints = SpeciesInteractionNetworks.interactions(subgraph(metaweb, args...))
-    return [i[interaction_idx] for i in ints]
-end
+
+# ------- Highest vs. Lowest overlap -------
 
 function compute_bee_overlap(sdms; threshold=true)
     mw = get_metaweb()
-
     total_size = length(findall(first(values(sdms))[:prediction].indices))
 
     bee_names = filter(x->occursin("Bombus", x), collect(keys(sdms)))
-
-
     overlaps = [[] for _ in bee_names]
     for (i,species) in enumerate(bee_names)
         base_sdm = Bool.(get_prediction(sdms[species], threshold))
@@ -474,29 +402,45 @@ function plot_gmm(fig, slice, results; title="")
     isfirstcol = col == 1
     islastrow = row == 7
 
-    xlabel = islastrow ? "Day of Year" : ""
-    ylabel = isfirstcol ? "Normalized Number of Observations" : ""
+    ylabel = isfirstcol ? "Number of Observations" : ""
 
     # Create visualization
     #fig = Figure(size=(900, 500))
   
+    months = 5:9
+    doy_range_by_month = [((Date(2025, m, 1) - Date(2025, 1, 1)).value, (lastdayofmonth(Date(2025, m,1)) - Date(2025, 1, 1)).value) for m in months]
+    xticks = ([median(doy_range_by_month[i]) for i in eachindex(months)], [monthname(i) for i in months])
+
     # Plot 2: Best fit with 95% CI
     ax = Axis(
         fig[slice...],
         title=title,
         titlealign=:left,
+        titlefont=:bold_italic,
         aspect=1,
-        xlabel=xlabel,
+        xlabel="",
         ylabel=ylabel,
-        xticksvisible = islastrow,
+        xticks = xticks,
+        xticksvisible = false,
         xticklabelsvisible = islastrow,
-        yticksvisible = isfirstcol,
-        yticklabelsvisible = isfirstcol,
+        xticklabelrotation=π/2,
+        xgridvisible=false,
+        ygridvisible=false,
+        #yticksvisible = isfirstcol,
+        #yticklabelsvisible = isfirstcol,
     )
+    ymax = maximum(y) + (0.05*maximum(y))
     xlims!(begindoy, enddoy)
+    ylims!(0, ymax)
     # Generate prediction curves with CI using posterior samples
     x_pred = range(begindoy, enddoy, length=365*2)
     
+
+    cols = [ :grey98, :grey85,]
+    for (i,doy_range) in enumerate(doy_range_by_month)
+        poly!(ax, Point2f[(doy_range[1], 0), (doy_range[1], ymax), (doy_range[2]+1, ymax), (doy_range[2]+1, 0)], color = (cols[1 + i % 2], 0.2))
+    end 
+
     # Extract posterior samples for all components
     n_posterior_samples = length(components[1]["mu_samples"])
     y_pred_samples = zeros(n_posterior_samples, length(x_pred))
@@ -504,6 +448,9 @@ function plot_gmm(fig, slice, results; title="")
     # Generate predictions for each posterior sample
     for s in 1:n_posterior_samples
         for (j, x_val) in enumerate(x_pred)
+            # Initialize to zero for this prediction point
+            y_pred_samples[s, j] = 0.0
+            
             # Sum over all components using sampled parameters
             for comp in components
                 μ_s = comp["mu_samples"][s]
@@ -519,6 +466,9 @@ function plot_gmm(fig, slice, results; title="")
     y_pred_lower = [quantile(y_pred_samples[:, j], 0.025) for j in 1:length(x_pred)]
     y_pred_upper = [quantile(y_pred_samples[:, j], 0.975) for j in 1:length(x_pred)]
     
+
+    
+
     # Plot 95% CI band
     band!(ax, x_pred, y_pred_lower, y_pred_upper, 
           color=(:dodgerblue, 0.4), 
@@ -528,19 +478,29 @@ function plot_gmm(fig, slice, results; title="")
     # Plot data
     scatter!(ax, x, y, label="Data", markersize=7, color=(:black, 0.5))
     
-    # Plot individual components using mean parameters
+    # Plot individual components using posterior mean by computing mean of component curves
     colors = [:red, :green, :orange, :purple,]
     for (idx, comp) in enumerate(components)
-        μ = comp["mu_mean"]
-        σ = comp["sigma_mean"]
-        A = comp["amplitude_mean"]
+        # Compute component curves for each posterior sample
+        y_component_samples = zeros(n_posterior_samples, length(x_pred))
         
-        y_component = A .* exp.(-(x_pred .- μ).^2 ./ (2 * σ^2))
+        for s in 1:n_posterior_samples
+            μ_s = comp["mu_samples"][s]
+            σ_s = comp["sigma_samples"][s]
+            A_s = comp["amplitude_samples"][s]
+            
+            for (j, x_val) in enumerate(x_pred)
+                y_component_samples[s, j] = A_s * exp(-(x_val - μ_s)^2 / (2 * σ_s^2))
+            end
+        end
+        
+        # Take mean across posterior samples
+        y_component_mean = vec(mean(y_component_samples, dims=1))
         
         lines!(
             ax, 
             x_pred, 
-            y_component, 
+            y_component_mean, 
             label="Component $(comp["component_id"])",
             linestyle=:dash,
             linewidth=2,
@@ -562,14 +522,14 @@ function plot_gmm(fig, slice, results; title="")
     return fig
 end
 
-
 spnames = readdir("artifacts")
 paths = [joinpath("artifacts", sp, "phenology.json") for sp in spnames]
 
 cidx = CartesianIndices((1:7, 1:7))
 
 for fig_id in 1:4
-f = Figure(size=(2000, 2000))
+#fig_id = 1
+f = Figure(size=(2000, 2000), fonts = (; regular = "Roboto"))
 for (i, ci) in enumerate(cidx)
     sp_idx = ((fig_id-1) * prod(size(cidx))) + i + 1
     if sp_idx <= length(spnames)
@@ -578,8 +538,16 @@ for (i, ci) in enumerate(cidx)
     end
 end 
 f
-save("$fig_id.png", f)
+    save("plots/phen$fig_id.png", f)
 end
 
- 
+
+sp_idx = 3
+sp_name = "Bombus huntii"
+res = load_gmm(joinpath("artifacts", sp_name, "phenology.json"))
+f = Figure(fonts = (; regular = "Roboto"))
+plot_gmm(f, (1,1), res; title=sp_name)
+f 
+
+
 

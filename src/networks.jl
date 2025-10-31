@@ -157,5 +157,3 @@ function get_metaweb()
     adj_mat = [mw_df.interacts[findfirst(x->x.bee_name == bi && x.plant_name == pi, eachrow(mw_df))] for bi in b, pi in p]
     return SpeciesInteractionNetwork(Bipartite(b,p), Binary(adj_mat)) 
 end 
-
-
