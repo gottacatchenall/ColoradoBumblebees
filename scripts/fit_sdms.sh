@@ -12,13 +12,13 @@
 export JULIA_DEPOT_PATH="/project/def-tpoisot/mcatchen/JuliaEnvironments/ColoradoBees"
 
 module load julia/1.11.3
-julia fit_sdms.jl -e '
+julia -e '
     include(joinpath("..", "src", "sdm.jl"))
    
     artifact_dir = "/scratch/mcatchen/ColoradoBees/artifacts" 
     data_dir = "/scratch/mcatchen/ColoradoBees/data"
     chelsa_dir = "/home/mcatchen/scratch/ColoradoBees/data/CHELSA" 
-    
+
     job_id = parse(Int, ENV["SLURM_ARRAY_TASK_ID"])
     species = sort(get_species_list(data_dir))
     create_sdms(data_dir, artifact_dir, chelsa_dir, species[job_id])
