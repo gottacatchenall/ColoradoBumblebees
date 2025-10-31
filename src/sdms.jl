@@ -21,9 +21,9 @@ const EARTH_SYSTEM_MODELS = [
 ]
 
 const CLIMATE_SCENARIOS = [
-    #SSP126,
+    SSP126,
     SSP370,
-    #SSP585 
+    SSP585 
 ]
 
 const FUTURE_TIMESPANS = [
@@ -216,7 +216,7 @@ end
 Train a Gaussian process model using EvoTrees for species distribution modeling.
 """
 function train_model(X_train, y_train)
-    return EvoTrees.fit_evotree(
+    return EvoTrees.fit(
         EvoTreeGaussian(),
         x_train = X_train',
         y_train = y_train,
