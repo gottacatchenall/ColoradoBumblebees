@@ -140,7 +140,14 @@ end
 function get_species_list(data_dir)
     gbif_df = get_gbif_data(data_dir)
     taxa_df = get_taxa_df(data_dir)
-    [taxa_df.species_name[findfirst(r->r.species_key == key, eachrow(taxa_df))] for key in unique(gbif_df.speciesKey)]
+    species_names = []
+    for key in unique(gbif_df.speciesKey)
+        idx = findfirst(r->r.species_key == key, eachrow(taxa_df))
+        if !isnothing(idx)
+            push!(species_names, taxa_df.species_name[idx])
+        end
+    end
+    return species_names
 end 
 
 function get_gbif_data(data_dir)

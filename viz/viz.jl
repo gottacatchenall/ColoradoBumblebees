@@ -557,7 +557,3 @@ plot_gmm(f, (1,1), res; title=sp_name)
 f 
 
 
-
-
-
-
