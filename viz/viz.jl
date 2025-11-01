@@ -557,3 +557,22 @@ plot_gmm(f, (1,1), res; title=sp_name)
 f 
 
 
+
+include(joinpath("..", "src", "sdms.jl"))
+include(joinpath("..", "src", "networks.jl"))
+
+artifact_dir = "./artifacts" 
+data_dir = "./data"
+chelsa_dir = "/Users/michael/.julia/SimpleSDMDatasets/CHELSA2/BioClim" 
+
+job_id = 2
+species = sort(get_species_list(data_dir))
+
+
+
+create_species_distribution_models(data_dir, artifact_dir, chelsa_dir, species[job_id])
+
+
+all_occurrences = load_occurrence_data(data_dir)
+species_occurrences = group_occurrences_by_species(all_occurrences)
+target_occurrences = species_occurrences[species_name]

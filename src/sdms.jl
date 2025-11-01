@@ -65,6 +65,8 @@ function load_occurrence_data(data_directory)
     
     # Load taxonomy mapping
     taxa_data = CSV.read(joinpath(data_directory, "taxa.csv"), DataFrame)
+    filter!(row->row.speciesKey ∈ taxa_data.species_key, gbif_data)
+
     species_key_to_name = Dict([row.species_key => row.species_name for row in eachrow(taxa_data)])
     
     # Map species keys to names
