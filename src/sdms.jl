@@ -231,7 +231,7 @@ function calculate_evaluation_metrics(y_true, y_predicted, thresholds=0:0.001:1)
         :prauc => pr_auc,
         :rocauc => roc_auc,
         :tss => trueskill(confusion_matrices[threshold_index]),
-        :mcc => mcc(confusion_matrices[threshold_index])
+        :mcc => mcc(confusion_matrices[threshold_index]),
         :threshold => optimal_threshold
     )
 end
