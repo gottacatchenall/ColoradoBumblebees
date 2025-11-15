@@ -13,7 +13,7 @@ using Dates
 
     for i in 1:k
         # Center of component
-        μ[i] ~ Normal(mean(x), std(x))
+        μ[i] ~ Uniform(0,1)
         # Width of component 
         σ[i] ~ truncated(Normal(1, 1), 0.05, 1.5)
         # Amplitude

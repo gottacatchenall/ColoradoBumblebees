@@ -32,7 +32,7 @@
 }
 
 #let showtitle(title) = {    
-    text(size: 26pt, fill: rgb("#222"), weight: "bold", font: "IBM Plex Sans")[#par(text(title), leading: 0.2em)]  
+    text(size: 26pt, fill: rgb("#222"), weight: 600)[#par(text(title), leading: 0.3em)]  
 }
 
 #let showabstract(abstract) = {
@@ -41,14 +41,12 @@
         numbering: none,
         text(
           0.75em,     
-          font: "IBM Plex Sans",
           fill: rgb("#555"),
           [Abstract]
         ),
   )
   par(first-line-indent: 0em)[
     #text(
-      font: "IBM Plex Sans", 
       size: 0.95em
     )[#abstract]
   ]
@@ -58,7 +56,7 @@
 #let showauthors(authors, institutions, corresponding_email) = {
 
 for person in authors.keys() [
-  #text(font: "IBM Plex Sans", size: 1em)[#person#for x in authors.at(person).affiliations {  
+  #text(size: 1em)[#person#for x in authors.at(person).affiliations {  
   let pos = institutions.keys().position(y => y == x) + 1
     super()[#pos]
     if institutions.keys().at(institutions.keys().position(y => y == x)) != authors.at(person).affiliations.last()  {super()[,]}
@@ -68,22 +66,23 @@ for person in authors.keys() [
 v(0.25em)
 
 // Print Corresponding Email
-text(font: "IBM Plex Sans", size: 0.85em)[Corresponding Author: #corresponding_email]
+text(font: "Iosevka", size: 0.85em)[Corresponding Author: #corresponding_email]
 v(1em)
 
 // Print Institutions
 for (i,inst) in institutions.keys().enumerate() {
   let pos = institutions.keys().position(y => y == inst) + 1
-  text(0.8em, rgb("#222"), font: "IBM Plex Sans")[#super()[#text(size: 1.2em, weight: "bold")[#pos ]]#institutions.at(inst)]
+  text(0.8em, rgb("#222"))[#super()[#text(size: 1.2em, weight: "bold")[#pos ]]#institutions.at(inst)]
     if institutions.keys().last() != inst {text(size: 0.7em, font: "IBM Plex Sans")[\ ]}
   }
 }
 
 #let showbibliography(file) = {
   pagebreak()
-  text(size: 0.95em)[
+  columns(2)[
+  #text(size: 0.8em)[
     #bibliography(file, title: "References", style: "springer-basic-author-date")
-  ]
+  ]]
 }
 
 #let note(author, body, color : orange) = {

@@ -13,23 +13,30 @@ const SDT = SpeciesDistributionToolkit
 # ============================================================================
 
 const EARTH_SYSTEM_MODELS = [
-    GFDL_ESM4, 
-    IPSL_CM6A_LR, 
-    MPI_ESM1_2_HR, 
-    MRI_ESM2_0, 
-    UKESM1_0_LL
+    "ACCESS-CM2",
+    "BCC-CSM2-MR",
+    "CMCC-ESM2",
+    "EC-Earth3-Veg",
+    "GISS-E2-1-G",
+    "INM-CM5-0",
+    "IPSL-CM6A-LR",
+    "MIROC6",
+    "MPI-ESM1-2-HR",
+    "MRI-ESM2-0",
+    "UKESM1-0-LL"
 ]
 
 const CLIMATE_SCENARIOS = [
-    SSP126,
-    SSP370,
-    SSP585 
+    "SSP126",
+    "SSP245",
+    "SSP370",
 ]
 
 const FUTURE_TIMESPANS = [
-    Year(2011) => Year(2040),
-    Year(2041) => Year(2070), 
-    Year(2071) => Year(2100)
+    "2021-2040",
+    "2041-2060",
+    "2061-2080",
+    "2081-2100"
 ]
 
 
@@ -39,11 +46,6 @@ const BOUNDING_BOX = (left=-109.7, right=-101.8, bottom=34.5, top=42.5)
 # DATA LOADING FUNCTIONS
 # ============================================================================
 
-"""
-    parse_occurrence_from_row(row)
-
-Convert a CSV row into an Occurrence object with standardized fields.
-"""
 function parse_occurrence_from_row(row)
     OccurrencesInterface.Occurrence(;
         presence = row.occurrenceStatus == "PRESENT",
@@ -53,12 +55,6 @@ function parse_occurrence_from_row(row)
     )
 end
 
-"""
-    load_occurrence_data(data_directory)
-
-Load GBIF occurrence records and taxonomy data, returning a vector of Occurrence objects.
-Joins species keys with species names from the taxonomy file.
-"""
 function load_occurrence_data(data_directory)
     # Load occurrence records
     gbif_data = CSV.read(joinpath(data_directory, "gbif.csv"), DataFrame)
@@ -75,13 +71,6 @@ function load_occurrence_data(data_directory)
     return [parse_occurrence_from_row(row) for row in eachrow(gbif_data)]
 end
 
-"""
-    group_occurrences_by_species(occurrences, minimum_occurrences=50)
-
-Split occurrence records into species-level groups, filtering to only include
-species with at least `minimum_occurrences` records.
-Returns a dictionary mapping species name to Occurrences object.
-"""
 function group_occurrences_by_species(occurrences, minimum_occurrences=50)
     # Extract genus and species only (ignore subspecies, variety, etc.)
     function extract_binomial_name(species_string)
@@ -110,66 +99,42 @@ end
 # ENVIRONMENTAL LAYER FUNCTIONS
 # ============================================================================
 
-"""
-    load_baseline_climate_layers(chelsa_directory)
-
-Load the 19 CHELSA bioclimatic variables for the baseline period.
-Returns a vector of SDM layers.
-"""
-function load_baseline_climate_layers(chelsa_directory)
-    baseline_directory = joinpath(chelsa_directory, "baseline")
+function load_baseline_climate_layers(worldclim_dir)
+    baseline_directory = joinpath(worldclim_dir, "baseline")
 
     filenames = readdir(baseline_directory)
     
-    chelsa_paths = [
+    layer_paths = [
         joinpath(baseline_directory, filenames[findfirst(fn -> occursin(pattern, fn), filenames)]) 
-        for pattern in ["_bio$(i)_" for i in 1:19]
+        for pattern in ["_bio_$i.tif" for i in 1:19]
     ]
     
     # Load and convert to Float32
-    layers = [SDMLayer(path; BOUNDING_BOX...) for path in chelsa_paths]
+    layers = [SDMLayer(path; BOUNDING_BOX...) for path in layer_paths]
     return [Float32.(layer) for layer in layers]
 end
 
-"""
-    load_future_climate_layers(base_directory, scenario, earth_system_model, timespan, bbox)
-
-Load future climate projection layers for a specific scenario, ESM, and time period.
-"""
-function load_future_climate_layers(base_directory, scenario, earth_system_model, timespan, bbox)
-    esm_string = replace(lowercase(string(earth_system_model)), "_" => "-")
-    
+function load_future_climate_layers(base_directory, scenario, earth_system_model, timespan)    
     path = joinpath(
         base_directory,
-        string(scenario),
-        replace(string(earth_system_model), "_" => "-"),
+        scenario, 
+        timespan
     )
-    
-    start_year, end_year = timespan[1].value, timespan[2].value
-    
+        
     # Construct paths for all 19 bioclimatic variables
-    layer_paths = [
+    layer_path =
         joinpath(
             path, 
-            "chelsa_bio$(layer)_$(start_year)-$(end_year)_$(esm_string)_$(lowercase(string(scenario)))_v.2.1.tif"
+            "wc2.1_30s_$(earth_system_model)_$(lowercase(scenario))_$timespan.tif"
         ) 
-        for layer in 1:19
-    ]
     
-    return [Float32.(SDMLayer(path; bbox...)) for path in layer_paths]
+    return [Float32.(SDMLayer(layer_path; bandnumber=i, BOUNDING_BOX...)) for i in 1:19]
 end
 
 # ============================================================================
 # PSEUDOABSENCE GENERATION
 # ============================================================================
 
-"""
-    generate_pseudoabsences(presence_layer, buffer_distance_km, class_balance_ratio)
-
-Generate pseudoabsence points using a buffer around known presences.
-- `buffer_distance_km`: minimum distance from presences in kilometers
-- `class_balance_ratio`: ratio of absences to presences (1.0 = equal numbers)
-"""
 function generate_pseudoabsences(presence_layer, buffer_distance_km, class_balance_ratio)
     # Create background mask (all non-NA areas)
     background = pseudoabsencemask(DistanceToEvent, presence_layer)
@@ -190,12 +155,6 @@ end
 # MODEL TRAINING FUNCTIONS
 # ============================================================================
 
-"""
-    prepare_training_data(layers, presence_layer, absence_layer)
-
-Combine environmental layers with presence/absence data into feature matrix X
-and label vector y for model training.
-"""
 function prepare_training_data(layers, presence_layer, absence_layer)
     # Extract environmental values at presence and absence locations
     X = Matrix(hcat([
@@ -212,11 +171,6 @@ function prepare_training_data(layers, presence_layer, absence_layer)
     return X, y
 end
 
-"""
-    train_model(X_train, y_train)
-
-Train a Gaussian process model using EvoTrees for species distribution modeling.
-"""
 function train_model(X_train, y_train)
     return EvoTrees.fit(
         EvoTreeGaussian(),
@@ -225,21 +179,10 @@ function train_model(X_train, y_train)
     )
 end
 
-"""
-    predict_distribution(model, feature_matrix)
-
-Generate predictions from a trained model.
-"""
 function predict_distribution(model, feature_matrix)
     return EvoTrees.predict(model, feature_matrix')
 end
 
-"""
-    create_prediction_layer(model, environmental_layers)
-
-Apply a trained model across the entire study area to create prediction and
-uncertainty maps.
-"""
 function create_prediction_layer(model, environmental_layers)
     # Initialize output layers
     prediction_layer = deepcopy(environmental_layers[begin])
@@ -265,11 +208,6 @@ end
 # MODEL EVALUATION
 # ============================================================================
 
-"""
-    calculate_evaluation_metrics(y_true, y_predicted, thresholds=0:0.001:1)
-
-Calculate ROC-AUC, PR-AUC, TSS, and optimal threshold for binary classification performance.
-"""
 function calculate_evaluation_metrics(y_true, y_predicted, thresholds=0:0.001:1)
     # Calculate confusion matrices across all thresholds
     confusion_matrices = [ConfusionMatrix(y_predicted .> t, y_true) for t in thresholds]
@@ -286,23 +224,18 @@ function calculate_evaluation_metrics(y_true, y_predicted, thresholds=0:0.001:1)
     pr_dy = [reverse(precisions)[i] + reverse(precisions)[i-1] for i in 2:length(precisions)]
     pr_auc = sum(pr_dx .* (pr_dy ./ 2.0))
     
-    # Find optimal threshold using True Skill Statistic
-    optimal_threshold, threshold_index = findmax(trueskill.(confusion_matrices))
+    # Find optimal threshold using MCC
+    optimal_threshold, threshold_index = findmax(mcc.(confusion_matrices))
     
     return Dict(
         :prauc => pr_auc,
         :rocauc => roc_auc,
         :tss => trueskill(confusion_matrices[threshold_index]),
+        :mcc => mcc(confusion_matrices[threshold_index])
         :threshold => optimal_threshold
     )
 end
 
-"""
-    aggregate_fold_statistics(fold_stats)
-
-Aggregate statistics across k-fold cross-validation folds.
-Returns mean and standard deviation for each metric.
-"""
 function aggregate_fold_statistics(fold_stats)
     return Dict(
         metric => Dict("mean" => mean(values), "std" => std(values))
@@ -315,27 +248,6 @@ end
 # BASELINE SDM FITTING
 # ============================================================================
 
-"""
-    fit_baseline_sdm(
-        occurrences, 
-        environmental_layers; 
-        pseudoabsence_buffer_distance=25.0, 
-        class_balance=1.0, 
-        k=4
-    )
-
-Fit a species distribution model using k-fold cross-validation.
-
-# Arguments
-- `occurrences`: Species occurrence records
-- `environmental_layers`: Environmental predictor variables
-- `pseudoabsence_buffer_distance`: Buffer around presences in km (default: 25)
-- `class_balance`: Ratio of absences to presences (default: 1.0)
-- `k`: Number of cross-validation folds (default: 4)
-
-# Returns
-Tuple of (models, range_map, uncertainty_map, statistics, presence_layer, absence_layer)
-"""
 function fit_baseline_sdm(
     occurrences,
     environmental_layers;
@@ -394,13 +306,8 @@ end
 # FUTURE PROJECTION FUNCTIONS
 # ============================================================================
 
-"""
-    project_future_distribution(models, chelsa_directory, scenario, esm, timespan, bbox)
-
-Project species distribution under future climate conditions using an ensemble of models.
-"""
-function project_future_distribution(models, chelsa_directory, scenario, esm, timespan, bbox)
-    future_layers = load_future_climate_layers(chelsa_directory, scenario, esm, timespan, bbox)
+function project_future_distribution(models, worldclim_directory, scenario, esm, timespan)
+    future_layers = load_future_climate_layers(worldclim_directory, scenario, esm, timespan)
     
     predictions = []
     uncertainties = []
@@ -414,12 +321,7 @@ function project_future_distribution(models, chelsa_directory, scenario, esm, ti
     return mean(predictions), mean(uncertainties)
 end
 
-"""
-    create_esm_ensemble(models, chelsa_directory, scenario, timespan, bbox)
-
-Create an ensemble prediction across multiple Earth System Models.
-"""
-function create_esm_ensemble(models, chelsa_directory, scenario, timespan, bbox)
+function create_esm_ensemble(models, worldclim_directory, scenario, timespan)
     predictions = []
     uncertainties = []
     
@@ -427,7 +329,7 @@ function create_esm_ensemble(models, chelsa_directory, scenario, timespan, bbox)
         @info "    |    |-> ESM: $esm [$(i_esm)/$(length(EARTH_SYSTEM_MODELS))]"
         
         prediction, uncertainty = project_future_distribution(
-            models, chelsa_directory, scenario, esm, timespan, bbox
+            models, worldclim_directory, scenario, esm, timespan
         )
         
         push!(predictions, prediction)
@@ -441,11 +343,6 @@ end
 # OUTPUT FUNCTIONS
 # ============================================================================
 
-"""
-    save_future_projections(output_directory, future_results)
-
-Save future projection rasters to disk organized by scenario and time period.
-"""
 function save_future_projections(output_directory, future_results)
     for (scenario, scenario_dict) in future_results
         scenario_dir = joinpath(output_directory, string(scenario))
@@ -469,11 +366,6 @@ function save_future_projections(output_directory, future_results)
     end
 end
 
-"""
-    save_baseline_results(output_directory, baseline_results)
-
-Save baseline SDM results including presence/absence data, predictions, and uncertainty.
-"""
 function save_baseline_results(output_directory, baseline_results)
     mkpath(output_directory)
     SDT.SimpleSDMLayers.save(
@@ -495,11 +387,6 @@ function save_baseline_results(output_directory, baseline_results)
     )
 end
 
-"""
-    save_all_sdm_outputs(output_directory, species_name, results)
-
-Save all SDM outputs including baseline, future projections, metrics, and visualization.
-"""
 function save_all_sdm_outputs(output_directory, species_name, results)
     mkpath(output_directory)
     
@@ -534,40 +421,21 @@ end
 # MAIN WORKFLOW
 # ============================================================================
 
-"""
-    create_species_distribution_models(
-        data_directory, 
-        output_directory, 
-        chelsa_directory, 
-        species_name; 
-        k=5, 
-        class_balance=1.0
-    )
-
-Complete workflow to create baseline and future species distribution models.
-
-# Arguments
-- `data_directory`: Path to occurrence data
-- `output_directory`: Path for saving results
-- `chelsa_directory`: Path to CHELSA climate data
-- `species_name`: Name of target species
-- `k`: Number of cross-validation folds (default: 5)
-- `class_balance`: Ratio of pseudoabsences to presences (default: 1.0)
-"""
 function create_species_distribution_models(
     data_directory, 
     output_directory, 
-    chelsa_directory,
+    worldclim_directory,
     species_name;
     k = 5,
-    class_balance = 1.0
+    class_balance = 1.5,
+    pseudoabsence_buffer_distance = 15.0,
 )
     @info "Creating SDMs for $species_name"
     @info "="^70
     @info "\n"
     
     @info "[ 1/5 ] Loading baseline climate layers..."
-    baseline_layers = load_baseline_climate_layers(chelsa_directory)
+    baseline_layers = load_baseline_climate_layers(worldclim_directory)
     
     @info "[ 2/5 ] Loading occurrence records..."
     all_occurrences = load_occurrence_data(data_directory)
@@ -579,7 +447,8 @@ function create_species_distribution_models(
         target_occurrences, 
         baseline_layers; 
         k = k,
-        class_balance = class_balance
+        class_balance = class_balance,
+        pseudoabsence_buffer_distance = pseudoabsence_buffer_distance,
     )
     optimal_threshold = statistics[:threshold]["mean"]
     
@@ -595,7 +464,7 @@ function create_species_distribution_models(
             @info "    |$("-"^40)"
             # Create ensemble across ESMs
             prediction, uncertainty = create_esm_ensemble(
-                models, chelsa_directory, scenario, timespan, BOUNDING_BOX
+                models, worldclim_directory, scenario, timespan
             )
             
             future_projections[scenario][timespan] = Dict(
