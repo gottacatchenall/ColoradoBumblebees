@@ -128,7 +128,15 @@ function load_future_climate_layers(base_directory, scenario, earth_system_model
             "wc2.1_30s_bioc_$(earth_system_model)_$(lowercase(scenario))_$timespan.tif"
         ) 
     
-    return [Float32.(SDMLayer(layer_path; bandnumber=i, BOUNDING_BOX...)) for i in 1:19]
+    layers =  [Float32.(SDMLayer(layer_path; bandnumber=i, BOUNDING_BOX...)) for i in 1:19]
+    
+    # Standardize to correct minor float errors in loading
+    for l in layers
+        l.x = (BOUNDING_BOX.left, BOUNDING_BOX.right)
+        l.y = (BOUNDING_BOX.bottom, BOUNDING_BOX.top)
+    end
+
+    return layers
 end
 
 # ============================================================================
