@@ -125,7 +125,7 @@ function load_future_climate_layers(base_directory, scenario, earth_system_model
     layer_path =
         joinpath(
             path, 
-            "wc2.1_30s_$(earth_system_model)_$(lowercase(scenario))_$timespan.tif"
+            "wc2.1_30s_bioc_$(earth_system_model)_$(lowercase(scenario))_$timespan.tif"
         ) 
     
     return [Float32.(SDMLayer(layer_path; bandnumber=i, BOUNDING_BOX...)) for i in 1:19]
