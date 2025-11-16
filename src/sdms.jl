@@ -468,7 +468,7 @@ function create_species_distribution_models(
         
         for (i_timespan, timespan) in enumerate(FUTURE_TIMESPANS)
             @info "    |$("-"^40)"
-            @info "    |-> $scenario [$(i_scenario)/$(length(CLIMATE_SCENARIOS))]   |   $(timespan[1].value)-$(timespan[2].value) [$(i_timespan)/$(length(FUTURE_TIMESPANS))]"
+            @info "    |-> $scenario [$(i_scenario)/$(length(CLIMATE_SCENARIOS))]   |   $(timespan) [$(i_timespan)/$(length(FUTURE_TIMESPANS))]"
             @info "    |$("-"^40)"
             # Create ensemble across ESMs
             prediction, uncertainty = create_esm_ensemble(
