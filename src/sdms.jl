@@ -552,6 +552,9 @@ function tune_hyperparameters(
                     )
                 )
 
+                # obnoxious way to check timing etc.
+                CSV.write(joinpath(species_dir, "tuning.csv"), results_df)
+                
                 cursor += 1
             end 
         end
