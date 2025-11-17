@@ -268,12 +268,14 @@ function fit_baseline_sdm(
     presence_layer = mask(environmental_layers[begin], occurrences)
     
     @info "    |-> Generating pseudoabsences..."
+    Random.seed!(123) # standardize across tuning tests
     absence_layer = generate_pseudoabsences(presence_layer, pseudoabsence_buffer_distance, class_balance)
     
     # Prepare training data
     features, labels = prepare_training_data(environmental_layers, presence_layer, absence_layer)
     
     # Create cross-validation folds
+    Random.seed!(123) # standardize across tuning tests
     fold_indices = SDeMo.kfold(labels, features, k=k)
     
     # Storage for results
