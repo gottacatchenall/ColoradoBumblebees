@@ -5,6 +5,8 @@ using Dates
 using EvoTrees
 using JSON
 using CairoMakie
+using Random
+
 
 const SDT = SpeciesDistributionToolkit
 
