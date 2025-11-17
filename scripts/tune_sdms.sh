@@ -24,9 +24,9 @@ julia -e '
     species = sort(get_species_list(data_dir))
     
     tune_hyperparameters(
-        data_directory, 
-        output_directory, 
-        worldclim_directory,
+        data_dir, 
+        artifact_dir, 
+        worldclim_dir,
         species_name;
         k = 5,
         class_balances = 0.5:0.5:3,
