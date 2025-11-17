@@ -19,6 +19,7 @@ function read_sdm_future(futures_directory, ssp)
     ssp_dict = Dict()
 
     for yr in year_paths
+        @info futures_directory, ssp, yr
         ssp_dict[yr] = Dict(
             :range => SDMLayer(joinpath(ssp_directory, yr, "range.tif")),
             :uncertainty => SDMLayer(joinpath(ssp_directory, yr, "uncertainty.tif"))

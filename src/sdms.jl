@@ -179,9 +179,9 @@ function prepare_training_data(layers, presence_layer, absence_layer)
     return X, y
 end
 
-function train_model(X_train, y_train)
+function train_model(X_train, y_train; max_depth = 6)
     return EvoTrees.fit(
-        EvoTreeGaussian(),
+        EvoTreeGaussian(max_depth = max_depth),
         x_train = X_train',
         y_train = y_train,
     )
@@ -261,6 +261,7 @@ function fit_baseline_sdm(
     environmental_layers;
     pseudoabsence_buffer_distance = 25.0,
     class_balance = 1.0,
+    max_depth = 6,
     k = 4
 )
     # Create presence layer from occurrence points
@@ -285,7 +286,7 @@ function fit_baseline_sdm(
     
     # Train and evaluate each fold
     for (train_idx, validation_idx) in fold_indices
-        model = train_model(features[:, train_idx], labels[train_idx])
+        model = train_model(features[:, train_idx], labels[train_idx]; max_depth = max_depth)
         
         # Evaluate on validation set
         validation_predictions = predict_distribution(model, features[:, validation_idx])[:, 1]
@@ -494,4 +495,70 @@ function create_species_distribution_models(
     
     @info "[ 5/5 ] Writing results..."
     save_all_sdm_outputs(output_directory, species_name, results)
+end
+
+
+function tune_hyperparameters(
+    data_directory, 
+    output_directory, 
+    worldclim_directory,
+    species_name;
+    k = 5,
+    class_balances = 0.5:0.5:3,
+    pseudoabsence_buffer_distances = 5.0:5.0:25,
+    max_depths = 4:2:10,
+)
+    
+    @info "[ 1/3 ] Loading baseline climate layers..."
+    baseline_layers = load_baseline_climate_layers(worldclim_directory)
+    
+    @info "[ 2/3 ] Loading occurrence records..."
+    all_occurrences = load_occurrence_data(data_directory)
+    species_occurrences = group_occurrences_by_species(all_occurrences)
+    target_occurrences = species_occurrences[species_name]
+    
+    results_df = DataFrame(
+        class_balance = [],
+        pseudoabsence_buffer_distance = [],
+        max_depth = [],
+        mcc = [],
+        rocauc = []
+    )
+
+    cursor = 1
+    num_treatments = prod(length.([class_balances, pseudoabsence_buffer_distances, max_depths]))
+
+    @info "[ 3/3 ] Fitting models..."
+    for class_balance in class_balances
+        for pseudoabsence_buffer_distance in pseudoabsence_buffer_distances
+            for max_depth in max_depths
+                @info "    |-> Hyperparameter Set [$cursor / $num_treatments]..."
+                _, _, _, statistics, _, _ = fit_baseline_sdm(
+                    target_occurrences, 
+                    baseline_layers; 
+                    k = k,
+                    class_balance = class_balance,
+                    pseudoabsence_buffer_distance = pseudoabsence_buffer_distance,
+                    max_depth = max_depth
+                )
+
+                push!(results_df, 
+                    (
+                        class_balance, 
+                        pseudoabsence_buffer_distance, 
+                        max_depth,
+                        statistics[:mcc]["mean"],
+                        statistics[:rocauc]["mean"]
+                    )
+                )
+
+                cursor += 1
+            end 
+        end
+    end 
+
+    species_dir = joinpath(output_directory, species_name, "SDMs")
+    CSV.write(joinpath(species_dir, "tuning.csv"), results_df)
+
+    return results_df
 end
