@@ -356,9 +356,7 @@ function save_future_projections(output_directory, future_results)
         scenario_dir = joinpath(output_directory, string(scenario))
         
         for (timespan, timespan_dict) in scenario_dict
-            @info timespan, timespan_dict
-            # Format time period as string (e.g., "2011-2040")
-            period_string = string(timespan[1].value) * "-" * string(timespan[2].value)
+            period_string = timespan
             period_dir = joinpath(scenario_dir, period_string)
             mkpath(period_dir)
             
