@@ -27,7 +27,7 @@ julia -e '
         data_dir, 
         artifact_dir, 
         worldclim_dir,
-        species_name;
+        species[job_id];
         k = 5,
         class_balances = 0.5:0.5:3,
         pseudoabsence_buffer_distances = 5.0:5.0:25,
