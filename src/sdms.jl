@@ -517,6 +517,9 @@ function tune_hyperparameters(
     species_occurrences = group_occurrences_by_species(all_occurrences)
     target_occurrences = species_occurrences[species_name]
     
+    species_dir = joinpath(output_directory, species_name, "SDMs")
+
+
     results_df = DataFrame(
         class_balance = [],
         pseudoabsence_buffer_distance = [],
@@ -554,13 +557,12 @@ function tune_hyperparameters(
 
                 # obnoxious way to check timing etc.
                 CSV.write(joinpath(species_dir, "tuning.csv"), results_df)
-                
+
                 cursor += 1
             end 
         end
     end 
 
-    species_dir = joinpath(output_directory, species_name, "SDMs")
     CSV.write(joinpath(species_dir, "tuning.csv"), results_df)
 
     return results_df
