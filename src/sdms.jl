@@ -522,7 +522,7 @@ function tune_hyperparameters(
     target_occurrences = species_occurrences[species_name]
     
     species_dir = joinpath(output_directory, species_name, "SDMs")
-
+    mkpath(species_dir)
 
     results_df = DataFrame(
         class_balance = [],
