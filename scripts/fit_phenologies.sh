@@ -17,8 +17,8 @@ julia -e '
     include(joinpath("..", "src", "networks.jl"))
     include(joinpath("..", "src", "phenology.jl"))
 
-    artifact_dir = "cluster" in ARGS ? "/scratch/mcatchen/ColoradoBees/artifacts" : "./artifacts"
-    data_dir = "cluster" in ARGS ? "/scratch/mcatchen/ColoradoBees/data" : "./data"
+    artifact_dir ="/scratch/mcatchen/ColoradoBees/artifacts"
+    data_dir = "/scratch/mcatchen/ColoradoBees/data" 
 
     job_id = parse(Int, ENV["SLURM_ARRAY_TASK_ID"])
     species = sort(get_species_list(data_dir))
