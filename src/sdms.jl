@@ -610,7 +610,8 @@ function finish_tuning_hyperparameters(
                 if length(findall(
                     r-> r.class_balance == class_balance &&
                         r.pseudoabsence_buffer_distance == pseudoabsence_buffer_distance &&
-                        r.max_depth == max_depth == max_depth
+                        r.max_depth == max_depth == max_depth,
+                        results_df
                 )) == 0 
                     @info "    |-> Hyperparameter Set [$cursor / $num_treatments]..."
                     _, _, _, statistics, _, _ = fit_baseline_sdm(
