@@ -6,7 +6,7 @@
 #SBATCH --ntasks=1               
 #SBATCH --cpus-per-task=1        
 #SBATCH --mem-per-cpu=16G 
-#SBATCH --array=[1,129,19,73,103,178,46,38,92,110,29,135,93,172,14,151] 
+#SBATCH --array=[1,129,73,103,178,46,38,92,110,29,135,93,172,14,151] 
 #SBATCH --time=8:00:00         
 
 export JULIA_DEPOT_PATH="/project/def-tpoisot/mcatchen/JuliaEnvironments/ColoradoBees"

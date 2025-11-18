@@ -246,14 +246,6 @@ function calculate_evaluation_metrics(y_true, y_predicted, thresholds=0:0.001:1)
     )
 end
 
-function aggregate_fold_statistics(fold_stats)
-    return Dict(
-        metric => Dict("mean" => mean(values), "std" => std(values))
-        for metric in keys(first(fold_stats)) 
-        for values in [[fold[metric] for fold in fold_stats]]
-    )
-end
-
 # ============================================================================
 # BASELINE SDM FITTING
 # ============================================================================
@@ -281,10 +273,8 @@ function fit_baseline_sdm(
     fold_indices = SDeMo.kfold(labels, features, k=k)
     
     # Storage for results
-    fold_statistics = []
-    prediction_layers = []
-    uncertainty_layers = []
-    trained_models = []
+    true_labels = Bool[]
+    out_of_fold_predictions = Float32[]
     
     @info "    |-> Training $(k) cross-validation folds..."
     
@@ -294,44 +284,31 @@ function fit_baseline_sdm(
         
         # Evaluate on validation set
         validation_predictions = predict_distribution(model, features[:, validation_idx])[:, 1]
-        push!(fold_statistics, calculate_evaluation_metrics(labels[validation_idx], validation_predictions))
-        
-        # Generate full prediction maps
-        prediction, uncertainty = create_prediction_layer(model, environmental_layers)
-        push!(prediction_layers, prediction)
-        push!(uncertainty_layers, uncertainty)
-        push!(trained_models, model)
+
+        true_labels = vcat(true_labels, labels[validation_idx])
+        out_of_fold_predictions = vcat(out_of_fold_predictions, validation_predictions)
     end
     
-    # Aggregate results across folds
-    aggregated_statistics = aggregate_fold_statistics(fold_statistics)
-    optimal_threshold = aggregated_statistics[:threshold]["mean"]
+    # Compute fit stats on out-of-fold predictions
+    fit_stats = calculate_evaluation_metrics(true_labels, out_of_fold_predictions)
+    optimal_threshold = fit_stats[:threshold]
     
-    # Create binary range map using optimal threshold
-    mean_prediction = mean(prediction_layers)
-    range_map = Int.(mean_prediction .> optimal_threshold)
-    uncertainty_map = mean(uncertainty_layers)
+    # Fit full model
+    model = train_model(features, labels; max_depth = max_depth)
+    prediction, uncertainty = create_prediction_layer(model, environmental_layers)    
+    range_map = Int.(prediction .> optimal_threshold)
     
-    return trained_models, range_map, uncertainty_map, aggregated_statistics, presence_layer, absence_layer
+    return model, range_map, uncertainty, fit_stats, presence_layer, absence_layer
 end
 
 # ============================================================================
 # FUTURE PROJECTION FUNCTIONS
 # ============================================================================
 
-function project_future_distribution(models, worldclim_directory, scenario, esm, timespan)
-    future_layers = load_future_climate_layers(worldclim_directory, scenario, esm, timespan)
-    
-    predictions = []
-    uncertainties = []
-    
-    for model in models
-        prediction, uncertainty = create_prediction_layer(model, future_layers)
-        push!(predictions, prediction)
-        push!(uncertainties, uncertainty)
-    end
-    
-    return mean(predictions), mean(uncertainties)
+function project_future_distribution(model, worldclim_directory, scenario, esm, timespan)
+    future_layers = load_future_climate_layers(worldclim_directory, scenario, esm, timespan)    
+    prediction, uncertainty = create_prediction_layer(model, future_layers)
+    return prediction, uncertainty
 end
 
 function create_esm_ensemble(models, worldclim_directory, scenario, timespan)
@@ -461,7 +438,7 @@ function create_species_distribution_models(
         class_balance = class_balance,
         pseudoabsence_buffer_distance = pseudoabsence_buffer_distance,
     )
-    optimal_threshold = statistics[:threshold]["mean"]
+    optimal_threshold = statistics[:threshold]
     
     @info "[ 4/5 ] Projecting future distributions..."
     future_projections = Dict()
