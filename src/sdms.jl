@@ -571,3 +571,75 @@ function tune_hyperparameters(
 
     return results_df
 end
+
+
+function finish_tuning_hyperparameters(
+    data_directory, 
+    output_directory, 
+    worldclim_directory,
+    species_name;
+    k = 5,
+    class_balances = 0.5:0.5:3,
+    pseudoabsence_buffer_distances = 5.0:5.0:25,
+    max_depths = 4:2:10,
+)
+    
+    @info "[ 1/3 ] Loading baseline climate layers..."
+    baseline_layers = load_baseline_climate_layers(worldclim_directory)
+    
+    @info "[ 2/3 ] Loading occurrence records..."
+    all_occurrences = load_occurrence_data(data_directory)
+    species_occurrences = group_occurrences_by_species(all_occurrences)
+    target_occurrences = species_occurrences[species_name]
+    
+    species_dir = joinpath(output_directory, species_name, "SDMs")
+    mkpath(species_dir)
+
+
+
+    results_df = CSV.read(joinpath(species_dir, "tuning.csv"), DataFrame)
+
+    cursor = 1
+    num_treatments = prod(length.([class_balances, pseudoabsence_buffer_distances, max_depths]))
+
+    @info "[ 3/3 ] Fitting models..."
+    for class_balance in class_balances
+        for pseudoabsence_buffer_distance in pseudoabsence_buffer_distances
+            for max_depth in max_depths
+
+                if length(findall(
+                    r-> r.class_balance == class_balance &&
+                        r.pseudoabsence_buffer_distance == pseudoabsence_buffer_distance &&
+                        r.max_depth == max_depth == max_depth
+                )) == 0 
+                    @info "    |-> Hyperparameter Set [$cursor / $num_treatments]..."
+                    _, _, _, statistics, _, _ = fit_baseline_sdm(
+                        target_occurrences, 
+                        baseline_layers; 
+                        k = k,
+                        class_balance = class_balance,
+                        pseudoabsence_buffer_distance = pseudoabsence_buffer_distance,
+                        max_depth = max_depth
+                    )
+
+                    push!(results_df, 
+                        (
+                            class_balance, 
+                            pseudoabsence_buffer_distance, 
+                            max_depth,
+                            statistics[:mcc]["mean"],
+                            statistics[:rocauc]["mean"]
+                        )
+                    )
+
+                    CSV.write(joinpath(species_dir, "tuning.csv"), results_df)
+                end
+                cursor += 1
+            end 
+        end
+    end 
+
+    CSV.write(joinpath(species_dir, "tuning.csv"), results_df)
+
+    return results_df
+end
