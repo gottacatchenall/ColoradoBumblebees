@@ -235,8 +235,9 @@ function calculate_evaluation_metrics(y_true, y_predicted, thresholds=0:0.001:1)
     pr_auc = sum(pr_dx .* (pr_dy ./ 2.0))
     
     # Find optimal threshold using MCC
-    optimal_threshold, threshold_index = findmax(mcc.(confusion_matrices))
-    
+    _, threshold_index = findmax(mcc.(confusion_matrices))
+    optimal_threshold = thresholds[threshold_index]
+
     return Dict(
         :prauc => pr_auc,
         :rocauc => roc_auc,
@@ -531,8 +532,8 @@ function tune_hyperparameters(
                         class_balance, 
                         pseudoabsence_buffer_distance, 
                         max_depth,
-                        statistics[:mcc]["mean"],
-                        statistics[:rocauc]["mean"]
+                        statistics[:mcc],
+                        statistics[:rocauc]
                     )
                 )
 
@@ -605,8 +606,8 @@ function finish_tuning_hyperparameters(
                             class_balance, 
                             pseudoabsence_buffer_distance, 
                             max_depth,
-                            statistics[:mcc]["mean"],
-                            statistics[:rocauc]["mean"]
+                            statistics[:mcc],
+                            statistics[:rocauc]
                         )
                     )
 
