@@ -12,7 +12,7 @@
 export JULIA_DEPOT_PATH="/project/def-tpoisot/mcatchen/JuliaEnvironments/ColoradoBees"
 
 module load julia/1.11.3
-julia -e '    
+srun --unbuffered julia -e '    
     include(joinpath("..", "src", "io.jl"))
     include(joinpath("..", "src", "networks.jl"))
     include(joinpath("..", "src", "phenology.jl"))

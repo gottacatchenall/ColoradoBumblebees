@@ -7,12 +7,12 @@
 #SBATCH --cpus-per-task=1        
 #SBATCH --mem-per-cpu=16G 
 #SBATCH --array=1-180 
-#SBATCH --time=3:00:00         
+#SBATCH --time=12:00:00         
 
 export JULIA_DEPOT_PATH="/project/def-tpoisot/mcatchen/JuliaEnvironments/ColoradoBees"
 
 module load julia/1.11.3
-julia -e '
+srun --unbuffered julia -e '
     include(joinpath("..", "src", "sdms.jl"))
     include(joinpath("..", "src", "networks.jl"))
 
@@ -22,5 +22,7 @@ julia -e '
 
     job_id = parse(Int, ENV["SLURM_ARRAY_TASK_ID"])
     species = sort(get_species_list(data_dir))
-    create_species_distribution_models(data_dir, artifact_dir, worldclim_dir, species[job_id])
+
+    hyperparams = get_hyperparameters(data_dir, species)
+    create_species_distribution_models(data_dir, artifact_dir, worldclim_dir, species[job_id]; hyperparams...)
 '

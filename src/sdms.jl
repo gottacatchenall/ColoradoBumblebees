@@ -48,6 +48,12 @@ const BOUNDING_BOX = (left=-109.7, right=-101.8, bottom=34.5, top=42.5)
 # DATA LOADING FUNCTIONS
 # ============================================================================
 
+function get_hyperparameters(data_dir, species)
+    hyperparameter_df = CSV.read(joinpath(data_dir, "hyperparameters.csv"), DataFrame)
+    idx = findfirst(isequal(species), hyperparameter_df.species)
+    return NamedTuple(hyperparameter_df[idx,2:end])
+end
+
 function parse_occurrence_from_row(row)
     OccurrencesInterface.Occurrence(;
         presence = row.occurrenceStatus == "PRESENT",
@@ -418,6 +424,7 @@ function create_species_distribution_models(
     k = 5,
     class_balance = 1.5,
     pseudoabsence_buffer_distance = 15.0,
+    max_depth = 6
 )
     @info "Creating SDMs for $species_name"
     @info "="^70
@@ -438,6 +445,7 @@ function create_species_distribution_models(
         k = k,
         class_balance = class_balance,
         pseudoabsence_buffer_distance = pseudoabsence_buffer_distance,
+        max_depth = max_depth
     )
     optimal_threshold = statistics[:threshold]
     
