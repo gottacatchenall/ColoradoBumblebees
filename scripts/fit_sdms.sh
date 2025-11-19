@@ -21,8 +21,9 @@ srun --unbuffered julia -e '
     worldclim_dir = "/project/def-tpoisot/mcatchen/WorldClim" 
 
     job_id = parse(Int, ENV["SLURM_ARRAY_TASK_ID"])
-    species = sort(get_species_list(data_dir))
+    species_list = sort(get_species_list(data_dir))
+    species_name = species_list[job_id]
 
-    hyperparams = get_hyperparameters(data_dir, species)
-    create_species_distribution_models(data_dir, artifact_dir, worldclim_dir, species[job_id]; hyperparams...)
+    hyperparams = get_hyperparameters(data_dir, species_name)
+    create_species_distribution_models(data_dir, artifact_dir, worldclim_dir, species_name; hyperparams...)
 '
