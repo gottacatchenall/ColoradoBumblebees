@@ -4,6 +4,7 @@ end
 
 function read_sdm_baseline(sdm_directory)
     baseline_directory = joinpath(sdm_directory, "baseline")
+    @info sdm_directory
     return Dict(
         :range => SDMLayer(joinpath(baseline_directory, "range.tif")),
         :uncertainty => SDMLayer(joinpath(baseline_directory, "uncertainty.tif")),
