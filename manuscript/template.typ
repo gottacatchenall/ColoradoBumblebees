@@ -7,7 +7,7 @@
   align(left)[
     #block(text(weight: 700, 2em, title)) \
   ]
-
+  
   grid(
     ..authors.map(author => text()[#author.name,]),
   )
@@ -73,7 +73,7 @@ v(1em)
 for (i,inst) in institutions.keys().enumerate() {
   let pos = institutions.keys().position(y => y == inst) + 1
   text(0.8em, rgb("#222"))[#super()[#text(size: 1.2em, weight: "bold")[#pos ]]#institutions.at(inst)]
-    if institutions.keys().last() != inst {text(size: 0.7em, font: "IBM Plex Sans")[\ ]}
+    if institutions.keys().last() != inst {text(size: 0.7em)[\ ]}
   }
 }
 

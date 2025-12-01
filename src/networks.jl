@@ -92,7 +92,6 @@ end
 
 function get_interaction_df()
     name_subs = [
-        "Cirsium scariosum/scopulorum" => "Cirsium scariosum_scopulorum",
         "Mentzelia multiflora/speciosa" => "Mentzelia multiflora_speciosa",
     ]
     
@@ -102,12 +101,18 @@ function get_interaction_df()
         clean_pikespeak(),
         clean_gothic()
     )
+
+    taxa = String.(get_taxa_df("./data").species_name)
     
     gbif_plant_names = df.plant_name
     for (s,t) in name_subs
         gbif_plant_names = [replace(p, s=>t) for p in gbif_plant_names]
     end
     df.plant_name = gbif_plant_names
+
+    filter!(r -> r.plant_name ∈ taxa, df)
+    filter!(r -> r.bee_name ∈ taxa, df)
+
     return df
 end 
 
