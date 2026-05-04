@@ -41,15 +41,16 @@ bbox_poly = SimpleSDMPolygons._get_polygon_from_bbox(BOUNDING_BOX)
 species_richness = Float32.(get_total_species_richness(sdms))
 uncertainty = get_total_uncertainty(sdms)
 
-nbreaks = 4
+nbreaks = 3
 
 R = discretize(quantize(species_richness, nbreaks), nbreaks)
 U = discretize(quantize(uncertainty, nbreaks), nbreaks)
 
 
 bivar, colormatrix = make_bivariate(
-    Float32.(R),
-    Float32.(U),
+    R, U,
+    #Float32.(R),
+    #Float32.(U),
     #high1=colorant"#21baf7",
     high2=colorant"#486bb8",
     high1=colorant"#61e3a6",
@@ -67,9 +68,8 @@ for i in unique_vals
     push!(areas, length(findall(isequal(i), bivar))/prod(size(bivar)))
 end
 
-sortidx = sortperm(areas)[5:end]
+sortidx = sortperm(areas)[findfirst(x->x > 0.03, areas[sortperm(areas)]):end]
 
-areas[sortperm(areas)]
 
 
 
@@ -150,6 +150,10 @@ f = Figure(size=(1500, 1000))
 g = GridLayout(f[1,1])
 ax = Axis(
     g[1,1],
+    title = "Baseline Species Richness and Uncertainty",
+    titlealign = :left,
+    titlesize = 30,
+    titlefont = :regular,
     aspect=DataAspect()
 )
 heatmap!(ax, bivar, colormap=vec(colormatrix))
@@ -228,6 +232,7 @@ makelab!(ax_legend, (-1, -1.2), (-1.22, -0.2), (-0.15, -1.25), "Low Species\nRic
 ax = Axis(g_right[1,1], 
     xaxisposition = :bottom, 
     aspect=1, 
+    titlealign = :left,
     xlabel = "Mean Uncertainty",
     xticks=0:0.2:1,
     ylabel = "Elevation (m)",
@@ -253,8 +258,23 @@ ax2 = Axis(
 limits!(ax2, 0, 150, 1000, 4200)
 barplot!(ax2, bin_centers, avg_richness, color=("#41a878", 0.55), direction=:x, gap=0)
 
+annotation!(
+    ax,
+    0, -40,
+    0.8, 2800,
+    text = "Richness",
+    color = colorant"#2e8c60ff",
+    path = Makie.Ann.Paths.Arc(0.1),
+)
 
-
+annotation!(
+    ax,
+    85, -30,
+    0.2, 2000,
+    text = "Uncertainty",
+    color = colorant"#385faeff",
+    path = Makie.Ann.Paths.Arc(0.1),
+)
 
 colsize!(g, 1, Relative(0.7))
 rowsize!(g_right, 2, Relative(0.5))

@@ -125,17 +125,13 @@ function make_bivariate(QG, QL; nbreaks=5, high2=colorant"#759d77", high1=colora
     return category, colormatrix
 end 
 
-time_idx = 4
-nbreaks = 4
+nbreaks = 3
 
 ref = lost_species[end]
 qs = quantile(values(nodata(ref, 0)), [i for i in LinRange(0,1,nbreaks+1)[2:end-1]])
 
 quantized_loss, loss_qs = quantize_with_reference(lost_species, lost_species[end]; nbreaks=nbreaks)
 quantized_gain, gain_qs = quantize_with_reference(new_species, new_species[end]; nbreaks=nbreaks)
-
-
-quantized_loss[4] |> unique
 
 bivar_axis_settings = (;
     xgridvisible=false,
@@ -166,6 +162,9 @@ begin
             g2[cidx...];
             aspect=DataAspect(),
             title = years[i],
+            subtitle = "Moderate Warming",
+            subtitlesize = 11,
+            subtitlecolor = :grey50,
             bivar_axis_settings...
         )
         category, colormatrix = make_bivariate(
@@ -184,10 +183,6 @@ begin
     ax_legend = Axis(
         g1[2,2],
         aspect=1,
-        #xticksvisible=false,
-        #yticksvisible=false,
-        #xticklabelsvisible=false,
-        #yticklabelsvisible=false,
         width=350,
         alignmode=Outside()
     )
@@ -262,9 +257,15 @@ begin
     text!(ax, 0.0175, -70, text="No Change", color=:grey50, fontsize=16)
 
 
-    text!(ax, 0.0055, 900, text="SSP 1-2.6", font=:bold, color=:grey30, fontsize=23)
-    text!(ax, 0.0105, 900, text="SSP 2-4.5", font=:bold, color=:grey30, fontsize=23)
-    text!(ax, 0.0155, 900, text="SSP 3-7.0", font=:bold, color=:grey30, fontsize=23)
+    
+    text!(ax, 0.0055, 800, text="Mild\nWarming", lineheight = 0.8, font=:bold, color=:grey30, fontsize=20)
+    text!(ax, 0.0055, 750, text="SSP 1-2.6", color=:grey50, fontsize=14)
+    
+    text!(ax, 0.0105, 800, text="Moderate\nWarming", lineheight = 0.8, font=:bold, color=:grey30, fontsize=20)
+    text!(ax, 0.0105, 750, text="SSP 2-4.5", color=:grey50, fontsize=14)
+
+    text!(ax, 0.0160, 800, text="Extreme\nWarming", lineheight = 0.8, font=:bold, color=:grey30, fontsize=20)
+    text!(ax, 0.0160, 750, text="SSP 3-7.0", color=:grey50, fontsize=14)
 
 
 

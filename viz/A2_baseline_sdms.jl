@@ -40,7 +40,7 @@ function plot_baseline_sdm(
     )
     heatmap!(ax, range, colormap=[:grey95, :seagreen4])
     scatter!(ax, Bool.(sdm_obj[:baseline][:presences]), color=:yellow, markersize=2)
-    scatter!(ax, Bool.(sdm_obj[:baseline][:absences]), color=:black, markersize=2)
+    scatter!(ax, Bool.(sdm_obj[:baseline][:absences]), color=:red, markersize=2)
     lines!(ax, county_poly, color=:black, linewidth=0.25)
     lines!(ax, state_poly, color=:black, linewidth=1.)
 end

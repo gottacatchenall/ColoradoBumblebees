@@ -28,10 +28,7 @@ end
 get_bee_richness(sdms) = sum([v[:baseline][:range] for (s,v) in sdms if occursin("Bombus", s)])
 get_plant_richness(sdms) = sum([v[:baseline][:range] for (s,v) in sdms if !occursin("Bombus", s)])
 get_total_species_richness(sdms) = sum([v[:baseline][:range] for (s,v) in sdms])
-
-get_bee_uncertainty(sdms) = sum([v[:baseline][:uncertainty] for (s,v) in sdms if occursin("Bombus", s)])
-get_plant_uncertainty(sdms) = sum([v[:baseline][:uncertainty] for (s,v) in sdms if !occursin("Bombus", s)])
-get_total_uncertainty(sdms) = sum([v[:baseline][:uncertainty] for (s,v) in sdms])
+get_total_uncertainty(sdms) = sum([rescale(v[:baseline][:uncertainty], (0,1)) for (s,v) in sdms])
 
 
 # ============================================================================

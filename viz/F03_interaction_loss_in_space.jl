@@ -26,9 +26,9 @@ sdms = read_sdms("./artifacts")
 metaweb = get_metaweb()
 
 SSP_LABELS = Dict(
-    "SSP126" => "SSP 1-2.6",
-    "SSP245" => "SSP 2-4.5",
-    "SSP370" => "SSP 3-7.0"
+    "SSP126" => "Mild Warming",
+    "SSP245" => "Moderate Warming",
+    "SSP370" => "Extreme Warming"
 )
 
 num_bins = 100
@@ -154,12 +154,16 @@ function plot_quantized_loss!(
     pos, 
     loss_map;
     title = "",
+    subtitle = "",
     halign=0.94
 )
     ax = Axis(
         g[pos...],
         aspect=DataAspect(),
         title=title,
+        subtitle = subtitle,
+        subtitlesize = 12,
+        subtitlecolor = :grey50,
         xgridvisible=false,
         ygridvisible=false,
         backgroundcolor=:white,
@@ -198,17 +202,21 @@ end
 
 begin 
     f = Figure(size=(900, 900))
-    g = GridLayout(f[1,1])
 
-    plot_quantized_loss!(g, (1,1), quantized_lost[1], title="SSP 1-2.6")
-    plot_quantized_loss!(g, (1,2), quantized_lost[2], title="SSP 2-4.5")
+    main_g = GridLayout(f[1,1])
+
+
+    g = GridLayout(main_g[1,1])
+
+    plot_quantized_loss!(g, (1,1), quantized_lost[1], title = "Mild Warming", subtitle="SSP 1-2.6")
+    plot_quantized_loss!(g, (1,2), quantized_lost[2], title = "Moderate Warming", subtitle="SSP 2-4.5")
 
     bottom_grid = GridLayout(g[2,:])
-    plot_quantized_loss!(bottom_grid, (1,1), quantized_lost[3], title="SSP 3-7.0", halign=0.96)
+    plot_quantized_loss!(bottom_grid, (1,2), quantized_lost[3], title="Extreme Warming", subtitle="SSP 3-7.0", halign=0.92)
 
 
     Colorbar(
-        bottom_grid[1,2],
+        bottom_grid[1,1],
         colormap=colormap = cgrad(QUANTILE_COLORS, N_QUANTILES, categorical = true),
         ticks = (0.5:4.5, string.(Int.(vcat(1,qs...)))),
         colorrange=(0.5,5.5),
@@ -262,8 +270,8 @@ begin
     end 
     limits!(ax, 0, 420, 1000, 4200)
 
-    colsize!(bottom_grid, 1, Relative(0.58))
-    colgap!(bottom_grid, 2, Relative(0.05))
+    colsize!(bottom_grid, 2, Relative(0.58))
+    colgap!(bottom_grid, 1, Relative(0.03))
 
     axislegend(
         ax,
