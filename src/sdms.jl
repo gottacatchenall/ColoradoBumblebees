@@ -56,7 +56,7 @@ end
 
 function parse_occurrence_from_row(row)
     OccurrencesInterface.Occurrence(;
-        presence = row.occurrenceStatus == "PRESENT",
+        presence = true,
         what = row.species,
         when = DateTime(replace(row.eventDate, "Z" => "")),
         where = (row.decimalLongitude, row.decimalLatitude),
@@ -65,7 +65,7 @@ end
 
 function load_occurrence_data(data_directory)
     # Load occurrence records
-    gbif_data = CSV.read(joinpath(data_directory, "gbif.csv"), DataFrame)
+    gbif_data = CSV.read(joinpath(data_directory, "clean_gbif.csv"), DataFrame)
     
     # Load taxonomy mapping
     taxa_data = CSV.read(joinpath(data_directory, "taxa.csv"), DataFrame)

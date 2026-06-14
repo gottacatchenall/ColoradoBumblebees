@@ -1,4 +1,4 @@
-#import "authors.typ": *
+//#import "authors.typ": *
 
 #let preprint(
   metadata: "metadata.json",
@@ -94,6 +94,7 @@
   titlepage(json(metadata))
   pagebreak()
 
+  
   set page(header: [
     #set text(font: "Libertinus Sans", size: 11pt, rgb("#333"))
     Catchen _et al._
@@ -113,7 +114,7 @@
   ])
 
   [
-    *Abstract*: Climate warming and land-use change are reshuffling the distribution of life on Earth. This change is altering the structure of species interaction networks, which ultimately enable the persistence of biodiversity and ecosystem services. Forecasting change in species interactions is a central challenge for biodiversity conservation, but there are numerous methodological challenges associated with spatiotemporally explicit mapping interactions because these interactions form networks that intrinsically vary in space and time. Here, we project rewiring of interaction networks by integrating species distribution models with in-situ plant-pollinator interaction data to map expected change in a plant-pollinator network consisting of 13 bumble bee species and 157 plants they forage from in the southern Rocky Mountains of Colorado, a region where strong elevation gradients could drive spatial mismatch under climate change. Models project the "vertical disassembly" of interaction networks, where elevational range shifts lead to increasingly large spatial mismatches under more extreme climate warming scenarios. Our models identify hotspots of change where up to 50% of the total number of interactions in the whole system are lost, often outpacing the arrival of new interactions. These results demonstrate the utility of species distribution projections in mapping the impact of global change on interaction networks.
+    *Abstract*: Climate warming and land-use change are reshuffling the distribution of life on Earth. This change is altering the structure of species interaction networks, which ultimately enable the persistence of biodiversity and ecosystem services. Forecasting change in species interactions is a central challenge for biodiversity conservation, but there are numerous methodological challenges associated with spatiotemporally explicit mapping interactions because these interactions form networks that intrinsically vary in space and time. Here we project how interaction networks are rewired over time by integrating species distribution models with in-situ plant-pollinator interaction data to map expected change in a plant-pollinator network consisting of 13 bumble bee species and 157 plant species they forage from in the southern Rocky Mountains of Colorado, a region where strong elevation gradients could drive spatial mismatch under climate change. Models project the "vertical disassembly" of interaction networks, where elevational range shifts lead to increasingly large spatial mismatches under more extreme climate warming scenarios. Our models identify hotspots of change where up to 50% of the total number of interactions in the whole system are lost, often outpacing the arrival of new interactions. These results demonstrate the utility of species distribution projections in mapping the impact of global change on interaction networks.
 
     *Keywords*: pollination, interaction networks, biogeography, network rewiring, species distribution models, climate projections
   ]

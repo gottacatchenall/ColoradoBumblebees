@@ -11,14 +11,17 @@
 
 export JULIA_DEPOT_PATH="/project/def-tpoisot/mcatchen/JuliaEnvironments/ColoradoBees"
 
+export ARTIFACT_DIR="/scratch/mcatchen/ColoradoBees/artifacts"
+export DATA_DIR="/scratch/mcatchen/ColoradoBees/data"
+
 module load julia/1.11.3
-srun --unbuffered julia -e '    
+srun --unbuffered julia -e '
     include(joinpath("..", "src", "io.jl"))
     include(joinpath("..", "src", "networks.jl"))
     include(joinpath("..", "src", "phenology.jl"))
 
-    artifact_dir ="/scratch/mcatchen/ColoradoBees/artifacts"
-    data_dir = "/scratch/mcatchen/ColoradoBees/data" 
+    artifact_dir = ENV["ARTIFACT_DIR"]
+    data_dir = ENV["DATA_DIR"]
 
     job_id = parse(Int, ENV["SLURM_ARRAY_TASK_ID"])
     species = sort(get_species_list(data_dir))
